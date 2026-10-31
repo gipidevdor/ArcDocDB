@@ -4,7 +4,7 @@
 
 Scope: [document preparation](full-text-documenti.md), ADR-0054,
 REQ-SEC-003/006/007/010; no format or durable-decision change.
-Two readings by same author on October 16, 2026, separate from independent review,
+Two readings by the same author on October 16, 2026, separate from independent review,
 full MC/DC, and engine C1 qualification.
 
 | Compound decision | Conditions and tests |
@@ -31,10 +31,10 @@ full MC/DC, and engine C1 qualification.
 
 Scanner and selector reread against CBOR-kernel transitions: child-count
 parity distinguishes key/value, tags do not consume pair prematurely,
-new frame zeroes all masks. Spans relative to document start,
-within 16 MiB, even when buffer has prefix. Only verified text-leaf
+new frame zeroes all masks. Spans are relative to the document start,
+within 16 MiB, even when the buffer has a prefix. Only verified text-leaf
 spans enter analyzer. Duplicates and incompatible types are rejections.
-Module certifies neither ordering/deduplication of unrelated maps nor general contract.
+The module certifies neither ordering/deduplication of unrelated maps nor the general contract.
 
 All budgets reread: memory before copies, five declared limits and effective
 limits without hot boxing, cumulative tokens and staging across fields, work including
@@ -55,6 +55,6 @@ releasing worker scratch. No authorized commit path exists here.
 No lock, I/O, scheduler, or global counter per operation. CBOR kernel
 can verify a whole string in one step: quantum and counters are not realtime
 deadlines. Task expiry, worker-boundary fault injection, reservations before
-decision, publication before H/ACK, and MVCC remain to integrate/qualify.
-Heap measurements separate from coverage; two mutants do not demonstrate an
+decision, publication before H/ACK, and MVCC remain to be integrated/qualified.
+Heap measurements are separate from coverage; two mutants do not demonstrate an
 exhaustive campaign or full MC/DC. INV-I4/INV-I6 remain open overall.

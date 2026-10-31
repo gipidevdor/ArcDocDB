@@ -2,7 +2,7 @@
 
 # Verification plan
 
-Implements [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md). The principle:
+This plan implements [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md). The principle:
 a requirement is ‘verified’ only if **executable, repeatable** evidence exists that would
 fail if the requirement were violated.
 
@@ -18,7 +18,7 @@ fail if the requirement were violated.
 | `model` | exhaustively explored protocol model | exploration report with state count and checked invariants |
 | `fi` | fault injection (simulator and real crashes) | FI scenarios, with verifier and oracle after every recovery |
 | `fuzz` | decoder and protocol fuzzing | no crashes, every malformed input detected |
-| `corr` | deliberate corruption of persistent files | every damage detected or repaired |
+| `corr` | deliberate corruption of persistent files | all damage detected or repaired |
 | `mut` | mutation testing | mutation score and analyzed surviving mutants |
 | `soak` | long-running tests with repeated crashes | no violations, clean verifier |
 | `bench` | reproducible benchmarks | minimum performance and cost of checks |
@@ -52,8 +52,8 @@ checked in review and by mutation tests on logical operators.
    Decoders are tested with known vectors and every field at boundary values.
 2. **Differential:** in-memory reference model (hash table and version lists) with the
    same GET/PUT/DELETE/transaction/snapshot semantics; random operation sequences on
-   engine and model with every response compared; with simulated crash and recovery,
-   the engine must remain equal to the model **for what was acknowledged**.
+   the engine and model with every response compared; with simulated crash and recovery,
+   the engine must match the model **for what was acknowledged**.
 3. **Models:** 2PC + recovery; compaction + swap + reclaim; seqlock; batch and durable
    frontier; visibility horizon and snapshot registry; self-contained segments;
    tombstones; fragment split; a crash before and after every
@@ -70,7 +70,7 @@ checked in review and by mutation tests on logical operators.
 9. **Soak:** mixed load and repeated crashes for hours, with periodic scrubbing and verification.
 10. **Parallelism (INV-P6):** scalability benchmarks with Serie and core counts, and
     isolation (a burst on one Serie does not alter others' latency and throughput); review
-    checks that the list of what Serie share remains that in
+    checks that the list of what Serie share remains the one in
     [architecture](../architettura.md#archivio-coordinamento-minimo).
 
 <a id="interfaccia-locale-unix-socket"></a>
@@ -143,8 +143,8 @@ policies requiring qualification; they are not measured performance.
   for every C1 change; two readings.
 - No change without a traced requirement; `make check` is mandatory.
 - **Independence:** the author is not the only reader of C1 code. Mitigations: automatic
-  tools, checklist, rereading with a second reviewer (including automated)
-  **over verifiable data** (diff, coverage reports, test outcomes), not conclusions.
+  tools, checklist, rereading with a second reviewer (including an automated reviewer)
+  **of verifiable data** (diff, coverage reports, test outcomes), not conclusions.
 - SBCL version and core hash recorded at every baseline; signed baselines.
 
 <a id="criteri-di-rilascio-di-una-fase"></a>
@@ -159,7 +159,7 @@ A phase closes only if, for every relevant requirement:
 - [ ] offline verifier is clean after the crash suite;
 - [ ] C1 mutation score reaches the threshold fixed at phase start, and surviving
       mutants are explained;
-- [ ] `make check` passes; matrix current; no unapproved deviation;
+- [ ] `make check` passes; the matrix is current; no unapproved deviation;
 - [ ] high-exposure risks are mitigated or accepted in writing.
 
 <a id="strumenti-stato"></a>

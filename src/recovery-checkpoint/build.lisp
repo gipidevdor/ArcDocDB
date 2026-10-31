@@ -7,9 +7,9 @@
 (declaim (ftype (function (checkpoint-control active-recuperato arcdocdb.recovery.manifest::manifest) null)
                 verifica-checkpoint-derivato))
 (defun verifica-checkpoint-derivato (plan recovered previous)
-  "Pre: piano canonico interamente verificato in memoria. Post: transizione conservativa e chiusura ACTIVE esatte.
-Controlla stato, P, count e ogni coppia derivata; zero presente distinto dall'assenza.
-INVARIANT-VIOLATION per chiusura interna discordante; errori della transizione propagati, nessun I/O."
+  "Pre: canonical plan fully verified in memory. Post: exact conservative transition and ACTIVE closure.
+Checks state, P, count, and every derived pair; present zero distinct from absence.
+INVARIANT-VIOLATION for differing internal closure; transition errors propagated, no I/O."
   (let* ((manifest (manifest-checkpoint-control plan))
          (id (arcdocdb.recovery.active::id-active-recuperato recovered))
          (ids (arcdocdb.recovery.active::active-recuperato-ids recovered))
@@ -34,11 +34,11 @@ INVARIANT-VIOLATION per chiusura interna discordante; errori della transizione p
 (defun crea-checkpoint-da-active (recovered active stamp
                                  &key (max-payload +metadata-max-bytes+) (max-segmenti 65536)
                                       (max-esiti 65536) (budget-workspace 67108864))
-  "Pre: recovery esclusivo, CONTROL/ACTIVE autorevoli, nuovo ACTIVE preparato dello stesso identico view.
-File/FD/namespace congelati fino alla pubblicazione; STAMP è ordinale caller, non CSN.
-Post: piano CONTROL completo posseduto, conserva CLOSED/REMOVED/esiti e chiude ACTIVE a P; nuovo ID fresco.
-Budget prima degli array; codec, replay e transizione canonici. Nessun I/O, prenotazione ID o pubblicazione.
-Errori originali propagati; risultato solo se dipendenze ancora valide. Atomicità resta la futura rinomina."
+  "Pre: exclusive recovery, authoritative CONTROL/ACTIVE, new prepared ACTIVE of the exact same view.
+File/FD/namespace frozen until publication; STAMP is caller ordinal, not CSN.
+Post: complete owned CONTROL plan, preserves CLOSED/REMOVED/outcomes and closes ACTIVE at P; fresh new ID.
+Budgets before arrays; canonical codec, replay, and transition. No I/O, ID reservation, or publication.
+Original errors propagated; result only if dependencies still valid. Atomicity remains future rename."
   (multiple-value-bind (manifest id next version) (verifica-fonti-checkpoint recovered active)
     (multiple-value-bind (closed-size removed-size payload-size)
         (misura-payload-checkpoint recovered manifest version max-payload max-segmenti max-esiti budget-workspace)

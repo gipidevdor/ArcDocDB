@@ -7,8 +7,8 @@
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (t t t t t t t) null) verifica-avvio-analisi))
 (defun verifica-avvio-analisi (space input start end max-term max-tokens max-work)
-  "Pre: confine pubblico. Post: argomenti e stato ammessi senza mutazioni.
-INVALID-ARGUMENT per tipi/limiti; analisi in corso non sovrascrivibile."
+  "Pre: public boundary. Post: arguments and state admitted without mutations.
+INVALID-ARGUMENT for types/limits; analysis in progress cannot be overwritten."
   (unless (and (typep space 'spazio-full-text) (typep input 'octets)
                (typep start 'index) (typep end 'index) (<= start end (length input))
                (typep max-term 'index) (plusp max-term)
@@ -26,9 +26,9 @@ INVALID-ARGUMENT per tipi/limiti; analisi in corso non sovrascrivibile."
                 inizia-analisi-full-text))
 (defun inizia-analisi-full-text (space input start end &key (max-term-bytes 1024)
                                 (max-tokens 1048576) (max-work 268435456))
-  "Pre: scratch esclusivo, input UTF-8 immutabile fino a completamento/errore.
-Post: RUNNING; risultati precedenti invalidati. Controlli prima di mutare SPACE.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED per configurazione non ammessa."
+  "Pre: exclusive scratch, UTF-8 input immutable until completion/error.
+Post: RUNNING; previous results invalidated. Checks before mutating SPACE.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED for configuration not admitted."
   (verifica-avvio-analisi space input start end max-term-bytes max-tokens max-work)
   (setf (spazio-full-text-input space) input (spazio-full-text-input-pos space) start
         (spazio-full-text-input-end space) end (spazio-full-text-phase space) :decode
@@ -43,8 +43,8 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED per configurazione non ammessa."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) passo-decodifica-full-text))
 (defun passo-decodifica-full-text (space)
-  "Pre: input preso in prestito. Post: uno scalare validato o inizio NFC.
-CORRUPTION-DETECTED per UTF-8 non canonico; nessuna sostituzione silenziosa."
+  "Pre: borrowed input. Post: one validated scalar or start of NFC.
+CORRUPTION-DETECTED for noncanonical UTF-8; no silent replacement."
   (if (= (spazio-full-text-input-pos space) (spazio-full-text-input-end space))
       (setf (spazio-full-text-phase space) :decompose (spazio-full-text-cursor space) 0)
       (multiple-value-bind (scalar next)
@@ -58,7 +58,7 @@ CORRUPTION-DETECTED per UTF-8 non canonico; nessuna sostituzione silenziosa."
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text) null) avanza-analisi-full-text))
 (defun avanza-analisi-full-text (space)
-  "Pre: analisi in corso. Post: un passo limitato; fasi inattese sono errori interni."
+  "Pre: analysis in progress. Post: one bounded step; unexpected phases are internal errors."
   (consuma-lavoro-full-text space)
   (case (spazio-full-text-phase space)
     (:decode (passo-decodifica-full-text space)) (:decompose (passo-decomposizione-nfc space))
@@ -72,9 +72,9 @@ CORRUPTION-DETECTED per UTF-8 non canonico; nessuna sostituzione silenziosa."
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (t t) keyword) passo-analisi-full-text))
 (defun passo-analisi-full-text (space quantum)
-  "Pre: analisi iniziata, quantum fra 1 e 65536 passi. Post: RUNNING o DONE.
-Su errore di dominio passa a FAILED, rilascia input e invalida risultati parziali.
-Ogni passo ha numero limitato di lookup/scalari; il lavoro totale ha budget proprio."
+  "Pre: analysis started, quantum between 1 and 65536 steps. Post: RUNNING or DONE.
+On a domain error, transitions to FAILED, releases input, and invalidates partial results.
+Each step has a bounded number of lookups/scalars; total work has its own budget."
   (unless (and (typep space 'spazio-full-text) (typep quantum '(integer 1 65536)))
     (error 'invalid-argument :reason :fulltext-analysis-step))
   (when (eq :done (spazio-full-text-phase space)) (return-from passo-analisi-full-text :done))
@@ -94,9 +94,9 @@ Ogni passo ha numero limitato di lookup/scalari; il lavoro totale ha budget prop
 (declaim (ftype (function (t) (values octets vettore-u32 vettore-u32 index index &optional))
                 risultati-analisi-full-text))
 (defun risultati-analisi-full-text (space)
-  "Pre: analisi DONE. Post: byte, inizi, fini, numero token, byte usati, presi in prestito.
-Posizione del token e il suo indice da zero; validi fino al prossimo avvio sullo spazio.
-INVALID-ARGUMENT se incompleta/fallita; nessun accesso a dati parziali."
+  "Pre: analysis DONE. Post: borrowed bytes, starts, ends, token count, bytes used.
+A token's position is its zero-based index; valid until the next start on the workspace.
+INVALID-ARGUMENT if incomplete/failed; no access to partial data."
   (unless (and (typep space 'spazio-full-text) (eq :done (spazio-full-text-phase space)))
     (error 'invalid-argument :reason :fulltext-analysis-incomplete))
   (values (spazio-full-text-bytes space) (spazio-full-text-begins space) (spazio-full-text-ends space)

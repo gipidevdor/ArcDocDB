@@ -9,11 +9,11 @@
                          (values piano-csn-archivio index index &optional)) stabilizza-nomi-archivio-recuperato))
 (defun stabilizza-nomi-archivio-recuperato (set decisions directories sources active closed
                                          &key (max-segmenti-serie 65536) (max-segmenti-totali 1048576))
-  "Pre: catalogo completo, stesso replay, vettori paralleli; FD e namespace esclusivi/stabili nel pool I/O.
-Post: piano CSN riconfermato e conteggi rinominati/gia' definitivi completi, somma uguale ai segmenti.
-Tutti i budget/metadata, gate Archivio e preflight nomi prima di effetti, ordine del catalogo.
-Guasti originali senza risultato parziale/rollback/retry/close; completamenti precedenti conservati.
-Nessun nuovo ACTIVE, rimozione, checkpoint, indice, CSN operativo o ammissione del traffico."
+  "Pre: complete catalog, same replay, parallel vectors; exclusive/stable FDs and namespaces in the I/O pool.
+Post: CSN plan reconfirmed and complete renamed/already-final counts, sum equal to segments.
+All budgets/metadata, Archivio gate, and name preflight before effects, in catalog order.
+Original faults without partial result/rollback/retry/close; previous completions retained.
+No new ACTIVE, removal, checkpoint, index, operational CSN, or traffic admission."
   (let* ((count (verifica-forma-stabilizzazione-archivio
                  set decisions directories sources active closed max-segmenti-totali))
          (segments (verifica-capienza-stabilizzazione-archivio

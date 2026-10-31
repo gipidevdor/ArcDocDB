@@ -2,7 +2,7 @@
 
 # Second reading of the CBOR verifier with minimal headers
 
-Local static reading completed on October 9, 2026, after freezing the three independent test files. No concrete defects emerged in the new diff. This reading constitutes neither human approval nor campaign outcome: strict compilation, lint, execution, coverage, mutations, heap measurement, and integrated verification remain to be acquired.
+Local static reading completed on October 9, 2026, after freezing the three independent test files. No concrete defects emerged in the new diff. This reading constitutes neither human approval nor a campaign outcome: strict compilation, lint, execution, coverage, mutations, heap measurement, and integrated verification remain to be acquired.
 
 The reviewer wrote the current corpus without reading the new product and previously contributed to the already-integrated CBOR and UTF-8 kernels. The second reading concerns the new export, reuse of the common loop, and minimal-reader selection; it is not a new blind reading of previous components.
 
@@ -33,15 +33,15 @@ Syntactic reading of tests alone as Common Lisp data, with `*read-eval* NIL` and
 | # | Check | Static finding and limit |
 | --- | --- | --- |
 | 1 | Requirements and ADRs | REQ-LIM-001/002 and REQ-AFF-004/008 are linked to local structure, UTF-8, and minimal-header checking. ADR-0014/0048 are not extended to map order, duplicates, or tag semantics. |
-| 2 | Invariants and cases | INV-A8/P6, preflight, reset, budgets, precedence, and results have independent named cases. Their execution remains to be acquired. |
+| 2 | Invariants and cases | INV-A8/P6, preflight, reset, budgets, precedence, and results have independent named cases. Evidence of their execution remains to be collected. |
 | 3 | Typed conditions | Minimal reader precedes context, nodes, depth, and payload. Syntactic and UTF-8 conditions propagate; `:cbor-trailing` precedes tail reading. FAULTED boundary remains outside codec. |
 | 4 | Loops and recursion | Common loop remains span-bounded and draining bounded by workspace capacity 102. No new recursion or second scan is introduced. |
-| 5 | Allocations | New path uses arguments and local state, without closures or materialization of floats/u64. No allocation on success requires measurement. |
-| 6 | Verified results | Shared postcondition checks cursor/end, count/peak, and final state before three values. Tests require exactly three values. |
+| 5 | Allocations | New path uses arguments and local state, without closures or materialization of floats/u64. The absence of allocations on success requires measurement. |
+| 6 | Verified results | Shared postcondition checks cursor/end, count/peak, and final state before returning the three values. Tests require exactly three values. |
 | 7 | Compound decisions | D01, D02, and D03 from the dedicated table are preserved. Boolean selector is a simple decision; no branch is excluded from coverage denominator. |
 | 8 | Data ownership | Immutable caller buffer, exclusive workspace, and no retained buffer reference. T/NIL selector is call-local, not a shared field. |
 | 9 | Integration | ASDF order compatible with product dependencies and frozen oracles; dedicated suite added after structural suite. Build, trace, lint, and full check remain to be acquired. |
-| 10 | Source standard | Complete FTYPEs, safety 3, bounded functions, and meaningful guards in nontrivial functions. Both public APIs are thin delegations to common loop. No C1 status promotion inferred. |
+| 10 | Source standard | Complete FTYPEs, safety 3, bounded functions, and meaningful guards in nontrivial functions. Both public APIs are thin delegations to common loop. No C1 status promotion is inferred. |
 | 11 | Concurrency | No global write or new synchronization. Two workers with private workspaces and buffers are planned; REQ-CON-005 covered only for local callability. Outcome and overlap remain to be measured. |
 | 12 | Durability and atomicity | Not applicable to this kernel without I/O, WAL, or data publication. No engine guarantees claimed. |
 

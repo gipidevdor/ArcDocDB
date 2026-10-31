@@ -64,9 +64,9 @@ ticks/s; full check 1687/2704 ticks. Individual
 intervals are not printed; scaling or simultaneous execution
 on cores is not inferred.
 
-9658 calls to new API are an arithmetic total from plan:
+The 9658 calls to the new API are an arithmetic total from the plan:
 442 non-fuzz, 1024 fuzz, and 8192 parallel; 8848 successes and 810 rejections.
-Not an instrumented counter.
+This is not an instrumented counter.
 
 <a id="benchmark-e-mutazioni"></a>
 
@@ -74,12 +74,12 @@ Not an instrumented counter.
 
 Six cold fixtures, five replicates of 1024 calls and warmup 64:
 30 samples, all with a present heap counter equal to zero.
-Zero baseline zero and positive control of 16 × 1 MiB passed.
+The zero baseline and positive control of 16 × 1 MiB passed.
 NEXT 4/7/6/10/14/17 and tokens 5368/10359/9825/10464/16425/43144
 agree with fixtures. Wrapper takes 3.047504 s.
-External load uncontrolled and check cost included:
+External load is uncontrolled, and the cost of checks is included:
 neither absolute nonallocation nor engine throughput
-attested. Independent auditing passes 68028 data checks.
+is attested. Independent auditing passes 68028 data checks.
 
 Eight compilable mutants are DETECTED: physical capacity, MT5,
 swapped high/low halves, omitted scanning, overlap excluding header,
@@ -94,8 +94,8 @@ Nine private copies/caches, 361 files per copy, 366 internal fingerprints,
 and 892 stable external sources. DATA reader performs 3249 binary
 comparisons against freeze's entire Git context and originals:
 baseline without differences and one exact catalog replacement
-in each mutant. Extra-arity FTYPE and body change
-consistently in copy only. Comparison neither authenticates
+in each mutant. The extra-arity FTYPE and body change
+consistently in the copy only. Comparison neither authenticates
 execution nor demonstrates exclusive causality.
 
 <a id="copertura-grezza"></a>
@@ -149,8 +149,8 @@ scope; this second command does not rerun global spikes.
 
 Initial collection uses four workers and closes 397 files for 15
 processes; copies per worker: 132/132/132/1, without errors. Before/after
-origin and copy fingerprints agree, decoded processes
-are identical, and independent validator verifies closed inventory.
+source and copy fingerprints agree, decoded processes
+are identical, and an independent validator verifies the closed inventory.
 
 Serial appends preserve preparation, preflight, collection, DATA
 reading, and verified copies of original observation/closure. Final
@@ -160,19 +160,19 @@ files sum to 8444662 bytes; total files are 413 including
 index and catalog.
 Index measures 147480 bytes; limits remain 1 MiB plain and 8 MiB gzip.
 Fingerprint and metadata auditing passes before and after every append.
-Independent closed-inventory validator concerns initial
+The independent closed-inventory validator concerns the initial
 397-file collection; its outcome does not extend to appends.
 
-Published archive preserves logs, ASDF, runner, tag product and corpus
+The published archive preserves logs, ASDF, runner, tag product and corpus
 for all nine copies, and report with complete fingerprints.
 Nine complete copies remain in verified local backup;
 other unchanged sources can be reconstructed from commit `df37306e`.
 
-First materialized mutator contains two helper pins still
-referring to maps: corrected before self-tests and
-campaigns, preserving previous version and diff. One recorded
-attempt uses invalid self-test CLI options: fails before
-product, remains FAILED in archive, and is followed by corrected
+The first materialized mutator contains two helper pins still
+referring to maps. They were corrected before self-tests and
+campaigns, preserving the previous version and diff. One recorded
+attempt uses invalid self-test CLI options: it fails before running the
+product, remains FAILED in the archive, and is followed by a corrected
 command. Both mutation-reader preparations are preserved
 before completed reading. C4 cloner parenthesis is also
 corrected in a preserved variant: original diagnostic appears

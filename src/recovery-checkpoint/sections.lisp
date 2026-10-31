@@ -7,9 +7,9 @@
 (declaim (ftype (function (arcdocdb.recovery.manifest::manifest-closed u64 octets index) index)
                 scrivi-chiuso-checkpoint))
 (defun scrivi-chiuso-checkpoint (entry id buffer start)
-  "Pre: entry posseduta valida, BUFFER privato e budget autorizzati. Post: copia canonica CLOSED con esiti ordinati.
-Range prima di scrivere, CSN zero conservato tramite presenza distinta; nessun array sorgente esportato.
-Errori tipizzati propagati; un fallimento modifica solo sezioni private mai consegnate."
+  "Pre: valid owned entry, private BUFFER, and authorized budgets. Post: canonical CLOSED copy with sorted outcomes.
+Range before writing, zero CSN preserved through distinct presence; no source array exported.
+Typed errors propagated; failure modifies only private sections never delivered."
   (arcdocdb.recovery.manifest::check-closed-shape entry)
   (let* ((outcomes (arcdocdb.recovery.manifest::%closed-outcomes entry))
          (count (hash-table-count outcomes))
@@ -32,9 +32,9 @@ Errori tipizzati propagati; un fallimento modifica solo sezioni private mai cons
 (declaim (ftype (function (active-recuperato arcdocdb.recovery.manifest::manifest index) octets)
                 codifica-chiusi-checkpoint))
 (defun codifica-chiusi-checkpoint (recovered manifest size)
-  "Pre: SIZE misurata su fonti congelate. Post: tutti i vecchi CLOSED più la chiusura ACTIVE, ordinati per ID.
-Riusa il serializer ACTIVE per P ed esiti derivati; controlla avanzamento e consumo esatto.
-INVARIANT-VIOLATION per fonte mutata/incoerente; nessun risultato parziale o buffer esterno modificato."
+  "Pre: SIZE measured on frozen sources. Post: all old CLOSED plus ACTIVE closure, sorted by ID.
+Reuses the ACTIVE serializer for P and derived outcomes; checks progress and exact consumption.
+INVARIANT-VIOLATION for a mutated/inconsistent source; no partial result or external buffer modified."
   (let* ((id (arcdocdb.recovery.active::id-active-recuperato recovered))
          (table (arcdocdb.recovery.manifest::%manifest-closed manifest))
          (ids (ordina-id-checkpoint table id))
@@ -53,9 +53,9 @@ INVARIANT-VIOLATION per fonte mutata/incoerente; nessun risultato parziale o buf
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-AFF-018
 (declaim (ftype (function (arcdocdb.recovery.manifest::manifest index) octets) codifica-rimossi-checkpoint))
 (defun codifica-rimossi-checkpoint (manifest size)
-  "Pre: SIZE misurata, manifest congelato. Post: tutti e soli gli ID REMOVED in ordine u64, zero incluso.
-Controlla dimensione e range prima delle scritture private; nessuna eliminazione o riconciliazione fisica.
-INVARIANT-VIOLATION per conteggi discordanti, altri errori tipizzati propagati."
+  "Pre: SIZE measured, frozen manifest. Post: all and only REMOVED IDs in u64 order, including zero.
+Checks size and range before private writes; no physical deletion or reconciliation.
+INVARIANT-VIOLATION for mismatched counts, other typed errors propagated."
   (let* ((table (arcdocdb.recovery.manifest::%manifest-removed manifest))
          (ids (ordina-id-checkpoint table nil))
          (buffer (make-array size :element-type '(unsigned-byte 8) :initial-element 0)))

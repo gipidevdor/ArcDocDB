@@ -21,7 +21,7 @@ Final check and benchmark have positive outcomes and stable sources.
 - [Integrated checks](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-check.lisp).
 - [Benchmark and raw samples](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-bench.lisp).
 - [Derived comparison](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-comparison.lisp):
-  minimum, median, and maximum of three replicas, grouped by workers and mode.
+  minimum, median, and maximum of three replicates, grouped by workers and mode.
 - [Complete check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-full-check.lisp):
   successful `make check`, stable sources, nine spikes, warning-free compilation,
   foundation, storage, and recovery scan tests, linter, and traceability.
@@ -48,7 +48,7 @@ integrated checks identify the final variant.
 | Copies | Target reopened after close, size and every byte compared with source; source verified before and after matrix |
 
 The model uses samples every 500 ms and EWMA `alpha=1/2`: experimental
-parameters, not product tuning. Clock is injected, without real waits or
+parameters, not product tuning. The clock is injected, without real waits or
 device signals. Model quotas and I/O worker quotas are distinct tests.
 No new shared write per record: fd, buffer, plans, and samples belong to
 the individual worker; the common gate is at the case boundary and the
@@ -59,15 +59,15 @@ report reads fields only after join.
 ## Local comparison
 
 Immutable synthetic 16 MiB file, 8192 records of 2048 bytes; body without
-CBOR. Three replicas, 1/2 readers, 32,768 aggregate random reads per case,
+CBOR. Three replicates, 1/2 readers, 32,768 aggregate random reads per case,
 alternating order of four modes. The **24 cases** complete **786,432 verified
 reads** (1536 MiB) and **18 copies of 16 MiB** (288 MiB).
-Process lasts **21.415561 s**, including compilation, checks, preparation,
+The process lasts **21.415561 s**, including compilation, checks, preparation,
 verification, and sample serialization.
 
-Each row reports the median of three replicas and, in parentheses,
+Each row reports the median of three replicates and, in parentheses,
 minimum–maximum. P99 includes pread, record verification, and clock sampling;
-it is not client latency. Ratio uses the same replica's baseline and reader
+it is not client latency. Ratio uses the same replicate's baseline and reader
 count. Observed bandwidth includes CRC and pacing and is distinct from quota.
 
 | Readers | Copy | P99 during overlap, µs | P99/baseline ratio | Observed copy, MiB/s | Covered reads, min–max |
@@ -81,10 +81,10 @@ count. Observed bandwidth includes CRC and pacing and is distinct from quota.
 
 Baseline P99 is median 16 µs, 15–16 µs with one reader and 14–16 µs
 with two. All 18 copy cases have samples in the overlap; unrestricted copy
-covers only part of reads. The observed window includes token bucket waits:
+covers only part of the reads. The observed window includes token bucket waits:
 it does not prove active I/O at every instant. Raw samples retain starts
 and latencies in ticks; ends are reconstructed as start plus latency,
-in declared worker order.
+in the declared worker order.
 
 > **Proposal** — These samples do not justify changing ADR-0023. Ratios
 > below or above one are local comparisons with uncontrolled external load.

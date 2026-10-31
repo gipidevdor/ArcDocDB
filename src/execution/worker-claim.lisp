@@ -7,8 +7,8 @@
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer t index) null) %assegna-worker))
 (defun %assegna-worker (context writer home)
-  "Pre: IDLE/RESCHEDULE verificato, trasferimento riuscito dal ring. Post: CLAIMED.
-INVARIANT-VIOLATION writer/fase incoerenti; nessun rollback dopo fault interno."
+  "Pre: IDLE/RESCHEDULE verified, successful transfer from the ring. Post: CLAIMED.
+INVARIANT-VIOLATION for inconsistent writer/phase; no rollback after an internal fault."
   (%check-worker context)
   (unless (typep writer 'writer-programmabile)
     (error 'invariant-violation :reason :worker-state))
@@ -24,9 +24,9 @@ INVARIANT-VIOLATION writer/fase incoerenti; nessun rollback dopo fault interno."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (values (or null writer-programmabile) (member :claimed :empty :busy) index &optional)) prendi-writer-worker))
 (defun prendi-writer-worker (context)
-  "Pre: IDLE e owner corrente. Post: CLAIMED con obbligo/home, oppure IDLE con
-cursore ruotato per EMPTY/BUSY. Verificatori typed, fase errata RESOURCE-EXHAUSTED;
-EMPTY resta locale, mai prova di quiescenza per parcheggio o arresto."
+  "Pre: IDLE and current owner. Post: CLAIMED with obligation/home, or IDLE with
+rotated cursor for EMPTY/BUSY. Typed verifiers, incorrect phase RESOURCE-EXHAUSTED;
+EMPTY remains local, never proof of quiescence for parking or shutdown."
   (%passo-worker (context (:worker-state) ())
   (%richiedi-worker context :idle)
   (let ((ready (contesto-worker-writer-ready context)))
@@ -45,9 +45,9 @@ EMPTY resta locale, mai prova di quiescenza per parcheggio o arresto."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) index) inizia-tratto-worker))
 (defun inizia-tratto-worker (context)
-  "Pre: CLAIMED senza lease. Post: RUNNING con lease del thread corrente.
-Busy conserva CLAIMED; not-ready/generation restano fault permanenti del compito;
-condizioni handoff e verificatori typed, nessun retry o perdita del riferimento."
+  "Pre: CLAIMED without a lease. Post: RUNNING with the current thread's lease.
+Busy preserves CLAIMED; not-ready/generation remain permanent task faults;
+typed handoff conditions and verifiers, no retry or lost reference."
   (%passo-worker (context (:worker-state :writer-queue-busy) ())
   (%richiedi-worker context :claimed)
   (let ((lease (inizia-tratto-writer (contesto-worker-writer-writer context))))
@@ -59,9 +59,9 @@ condizioni handoff e verificatori typed, nessun retry o perdita del riferimento.
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (values (or null writer-programmabile) (member :claimed :published) index &optional)) ricircola-worker))
 (defun ricircola-worker (context)
-  "Pre: RESCHEDULE, obbligo unico, owner corrente. Post: full trasferisce nuova
-testa al contesto CLAIMED; room pubblica e libera IDLE. Busy conserva obbligo.
-Condizioni ready/verificatori typed; nessun retry o dedup, count full invariato."
+  "Pre: RESCHEDULE, unique obligation, current owner. Post: full transfers a new
+head to the CLAIMED context; room publishes and releases to IDLE. Busy retains the obligation.
+Typed ready conditions/verifiers; no retry or deduplication, full count unchanged."
   (%passo-worker (context (:worker-state :ready-queue-busy) ())
   (%richiedi-worker context :reschedule)
   (multiple-value-bind (writer status count)
@@ -82,9 +82,9 @@ Condizioni ready/verificatori typed; nessun retry o dedup, count full invariato.
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer t t) null) adotta-writer-worker))
 (defun adotta-writer-worker (context writer home)
-  "Pre: IDLE, obbligo unico non nel ring affidato al caller e home stabile.
-Post: CLAIMED sul contesto, obbligo trasferito dal caller; INVALID-ARGUMENT
-writer/home prima delle scritture, fase/owner/verificatori typed. Nessun dedup."
+  "Pre: IDLE, unique obligation outside the ring entrusted to the caller, stable home.
+Post: CLAIMED on the context, obligation transferred from the caller; INVALID-ARGUMENT
+for writer/home before writes, typed phase/owner/verifiers. No deduplication."
   (%passo-worker (context (:worker-state) (:worker-writer :ready-target))
   (%richiedi-worker context :idle)
   (unless (typep writer 'writer-programmabile)
@@ -97,9 +97,9 @@ writer/home prima delle scritture, fase/owner/verificatori typed. Nessun dedup."
 (declaim (ftype (function (contesto-worker-writer)
                          (values writer-programmabile index &optional)) cede-writer-worker))
 (defun cede-writer-worker (context)
-  "Pre: CLAIMED/RESCHEDULE senza lease o batch. Post: IDLE, obbligo al caller
-con home, generation conservata; mai cedere una lease attiva. Fase/owner e
-verificatori typed; nessuna pubblicazione implicita, il caller non abbandona il ref."
+  "Pre: CLAIMED/RESCHEDULE without a lease or batch. Post: IDLE, obligation with the caller
+along with home, generation retained; never yield an active lease. Typed phase/owner
+and verifiers; no implicit publication, the caller does not abandon the reference."
   (%passo-worker (context (:worker-state) ())
   (%check-worker context)
   (case (contesto-worker-writer-state context)

@@ -7,7 +7,7 @@ Preregistration on 2026-10-14 against base
 The [contract](pool-recycle.md) defines one ready operation per step.
 Complete C3 scope of extended dispatcher: `src/dispatch/package.lisp`,
 `types.lisp`, `build.lisp`, `claim.lisp`, and new `recycle.lisp`.
-No C1 source modified; recycling, worker, routing, and bridge delegated.
+No C1 source is modified; recycling, worker, routing, and bridge operations are delegated.
 
 <a id="prove-e-revisione"></a>
 
@@ -40,7 +40,7 @@ No C1 source modified; recycling, worker, routing, and bridge delegated.
 
 ## Coverage
 
-At least 95% expressions/branches across entire five-file component,
+At least 95% of expressions/branches across the entire five-file component,
 without manual exclusions. Publish all per-file counts and
 missing entries too, including defensive branches outside delegate domain if SBCL
 retains them. Zero denominator means only no native probe of that type,
@@ -48,7 +48,7 @@ not no source decisions. No MC/DC inference or
 C1 delegate coverage in C3 denominator.
 
 Preserve native SB-COVER, original HTML, and exact native/HTML audit.
-Reuse verified reader with explicit extended-scope adapter,
+Reuse the verified reader with explicit extended-scope adapter,
 negative tests on files, shapes, duplicates, denominators, and missing paths.
 
 <a id="memoria-e-misura-locale"></a>
@@ -59,7 +59,7 @@ C4 sensor with verified sampling, dedicated self-tests, and two
 actual campaigns. Every replicate has a fresh fixture: five replicates of
 4096 cycles, 128 warmup, preallocated queues with enough immutable
 symbolic payloads and quantum one. Factory, API lookup, GC, and final drain are outside
-clock; no private state/generation resets.
+the clock; no private state/generation resets.
 
 | Campaign | Measured cycle |
 |---|---|
@@ -67,18 +67,18 @@ clock; no private state/generation resets.
 | FULL | Recycling on full ring, alternating link of new CLAIMED, execution begin, one payload pop, ack and end in RESCHEDULE; IDLE link. |
 
 These are integrated cycles: they include C1 execution protocol and scalar oracles
-without attributing time to adapter alone. Fresh ROOM acquisition belongs
-to explicit fixture, not a hidden recycling call.
-Serie bridge is not started in clock and measurement acquires
-no Serie lease; functional tests verify bridge separately.
-Count, status, and link identity contribute to oracle.
+without attributing time to the adapter alone. Fresh ROOM acquisition belongs
+to the explicit fixture, not a hidden recycling call.
+The Serie bridge is not started inside the clock and measurement acquires
+no Serie lease; functional tests verify the bridge separately.
+Count, status, and link identity contribute to the oracle.
 Bounded public cleanup resolves all fixture obligations before
 closing I/O backends; no abandonment is qualified as valid shutdown.
 
-Preserve ticks, heap, sink, and completed cycles. Sensor must detect
+Preserve ticks, heap, sink, and completed cycles. The sensor must detect
 deliberate positive allocation, differing returns, wrong sink, below-resolution
 clock, invalid CLI, partial raw data, and existing destinations.
-External load uncontrolled; no tuning, threshold, or engine-throughput
+External load is uncontrolled; no tuning, threshold, or engine-throughput
 conclusion. Observed zero heap proves neither universal nonallocation
 nor correctness of a concurrent coordinator.
 

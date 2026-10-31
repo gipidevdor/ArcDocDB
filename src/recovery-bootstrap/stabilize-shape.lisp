@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-REC-004 REQ-AFF-008
 (declaim (ftype (function (t t t t) null) verifica-riga-stabilizzazione-archivio))
 (defun verifica-riga-stabilizzazione-archivio (directory sources active closed)
-  "Pre: riga di quattro vettori paralleli stabili. Post: tipi canonici prima di accessori e scansioni.
-INVALID-ARGUMENT per riga errata; nessuna lettura dei file, modifica di capacita' o allocazione."
+  "Pre: row of four stable parallel vectors. Post: canonical types before accessors and scans.
+INVALID-ARGUMENT for invalid row; no file read, capability modification, or allocation."
   (unless (and (typep directory 'arcdocdb.io:file-io) (typep sources 'recovery-sources)
                (typep active 'arcdocdb.recovery.active:active-recuperato) (typep closed 'simple-vector))
     (error 'invalid-argument :reason :archive-stabilization-row))
@@ -17,9 +17,9 @@ INVALID-ARGUMENT per riga errata; nessuna lettura dei file, modifica di capacita
 (declaim (ftype (function (insieme-serie-recovery decisioni-recuperate t t t t index) index)
                 verifica-forma-stabilizzazione-archivio))
 (defun verifica-forma-stabilizzazione-archivio (set decisions directories sources active closed total)
-  "Pre: catalogo completo e stesso replay; vettori/capacita' stabili. Post: count e tipi di tutte le righe.
-INVALID-ARGUMENT per autorita'/forma/count; RESOURCE-EXHAUSTED per budget minimo prima delle righe.
-FD decisioni ancora aperto; nessun effetto o nuovo vettore, ownership invariata."
+  "Pre: complete catalog and same replay; stable vectors/capabilities. Post: count and types of every row.
+INVALID-ARGUMENT for authority/shape/count; RESOURCE-EXHAUSTED for minimum budget before rows.
+Decision FD still open; no effects or new vector, ownership unchanged."
   (unless (eq (arcdocdb.recovery.archive.csn::insieme-serie-recovery-archive set)
               (arcdocdb.recovery.archive::decisioni-recuperate-archive decisions))
     (error 'invalid-argument :reason :archive-stabilization-decision-owner))

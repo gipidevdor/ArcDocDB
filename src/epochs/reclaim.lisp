@@ -6,8 +6,8 @@
 ;;; REQ: REQ-CMP-005 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche) null) aggiorna-soglia-reclaim))
 (defun aggiorna-soglia-reclaim (registry)
-  "Pre: compito di manutenzione. Post: frontiera monotona sicura per r < soglia.
-Una scansione W serve più ticket; nessun reader bloccato e nessun file eliminato."
+  "Pre: maintenance task. Post: monotonic frontier safe for r < threshold.
+One W scan serves multiple tickets; no reader blocked and no file deleted."
   (sb-thread:with-mutex ((registro-epoche-mutex registry))
     (verifica-contatori-epoche registry)
     (let* ((words (registro-epoche-words registry)) (epoch (aref words +word-epoch+))
@@ -27,9 +27,9 @@ Una scansione W serve più ticket; nessun reader bloccato e nessun file eliminat
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) boolean) acquisisci-reclaim))
 (defun acquisisci-reclaim (ticket expected-generation)
-  "Pre: ritiro pubblicato, evento originale; soglia aggiornata dal compito di manutenzione.
-Post: T assegna il reclaim esclusivo se r<soglia; NIL lascia il ticket in attesa.
-Nessuna scansione W per ticket. Un secondo claim è INVALID-ARGUMENT, non duplica l'I/O."
+  "Pre: retirement published, original event; threshold updated by the maintenance task.
+Post: T assigns exclusive reclaim if r<threshold; NIL leaves the ticket waiting.
+No W scan per ticket. A second claim is INVALID-ARGUMENT and does not duplicate I/O."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)
@@ -46,9 +46,9 @@ Nessuna scansione W per ticket. Un secondo claim è INVALID-ARGUMENT, non duplic
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) null) completa-reclaim))
 (defun completa-reclaim (ticket expected-generation)
-  "Pre: reclaim già acquisito, descrittore chiuso/file rimosso secondo la prova del manifest.
-Post: riferimento forte e credito liberati; idempotente per la stessa identità completata.
-INVALID-ARGUMENT per mancato claim/riuso; fallimento I/O conserva ticket claimed e risorsa."
+  "Pre: reclaim already acquired, descriptor closed/file removed according to manifest proof.
+Post: strong reference and credit released; idempotent for the same completed identity.
+INVALID-ARGUMENT for missing claim/reuse; I/O failure retains the claimed ticket and resource."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)
@@ -62,8 +62,8 @@ INVALID-ARGUMENT per mancato claim/riuso; fallimento I/O conserva ticket claimed
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) t) leggi-risorsa-ritiro))
 (defun leggi-risorsa-ritiro (ticket expected-generation)
-  "Pre: proprietario della compaction/reclaim, evento originale. Post: riferimento forte al descrittore.
-INVALID-ARGUMENT dopo annullamento/completamento/riuso; leggere non assegna il diritto di chiuderlo."
+  "Pre: compaction/reclaim owner, original event. Post: strong reference to the descriptor.
+INVALID-ARGUMENT after cancellation/completion/reuse; reading does not assign the right to close it."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)
@@ -76,8 +76,8 @@ INVALID-ARGUMENT dopo annullamento/completamento/riuso; leggere non assegna il d
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) (values keyword u64 &optional)) leggi-ritiro))
 (defun leggi-ritiro (ticket expected-generation)
-  "Pre: evento con generazione originale. Post: stato keyword ed epoca coerenti, per osservabilità.
-INVALID-ARGUMENT per identità vecchia; nessun claim e nessuna risorsa liberata."
+  "Pre: event with original generation. Post: consistent keyword state and epoch, for observability.
+INVALID-ARGUMENT for an old identity; no claim and no resource released."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)
@@ -95,8 +95,8 @@ INVALID-ARGUMENT per identità vecchia; nessun claim e nessuna risorsa liberata.
 (declaim (ftype (function (registro-epoche)
                          (values u64 u64 (integer 0 65536) (integer 0 65536) &optional)) leggi-registro-epoche))
 (defun leggi-registro-epoche (registry)
-  "Pre: registro sano. Post: E, soglia, crediti occupati e riservati coerenti sotto mutex.
-La soglia è una prova conservativa acquisita, non un censimento dei reader attualmente vivi."
+  "Pre: healthy registry. Post: consistent E, threshold, occupied and reserved credits under mutex.
+The threshold is an acquired conservative proof, not a census of currently live readers."
   (sb-thread:with-mutex ((registro-epoche-mutex registry))
     (verifica-contatori-epoche registry)
     (let ((words (registro-epoche-words registry)))

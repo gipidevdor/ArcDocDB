@@ -7,8 +7,8 @@
 ;;; REQ: REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer t) null) %check-lease))
 (defun %check-lease (queue lease)
-  "Pre: token opaco fornito dal chiamante. Post: thread/generation correnti e quota valida.
-INVALID-ARGUMENT per token stale, errato o altro thread; INVARIANT-VIOLATION per quota."
+  "Pre: opaque caller-supplied token. Post: current thread/generation and valid quota.
+INVALID-ARGUMENT for stale/incorrect/foreign-thread token; INVARIANT-VIOLATION for quota."
   (unless (and (typep lease 'index) (plusp lease)
                (eq (coda-writer-owner queue) sb-thread:*current-thread*)
                (= lease (coda-writer-generation queue)))
@@ -21,8 +21,8 @@ INVALID-ARGUMENT per token stale, errato o altro thread; INVARIANT-VIOLATION per
 ;;; REQ: REQ-CON-002 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (coda-writer sb-thread:thread) null) %libera-owner))
 (defun %libera-owner (queue thread)
-  "Pre: THREAD possiede owner, campi della lease già finalizzati. Post: owner libero.
-Un solo CAS; INVARIANT-VIOLATION al guasto, fail-stop del chiamante senza retry."
+  "Pre: THREAD owns owner, lease fields already finalized. Post: owner free.
+One CAS only; INVARIANT-VIOLATION on failure, caller fail-stop without retry."
   (unless (eq (coda-writer-owner queue) thread)
     (error 'invariant-violation :reason :writer-owner))
   (unless (eq (sb-ext:compare-and-swap (coda-writer-owner queue) thread nil) thread)
@@ -32,9 +32,9 @@ Un solo CAS; INVARIANT-VIOLATION al guasto, fail-stop del chiamante senza retry.
 ;;; REQ: REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer) index) acquisisci-writer))
 (defun acquisisci-writer (queue)
-  "Pre: chiamante richiede una nuova lease. Post: generation positiva, quota nuova;
-RESOURCE-EXHAUSTED per writer busy o generation esaurita. Overflow non incrementa
-né cambia extracted e libera il CAS acquisito; nessun wrap, callback o scheduling."
+  "Pre: caller requests a new lease. Post: positive generation, fresh quota;
+RESOURCE-EXHAUSTED for busy writer or exhausted generation. Overflow neither increments
+nor changes extracted and releases the acquired CAS; no wrap, callback, or scheduling."
   (let ((thread sb-thread:*current-thread*) (committed nil))
     (unless (null (sb-ext:compare-and-swap (coda-writer-owner queue) nil thread))
       (error 'resource-exhausted :reason :writer-busy))
@@ -54,8 +54,8 @@ né cambia extracted e libera il CAS acquisito; nessun wrap, callback o scheduli
 (declaim (ftype (function (coda-writer t t t)
                          (values simple-vector index index &optional)) %check-target))
 (defun %check-target (queue target start end)
-  "Pre: destinazione del consumatore e range dichiarato. Post: SIMPLE-VECTOR e indici
-non vuoti validati prima del ring; INVALID-ARGUMENT per alias, tipo o range errati."
+  "Pre: consumer destination and declared range. Post: SIMPLE-VECTOR and valid
+nonempty indices validated before ring access; INVALID-ARGUMENT for incorrect alias, type, or range."
   (unless (and (typep target 'simple-vector) (not (eq target (coda-writer-slots queue))))
     (error 'invalid-argument :reason :writer-target))
   (unless (and (typep start 'index) (typep end 'index) (< start end) (<= end (length target)))
@@ -66,11 +66,11 @@ non vuoti validati prima del ring; INVALID-ARGUMENT per alias, tipo o range erra
 (declaim (ftype (function (coda-writer t t t t)
                          (values index (member :messages :empty :yield) &optional)) preleva-messaggi))
 (defun preleva-messaggi (queue lease target start end)
-  "Pre: lease del thread corrente e destinazione privata non alias degli slots.
-Post: FIFO fino a MIN(count, range, quota), slots liberati, ownership al consumatore;
-fuori dai messaggi copiati target invariato. :YIELD senza lavoro sul ring a quota zero,
-:EMPTY se vuoto, :MESSAGES dopo copia. INVALID-ARGUMENT per lease/target, RESOURCE-
-EXHAUSTED per guard busy; errori interni impongono fail-stop al chiamante."
+  "Pre: current thread's lease and private destination not aliased with slots.
+Post: FIFO up to MIN(count, range, quota), slots freed, ownership with consumer;
+target unchanged outside copied messages. :YIELD without ring work at zero quota,
+:EMPTY if empty, :MESSAGES after copying. INVALID-ARGUMENT for lease/target, RESOURCE-
+EXHAUSTED for busy guard; internal errors require caller fail-stop."
   (%check-lease queue lease)
   (multiple-value-bind (destination first limit) (%check-target queue target start end)
     (let ((remaining (- (coda-writer-quantum queue) (coda-writer-extracted queue))))
@@ -102,9 +102,9 @@ EXHAUSTED per guard busy; errori interni impongono fail-stop al chiamante."
 ;;; REQ: REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer t) null) rilascia-writer))
 (defun rilascia-writer (queue lease)
-  "Pre: lease corrente del thread proprietario. Post: quota azzerata prima del CAS owner
-verso NIL, generation conservata. INVALID-ARGUMENT per token errato/stale/altro thread;
-INVARIANT-VIOLATION al guasto. Nessun ready, wakeup, callback o controller implicito."
+  "Pre: current lease of owner thread. Post: quota cleared before owner CAS
+to NIL, generation retained. INVALID-ARGUMENT for incorrect/stale/foreign-thread token;
+INVARIANT-VIOLATION on failure. No implicit ready, wakeup, callback, or controller."
   (%check-lease queue lease)
   (setf (coda-writer-extracted queue) 0)
   (%libera-owner queue sb-thread:*current-thread*))

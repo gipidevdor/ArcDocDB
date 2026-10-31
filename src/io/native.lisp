@@ -22,8 +22,8 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (string (member :input :append :directory)) fd) native-open))
 (defun native-open (name mode)
-  "Pre: nome non vuoto/NUL-free. Post: FD CLOEXEC/NOFOLLOW e modo richiesto.
-SYSCALL-ERROR esplicito; ABI non 64 bit UNSUPPORTED-FORMAT, senza apertura."
+  "Pre: nonempty NUL-free name. Post: CLOEXEC/NOFOLLOW FD and requested mode.
+Explicit SYSCALL-ERROR; non-64-bit ABI yields UNSUPPORTED-FORMAT without opening."
   (unless (= sb-vm:n-word-bits 64)
     (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
@@ -51,8 +51,8 @@ SYSCALL-ERROR esplicito; ABI non 64 bit UNSUPPORTED-FORMAT, senza apertura."
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (fd keyword (or null fixnum)) nil) cleanup-open))
 (defun cleanup-open (fd reason errno)
-  "Pre: FD aperto ma non pubblicato. Post: una close, poi errore primario preservato.
-IO-FAULT include un eventuale errno di cleanup; nessun tentativo aggiuntivo."
+  "Pre: open unpublished FD. Post: one close, then primary error preserved.
+IO-FAULT includes any cleanup errno; no additional attempt."
   (let ((cleanup nil))
     (handler-case (sb-posix:close fd)
       (sb-posix:syscall-error (c) (setf cleanup (sb-posix:syscall-errno c))))
@@ -63,8 +63,8 @@ IO-FAULT include un eventuale errno di cleanup; nessun tentativo aggiuntivo."
          (ftype (function (fd octets index index file-offset) (signed-byte 64)) native-read)
          (ftype (function (fd octets index index) (signed-byte 64)) native-write))
 (defun native-read (fd buffer start count offset)
-  "Pre: range verificato, buffer esclusivo. Post: una pread, errno catturato subito.
-Pin e SAP non escono dalla chiamata; SYSCALL-ERROR per ritorno -1."
+  "Pre: verified range, exclusive buffer. Post: one pread, errno captured immediately.
+Pin and SAP do not leave the call; SYSCALL-ERROR for return -1."
   (sb-sys:with-pinned-objects (buffer)
     (let ((n (%pread fd (sb-sys:sap+ (sb-sys:vector-sap buffer) start) count offset)))
       (when (= n -1)
@@ -72,8 +72,8 @@ Pin e SAP non escono dalla chiamata; SYSCALL-ERROR per ritorno -1."
       n)))
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-STO-003
 (defun native-write (fd buffer start count)
-  "Pre: range verificato e stabile. Post: una write, errno immediato, nessun retry.
-Pin e SAP restano locali; SYSCALL-ERROR per ritorno -1."
+  "Pre: verified stable range. Post: one write, immediate errno, no retry.
+Pin and SAP remain local; SYSCALL-ERROR for return -1."
   (sb-sys:with-pinned-objects (buffer)
     (let ((n (%write fd (sb-sys:sap+ (sb-sys:vector-sap buffer) start) count)))
       (when (= n -1)
@@ -83,26 +83,26 @@ Pin e SAP restano locali; SYSCALL-ERROR per ritorno -1."
 ;;; REQ: REQ-AFF-001
 (declaim (ftype (function (fd) integer) native-flush native-directory-flush native-close))
 (defun native-flush (fd)
-  "Pre: FD scrivibile posseduto. Post: flush richiesto dalla piattaforma, mai ritentato.
-SYSCALL-ERROR per guasto; nessun fallback meno durevole."
+  "Pre: owned writable FD. Post: platform-required flush, never retried.
+SYSCALL-ERROR on failure; no less durable fallback."
   #+darwin (sb-posix:fcntl fd +full-fsync+)
   #+linux (sb-posix:fdatasync fd)
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform))
 ;;; REQ: REQ-AFF-001
 (defun native-directory-flush (fd)
-  "Pre: FD directory posseduto. Post: fsync eseguita una volta; SYSCALL-ERROR propagato."
+  "Pre: owned directory FD. Post: fsync performed once; SYSCALL-ERROR propagated."
   (sb-posix:fsync fd))
 ;;; REQ: REQ-AFF-001
 (defun native-close (fd)
-  "Pre: FD non ancora chiuso. Post: una close soltanto; SYSCALL-ERROR mai ritentato."
+  "Pre: FD not yet closed. Post: one close only; SYSCALL-ERROR never retried."
   (sb-posix:close fd))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-FOR-001
 (declaim (ftype (function (fd) (values identity-component identity-component &optional))
                 native-identity))
 (defun native-identity (fd)
-  "Pre: capacità posseduta, nessuna close concorrente. Post: device/inode da una fstat.
-Non legge il percorso o la dimensione; IO-FAULT se non regolare, SYSCALL-ERROR senza retry."
+  "Pre: owned capability, no concurrent close. Post: device/inode from one fstat.
+Does not read path or size; IO-FAULT if nonregular, SYSCALL-ERROR without retry."
   (let ((stat (sb-posix:fstat fd)))
     (unless (sb-posix:s-isreg (sb-posix:stat-mode stat))
       (error 'io-fault :reason :io-file-kind :operation :identity))

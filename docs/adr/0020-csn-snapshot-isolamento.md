@@ -14,7 +14,7 @@
 ### Commit Sequence Number
 
 - Each Archivio has a **CSN**: a 64-bit counter, incremented with an atomic operation.
-- Single-Serie transactions: the writer assigns **one CSN per batch** of group commit (one
+- Single-Serie transactions: the writer assigns **one CSN per group-commit batch** (one
   atomic increment per batch). All versions in the batch carry that CSN in the record.
 - Multiseries transactions: the coordinator assigns the CSN **after** the COMMIT decision
   is durable in `multiserie.log` ([ADR-0021](0021-2pc-intenti-outcome.md)).
@@ -60,7 +60,7 @@ first-committer-wins; `snapshot too old` (Oracle ORA-01555, PostgreSQL
 
 - Only one shared element across Serie: an atomic increment per batch. No shared I/O.
 - The CSN goes into records and hints: 8 bytes per record.
-- After a restart, the CSN resumes from the maximum observed + 1; snapshots do not survive
+- After a restart, CSN assignment resumes at the maximum observed value + 1; snapshots do not survive
   the process.
 
 <a id="alternative-considerate"></a>

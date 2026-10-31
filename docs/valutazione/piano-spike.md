@@ -110,15 +110,15 @@ distinct identities and Linux/macOS remain separate tests.
 
 > **Proposal** — [Executable experiment](../../spikes/SPK-04-writer-pool/README.md)
 > verified in the [local campaign](risultati-SPK-04-2026-10-08.md): bounded queues,
-> writer segments, parking, and read restart. Real tests and finite models
+> writer slices, parking, and read restart. Real tests and finite models
 > remain distinct; no engine target is confirmed.
 
 - *Question:* what is the throughput ceiling of a serial executor per Serie on a
   shared pool, and how does it scale with Serie count?
 - *Method:* per-Serie queues drained in batches by pool workers; synthetic serial
   work of controlled duration; 1…N Serie; uniform and skewed load. Under
-  [ADR-0045](../adr/0045-modello-di-esecuzione.md): bounded-length writer segments,
-  ready Serie list touched once per segment, reads performed by the receiving
+  [ADR-0045](../adr/0045-modello-di-esecuzione.md): bounded-length writer slices,
+  ready Serie list touched once per slice, reads performed by the receiving
   worker, parking and resumption of a batch's clients; and, for parallelism as
   a founding principle ([ADR-0036](../adr/0036-leggi-di-progetto.md), INV-P6),
   closed-inventory elements (CSN, horizon, threshold, epoch) exercised at expected frequency.
@@ -190,11 +190,11 @@ distinct identities and Linux/macOS remain separate tests.
   multiple closed unsynchronized batches, every lost or partial subset, and
   alternatively damage below the frontier — recovery concludes “tail” in the
   first case and “corruption” in the second, without ever writing segments;
-  (6) **visibility horizon**: two Serie, one in-flight batch, one multiserie
+  (6) **visibility horizon**: two Serie, one in-flight batch, one multiseries
   transaction, a snapshot created at every point, snapshot registration racing
   publication, a Serie entering `FAULTED` with an in-flight CSN;
   (7) **self-sufficient segments**: rotation, CLEAN, and hint regeneration at
-  every point of a multiserie transaction; (8) **tombstones**: deletions,
+  every point of a multiseries transaction; (8) **tombstones**: deletions,
   recreations, CLEAN, MERGE of nonadjacent segments, snapshots, restart at every
   point; (9) fragment split with concurrent readers; (10) crash before and after
   **every atomicity point** in the [table](../analisi-progettuale.md#punti-di-atomicità).

@@ -133,7 +133,7 @@ split with empty child, child selection, absent second candidate.
 
 Final inventory of cases and names of the four runtime targets to complete
 with the test file. All cases are serial, deterministic, and bounded;
-no positive outcome attributed before the parent's recorded run.
+no positive outcome is attributed before the parent's recorded run.
 
 <a id="chiusura-del-parent-dopo-il-freeze"></a>
 
@@ -158,14 +158,14 @@ cleanup, and new helper complexity, separating credits into a function
 to contain paths. Existing primitive limits remain:
 deterministic FI on a changed sequence during sampling, internal
 mutation interruptions, fault during copy, x86-64, and whole-engine
-qualification. No complete MC/DC coverage claimed.
+qualification. No complete MC/DC coverage is claimed.
 
 <a id="seconda-lettura-indipendente--averroes"></a>
 
 ## Second independent reading — Averroes
 
-HEAD examined: `6796eb3931af81d4f82479c416cd9deae4b2f261`, hashes reread
-stable by reviewer. No blocking functional defect found; IR-C1-01
+HEAD examined: `6796eb3931af81d4f82479c416cd9deae4b2f261`, hashes reread and found
+stable by the reviewer. No blocking functional defect found; IR-C1-01
 closed statically. Requirements/ADR, bounds, ownership,
 preflight, digest/payload fidelity, credits, integration, and CAS were checked.
 The reviewer ran no tests and does not attest the parent's runtime outcomes.

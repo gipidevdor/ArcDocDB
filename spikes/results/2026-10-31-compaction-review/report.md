@@ -1,6 +1,6 @@
 # Compaction refinement and review — 2026-10-31
 
-Reviews the production compaction path, framing/selection, canonical CONTROL
+This report reviews the production compaction path, framing/selection, canonical CONTROL
 publication, RAM/paged location relocation, source/FD retirement, inode-bound
 reclamation, recovery, admission, finite resource counters and performance.
 The serial current-only scope and its concurrency/power-loss limitations remain.
@@ -10,9 +10,9 @@ The serial current-only scope and its concurrency/power-loss limitations remain.
 1. Compaction reserved segment count but could consume the last representable
    u32 ACTIVE ID. Its mandatory recovery would then require an unrepresentable
    fresh ID. Reject before output creation unless one unused u32 ID remains.
-2. Two CONTROL publications fit at revision MAX-2, but normal completion leaves
-   MAX and cannot checkpoint on restart. A crash after replacement instead needs
-   both recovery checkpoint and pruning. Reserve three revisions before outputs.
+2. Two CONTROL publications fit starting at revision MAX-2, but normal completion
+   leaves MAX, preventing a checkpoint on restart. A crash after replacement instead
+   needs both a recovery checkpoint and pruning. Reserve three revisions before outputs.
 3. A deterministic mixed overwrite/delete/RAM-paged/reopen model exposed ordinary
    rotation consuming the last segment slot. The following startup could publish
    a checkpoint exceeding its own configured live-segment budget, then refuse.
@@ -20,19 +20,20 @@ The serial current-only scope and its concurrency/power-loss limitations remain.
    startup rejects insufficient room before checkpoint or reclamation effects.
    Raising the configured budget can recover unchanged canonical files.
 4. Planning separately traversed sources after the strict order/validator pass.
-   A bounded readonly observer now gathers geometry/selection within that existing
+   A bounded read-only observer now gathers geometry/selection within that existing
    pass. Default callers have no observer. Producer validation and independent
-   output/original-byte, membership, count, order/high-water and publication
+   output/original-byte, membership, count, order/high-water mark and publication
    checks remain; no per-key table/cache or relaxed CRC guard is introduced.
 
 ## Regression method
 
 Counter fixtures independently encode full EDIT/SEAL frames using the existing
-bitwise-reference test codec, retaining the real CONTROL header. Both formats
-and legacy/resident/paged run exhausted counter rejection with exact file/name
-invariance and successful recovery/next CSN. Last-valid reservations run both
-normal maintenance and interruption immediately after durable replacement,
-then real reopen/value/CSN checks. The mixed deterministic model performs 512
+bitwise-reference test codec, retaining the real CONTROL header. The fixtures
+exercise exhausted-counter rejection for both formats and legacy/resident/paged
+configurations, with exact file/name invariance and checks of successful recovery
+and the next CSN. Cases with the last valid reservations cover both normal maintenance and
+interruption immediately after durable replacement, followed by real
+reopen/value/CSN checks. The mixed deterministic model performs 512
 PUT/DELETE operations per format, alternates RAM/paged every sixteen operations,
 checks sixteen current values and CSNs after every operation, and spans four
 engine sessions plus a final reopen. The startup-capacity case checks that a
@@ -84,17 +85,17 @@ Input/output sizes are unchanged: 17170560 bytes become 529472 bytes plus a
 fall by one per configuration; append bytes/calls and fifteen flushes are
 unchanged. Counted API bytes are not physical storage-device traffic.
 
-RAM compaction is 63.549–65.950 ms in these final samples, versus
+RAM compaction takes 63.549–65.950 ms in these final samples, versus
 67.872–72.944 ms previously. Paged timing is 116.978–128.393 ms versus
 114.943–125.088 ms: some configurations improve and some regress. This does not
 demonstrate a uniform paged latency improvement. Each configuration has only one
 maintenance sample, so timing differences are not a statistical latency claim.
-Post-maintenance hot GET P99 medians are 3–4 µs RAM and 13–14 µs paged, with zero
+Post-maintenance hot GET P99 medians are 3–4 µs for RAM and 13–14 µs for paged storage, with zero
 allocated bytes in all timed GET samples. Maintenance allocates about 590 KB;
 no key-count-sized resident table is added.
 
-The reproducible optimization is less canonical read traffic with the same
-integrity proofs. Synchronous pauses, paged repeated membership probes,
+The reproducible improvement is reduced canonical read traffic with the same
+integrity proofs. Synchronous pauses, repeated paged membership probes,
 background/concurrent compaction, historical snapshots, multiseries and power
 loss remain explicit limits; this iteration does not claim whole-engine or
 C1/MC/DC qualification.
@@ -103,7 +104,7 @@ The [first final documentation attempt](docs-setup-needed/report.lisp) passes
 lint/trace/links, then stops because generated documentation dependencies had
 been removed during the previous cleanup. This is a build prerequisite issue,
 not a product failure. The final command includes `docs-setup` through the normal
-`docs` target; no product source or warning policy changes for that retry.
+`docs` target; no product source or warning policy is changed for that retry.
 
 [Final lint, traceability, links, documentation bootstrap and rendering checks](final-checks/report.lisp)
 pass. The final source-identity receipt includes this command as well as both

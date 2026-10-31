@@ -8,17 +8,17 @@ contract and connected ASDF; they did not write the two sources. The second read
 is attributed to the oracle author in the [separate report](cbor-header-revisione.md).
 These are local automated readings, without human release approval.
 
-No kernel defect found in the static reading. The public range
+No kernel defect was found in the static reading. The public range check
 checks types before length and numbers before bytes. Empty spans and reserved
 AI have distinct reasons and offsets. AI31 returns before width
-calculation; the major7 case remains a marker without structural attestation.
+calculation; the major 7 case remains a marker without structural attestation.
 The width<=end-start guard precedes all argument bytes and guarantees
 that next=start+width is an index. At most four bytes are accumulated per
 word: BE rotations do not construct a 64-bit integer. F8 checks the
 simple value after the second byte is available; F9/FA/FB also preserve
 NaN and infinity. The six values match the frozen contract.
 
-The module has four short functions, complete FTYPEs, safety3, typed
+The module has four short functions, complete FTYPEs, safety 3, typed
 conditions, caller-owned input, and no global mutable state.
 Internal range/progress guards defend dependencies among helpers;
 no correct public input makes them false. The [decision register](cbor-header-decisioni.md)

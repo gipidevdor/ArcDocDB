@@ -10,8 +10,8 @@
     (format out "<p>~A describes what runs today. Design documents retain the contracts of the complete engine.</p></div></section>"
             (page-link "docs/implementazione/README.md" "Capabilities and limits"))
     (write-string "<section class=\"reading-paths\" aria-labelledby=\"reading-heading\"><div class=\"section-heading\"><h2 id=\"reading-heading\">Find your way in.</h2>" out)
-    (format out "<a href=\"~A\">All ~D documents ↗</a></div>" (h (relative-url "library.html"))
-            (count-if #'page-source *pages*))
+    (format out "<a href=\"~A\">All ~:D documentation pages ↗</a></div>" (h (relative-url "library.html"))
+            (count-if #'content-page-p *pages*))
     (loop for (number title description links) in
       '(("01" "Use the system" "Build, start the local service and understand its operational limits."
          (("docs/implementazione/production-unix-m1.md" "Server & client") ("docs/implementazione/README.md" "Implementation")))
@@ -20,7 +20,9 @@
         ("03" "Read the decisions" "See the alternatives, reasoning and consequences behind the engine."
          (("docs/adr/README.md" "Architecture decisions") ("docs/roadmap.md" "Roadmap")))
         ("04" "Examine the evidence" "Trace requirements, invariants, fault injection and measured results."
-         (("docs/affidabilita/README.md" "Reliability") ("docs/tracciabilita/README.md" "Traceability") ("docs/valutazione/README.md" "Evaluation")))) do
+         (("docs/affidabilita/README.md" "Reliability") ("docs/tracciabilita/README.md" "Traceability") ("docs/valutazione/README.md" "Evaluation")))
+        ("05" "Read the code contracts" "Find package interfaces, signatures, source docstrings and definitions."
+         (("api/index.html" "Code reference") ("docs/code-reference.md" "Coverage and scope")))) do
       (format out "<div class=\"reading-path\"><span class=\"path-number\">~A</span><h3>~A</h3><div><p>~A</p><div class=\"path-links\">" number title description)
       (dolist (link links) (write-string (apply #'page-link link) out))
       (write-string "</div></div></div>" out))
@@ -31,19 +33,19 @@
 
 (defun catalog-content ()
   (with-output-to-string (out)
-    (format out "<p class=\"eyebrow\">The complete collection</p><h1>All documents.</h1><p class=\"catalog-intro\">~D documents. One source of truth. Implementation, design and evidence retain their stated scope.</p>"
-            (count-if #'page-source *pages*))
+    (format out "<p class=\"eyebrow\">The complete collection</p><h1>All documents.</h1><p class=\"catalog-intro\">~:D pages generated from the repository's Markdown and Common Lisp sources. Implementation, design and evidence retain their stated scope.</p>"
+            (count-if #'content-page-p *pages*))
     (write-string "<nav class=\"catalog-jump\" aria-label=\"Document sections\">" out)
     (dolist (group *groups*)
       (format out "<a href=\"#~A\">~A</a>" (first group) (h (second group))))
     (write-string "</nav>" out)
     (dolist (group *groups*)
-      (let ((members (remove-if-not (lambda (p) (and (page-source p) (equal (page-group p) (first group)))) *pages*)))
+      (let ((members (remove-if-not (lambda (p) (and (content-page-p p) (equal (page-group p) (first group)))) *pages*)))
         (format out "<section class=\"catalog-section\" id=\"~A\"><h2>~A <span>~D</span></h2><p>~A</p><ul>"
                 (first group) (h (second group)) (length members) (h (third group)))
         (dolist (page members)
           (format out "<li><a href=\"~A\">~A</a><span>~A</span></li>"
-                  (h (relative-url (page-route page))) (h (page-title page)) (h (page-source page))))
+                  (h (relative-url (page-route page))) (h (page-title page)) (h (or (page-source page) (page-route page)))))
         (write-string "</ul></section>" out)))))
 
 (defun search-content ()
@@ -59,6 +61,8 @@
                    (make-page :source source :route (route-for source) :group (group-for source)))))
   (setf *source-hashes* (source-hashes))
   (mapc #'render-markdown *pages*)
+  (setf *pages* (append *pages* (prepare-code-pages)))
+  (check-editorial-code)
   (let* ((home (synthetic-page "index.html" "ArcDocDB — Write once. Read with confidence."
                                "The complete ArcDocDB manual: an append-only Common Lisp document database. Implementation, architecture, specifications, decisions and evidence."))
          (catalog (synthetic-page "library.html" "All documents" "The complete ArcDocDB documentation, including architecture, specification, ADRs, implementation contracts and verification."))
@@ -91,9 +95,18 @@
     (write-text (merge-pathnames (page-route page) output)
                 (read-text (merge-pathnames
                             (format nil "build/arcdocdb-documentation/html/~A.html" (page-reference page)) stage))))
-  (let ((search (loop for page in *pages* when (page-source page) collect
+  (let ((search (append (loop for page in *pages* when (or (page-source page) (eq (page-kind page) :code)) collect
                  (object "title" (page-title page) "url" (page-route page) "group" (group-title (page-group page))
-                         "path" (page-source page) "text" (page-text page)))))
+                         "kind" (if (eq (page-kind page) :code) "code" "markdown")
+                         "path" (or (page-source page) (page-route page)) "text" (page-text page)))
+                       (loop for entry in *code-entries* collect
+                         (object "title" (code-display entry) "url" (code-entry-url entry) "group" "Code reference"
+                                 "kind" "symbol" "path" (code-entry-file entry)
+                                 "text" (format nil "~A ~A ~A ~A" (code-kind-label entry)
+                                                (let ((signature (or (code-entry-signature entry) "")))
+                                                  (subseq signature 0 (min 4096 (length signature))))
+                                                (or (code-entry-declaration entry) "")
+                                                (or (code-entry-doc entry) "")))))))
     (write-text (merge-pathnames "search-index.json" output) (json search)))
   (let ((hashes (source-hashes)))
     (maphash (lambda (source digest)
@@ -102,6 +115,7 @@
     (write-text (merge-pathnames "manifest.json" output)
               (json (object "generator" "CommonDoc Codex" "revision" *revision*
                             "workingTree" (if *local-build* "local-preview" "clean")
+                              "code" (code-manifest)
                               "pages" (loop for page in *pages* when (page-source page) collect
                                         (object "source" (page-source page) "url" (page-route page)
                                                 "sha256" (gethash (page-source page) hashes)))))))
@@ -152,7 +166,9 @@
     (prepare-pages)
     (when arguments
       (load (merge-pathnames "tools/pages/tests.lisp" root))
-      (run-tests))
+      (run-tests)
+      (load (merge-pathnames "tools/pages/code-tests.lisp" root))
+      (run-code-tests))
     ;; Codex resolves a system's manifest through ASDF. This documentation-only
     ;; system has no product dependency and is registered only in this process.
     (write-text (merge-pathnames "arcdocdb-manual.asd" stage)
@@ -164,7 +180,7 @@
     (when (probe-file output) (uiop:delete-directory-tree output :validate t))
     (ensure-directories-exist output)
     (publish-output stage output)
-    (format t "~&Codex: ~D source documents; site written to ~A~%" (count-if #'page-source *pages*) output)
+    (format t "~&CommonDoc Codex: ~D Markdown documents; site written to ~A~%" (count-if #'page-source *pages*) output)
     (when arguments
       (verify-site output)
       (verify-publication-gates output))))

@@ -3,7 +3,7 @@
 # CBOR items with minimal headers — contract and method
 
 C1 increment fixed before campaigns, under requirements REQ-LIM-001,
-REQ-LIM-002, REQ-AFF-004, and REQ-AFF-008. Integrates the minimal header reader
+REQ-LIM-002, REQ-AFF-004, and REQ-AFF-008. It integrates the minimal header reader
 with ADR-0048's bounded scanner; ADR-0014 document checks
 still require key ordering/equivalence and tag semantics.
 
@@ -33,14 +33,14 @@ retain `:cbor-truncated` at END. Failed preflight leaves
 scratch unchanged; runtime errors permit reset on the next call.
 
 The generic scanner retains its API and precedence.
-The new API uses an internal Boolean fixed to T, the generic wrapper to NIL;
+The new API fixes an internal Boolean to T, while the generic wrapper fixes it to NIL;
 no new mode parameter is exposed on the generic API.
 
 <a id="verifiche-fissate"></a>
 
 ## Fixed verification
 
-Blind corpus frozen before compilation: majors 0–7, width thresholds
+The blind corpus is frozen before compilation: majors 0–7, width thresholds
 and high u64, raw floats/NaNs, nesting, keys, and tags; opaque payloads,
 UTF-8, truncations, all leads, and competing precedence. Finite generation
 and fuzz with registered seed/counts; byte/node/depth budgets,
@@ -48,9 +48,9 @@ exact 16 MiB and beyond, depth 100/101, sentinels, aliases, and reuse.
 Two real workers with private buffers and scratch, timeouts, and checked sinks;
 overlap timings do not demonstrate scaling or simultaneous core execution.
 
-Two C1 readings with checklist and decision inventory, generic scanner
+Verification requires two C1 readings with a checklist and decision inventory, generic scanner
 regressions, and raw coverage of the scanner's two files.
-The dedicated report runs both suites; complete state and HTML
+The dedicated report runs both suites; complete state and HTML are
 preserved, without exclusions or MC/DC certification.
 
 Measurement driver: eight fixtures, five replicates of 4096 scans, warmup
@@ -62,7 +62,7 @@ baseline, exact smoke/end markers; compilation INVALID and infrastructure,
 OS signals, or post-completion failures WORKER-ERROR, never detections.
 Local goal: all detected, survivors analyzed.
 
-Warning-free build, lint, traceability, and full `make check` before
+A warning-free build, lint, traceability, and full `make check` are required before
 push. Common Lisp tools and audits (INV-X3), records read as data with
-read-eval NIL and EOF. Original sources, logs, errors, and results preserved;
+read-eval NIL and EOF. Original sources, logs, errors, and results are preserved;
 complete mutation copies/FASLs also remain in local backup.

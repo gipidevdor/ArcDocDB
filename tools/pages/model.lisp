@@ -3,7 +3,8 @@
   (:export #:build))
 (in-package #:arcdocdb.pages)
 
-(defstruct page source route reference title group html headings text description)
+(defstruct page source route reference title group html headings text description kind data)
+(defun content-page-p (page) (or (page-source page) (eq (page-kind page) :code)))
 (defvar *root*)
 (defvar *pages*)
 (defvar *current-page*)
@@ -15,6 +16,7 @@
 (defparameter *groups*
   '(("start" "Start here" "Purpose, setup and the current executable profile.")
     ("implementation" "Implementation" "Operational contracts, modules and current limits.")
+    ("code" "Code reference" "Source-derived package interfaces, definitions, signatures and contracts.")
     ("design" "Architecture & design" "The intended engine, its specification and persistent formats.")
     ("decisions" "Architecture decisions" "The reasoning, alternatives and scope of each decision.")
     ("verification" "Reliability & evidence" "Invariants, requirements, fault injection and evaluation.")
@@ -34,7 +36,10 @@
                    ("docs/valutazione/README.md" "Evaluation")
                    ("docs/roadmap.md" "Roadmap")
                    ("CONTRIBUTING.md" "Contributing"))
-    ("Reference" ("docs/invarianti.md" "Invariants")
+    ("Reference" ("api/index.html" "Code reference")
+                 ("docs/lisp-api.md" "Common Lisp example")
+                 ("docs/code-reference.md" "Reference coverage")
+                 ("docs/invarianti.md" "Invariants")
                  ("docs/glossario.md" "Glossary")
                  ("docs/riferimenti.md" "Source hierarchy")
                  ("spikes/README.md" "Experiments"))
@@ -120,8 +125,9 @@
 
 (defun group-for (path)
   (cond ((member path '("README.md" "docs/README.md" "CONTRIBUTING.md") :test #'equal) "start")
+        ((member path '("docs/code-reference.md" "docs/lisp-api.md") :test #'equal) "code")
         ((or (uiop:string-prefix-p "docs/legal/" path)
-             (member path '("docs/editorial-policy.md" "docs/github-pages.md" "SECURITY.md" "CHANGELOG.md" "assets/README.md") :test #'equal))
+             (member path '("docs/editorial-policy.md" "docs/editorial-review.md" "docs/github-pages.md" "SECURITY.md" "CHANGELOG.md" "assets/README.md") :test #'equal))
          "publication")
         ((uiop:string-prefix-p "docs/implementazione/" path) "implementation")
         ((uiop:string-prefix-p "docs/adr/" path) "decisions")
@@ -168,9 +174,9 @@
   (format nil "<a href=\"~A\"~@[ class=\"~A\"~]>~A</a>"
           (h (page-url source)) class (h label)))
 
-(defun source-hashes ()
+(defun hashes-for-files (sources)
   (let ((table (make-hash-table :test #'equal))
-        (sources (remove nil (mapcar #'page-source *pages*))))
+        (sources sources))
     (dolist (line (uiop:split-string
                   (uiop:run-program (append '("shasum" "-a" "256" "--") sources)
                                     :directory *root* :output :string)
@@ -180,6 +186,9 @@
     (unless (= (hash-table-count table) (length sources))
       (error "Incomplete source hash inventory."))
     table))
+
+(defun source-hashes ()
+  (hashes-for-files (remove nil (mapcar #'page-source *pages*))))
 
 (defun copy-assets-tree (source destination)
   (dolist (file (uiop:directory-files source))

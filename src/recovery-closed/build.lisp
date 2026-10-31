@@ -9,10 +9,10 @@
                          (values closed-recuperato workspace-active &optional)) recupera-closed-writer))
 (defun recupera-closed-writer (control input id prefix version scratch batches records batch-records
                               batch-bytes prepared outcomes)
-  "Pre: header writer e corpo fino a P già letti. Post: prefisso e prepared risolti senza multiserie.log.
-Parser semantico canonico riusato solo dopo CRC/SEAL integrali; nessuna classificazione EOF.
-Errori originali propagati; prova senza scratch/workspace, workspace restituito solo al chiamante interno.
-Entrambi privati fino al completamento del reader, nessun effetto durevole."
+  "Pre: writer header and body through P already read. Post: prefix and prepared records resolved without multiserie.log.
+Canonical semantic parser reused only after complete CRC/SEAL checks; no EOF classification.
+Original errors propagate; proof without scratch/workspace, workspace returned only to the internal caller.
+Both private until reader completion, no durable effect."
   (multiple-value-bind (actual-batches actual-records)
       (verifica-lotti-closed scratch prefix id version batches records batch-records batch-bytes)
     (let ((workspace (attraversa-active scratch prefix version actual-batches actual-records prepared outcomes)))
@@ -38,12 +38,12 @@ Entrambi privati fino al completamento del reader, nessun effetto durevole."
                               &key (chunk-bytes 65536) (max-bytes 268435456) (max-batches 65536)
                                    (max-records 1048576) (max-batch-records 65536) (max-batch-bytes 67108864)
                                    (max-prepared 65536) (max-outcomes 65536) (max-esiti-chiusura 65536))
-  "Pre: recovery esclusivo, CONTROL e FD CLOSED autorevoli, file/namespace congelati e scratch privato.
-Post: stesso FD readonly, header e prefisso esatto dal manifest verificati; ID u64 senza restrizioni GET.
-Writer: lotti interi e prepared risolti da OUTCOME/EDIT; compaction: soli record ordinari verificati.
-Non legge oltre P, misura EOF, classifica TAIL, costruisce indici o modifica file/CSN/pubblicazione.
-Condizioni originali propagate senza retry o close; dipendenze aperte prima della consegna.
-Ingresso interno: seconda voce workspace semantico privato per writer, NIL per compaction."
+  "Pre: exclusive recovery, authoritative CONTROL and CLOSED FD, frozen file/namespace, private scratch.
+Post: same read-only FD, header and exact manifest prefix verified; u64 ID without GET restrictions.
+Writer: whole batches and prepared records resolved by OUTCOME/EDIT; compaction: verified ordinary records only.
+Does not read beyond P, measure EOF, classify TAIL, build indexes, or modify files/CSN/publication.
+Original conditions propagate without retry or close; dependencies open before delivery.
+Internal entry point: second value is private semantic workspace for writer, NIL for compaction."
   (let ((prefix (verifica-lettura-closed control input id scratch chunk-bytes max-bytes max-batches
                                         max-batch-records max-batch-bytes max-esiti-chiusura)))
     (multiple-value-bind (version origin) (leggi-header-closed control input id scratch)
@@ -74,9 +74,9 @@ Ingresso interno: seconda voce workspace semantico privato per writer, NIL per c
                               &key (chunk-bytes 65536) (max-bytes 268435456) (max-batches 65536)
                                    (max-records 1048576) (max-batch-records 65536) (max-batch-bytes 67108864)
                                    (max-prepared 65536) (max-outcomes 65536) (max-esiti-chiusura 65536))
-  "Pre: recovery esclusivo, CONTROL autorevole, FD readonly e scratch stabili nel pool I/O.
-Post: unico risultato completo da header/prefisso canonici, prepared risolti da OUTCOME/EDIT.
-Il workspace interno non lascia questa API; condizioni originali propagate, nessun effetto durevole."
+  "Pre: exclusive recovery, authoritative CONTROL, read-only FD and stable scratch in the I/O pool.
+Post: one complete result from canonical header/prefix, prepared records resolved by OUTCOME/EDIT.
+Internal workspace does not leave this API; original conditions propagate, no durable effect."
   (values (leggi-closed-con-workspace
            control input id scratch :chunk-bytes chunk-bytes :max-bytes max-bytes :max-batches max-batches
            :max-records max-records :max-batch-records max-batch-records :max-batch-bytes max-batch-bytes

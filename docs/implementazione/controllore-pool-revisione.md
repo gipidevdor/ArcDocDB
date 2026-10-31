@@ -49,7 +49,7 @@ Campaign results must be linked separately.
    its explicit rejection reachable. Conditions are not hidden and there are
    no handlers or rollback in the product.
 4. **Limits:** no loops, recursion, locks, waits, or retries in the six
-   sources. EWMA arithmetic has maximum intermediate 2^31; ticks are integers
+   sources. EWMA arithmetic has a maximum intermediate of 2^31; ticks are integers
    bounded to 2^40−1. The two time comparisons use only validated inputs
    and consistent local fields. Pending is the outcome of a short call, not
    a thread waiting for an actuator.
@@ -58,7 +58,7 @@ Campaign results must be linked separately.
    `%pool-range` uses fixnum type and scalar comparison without constructing a
    runtime type specifier. Absence of observed heap remains to be measured
    with a verified C4 sensor; it is not inferred from reading alone.
-6. **Verified data:** the getter exposes seven scalar values after owner and
+6. **Verified data:** the getter exposes seven scalar values after checking the owner and
    invariants, without publishing mutable representation or capability.
    Update exposes a bounded target and four closed outcomes. No request,
    Serie, or storage data enter or leave the package.
@@ -70,11 +70,11 @@ Campaign results must be linked separately.
    getter and update, non-reentrant APIs without callbacks. No
    mutable global state. The foreign-owner fixture retains the owner's snapshot;
    eight threads each construct a private controller,
-   after a harness-only barrier with 15-second timeout.
+   after a harness-only barrier with a 15-second timeout.
 9. **Traceability and verification:** definitions and tests name requirements;
    ASDF loads the package after execution and scheduler tests in the general
    check. Build, heap, coverage, and `make check` were not run
-   by the reviewer; C3 minimum is 95% statements and branches, not a percentage
+   by the reviewer; the C3 minimum is 95% of statements and branches, not a percentage
    already reached by test presence. Campaigns and their gaps must be
    read in the [results](controllore-pool-risultati.md).
 10. **Standard:** safety 3, complete function types, typed/read-only slots
@@ -131,7 +131,7 @@ limits or limits derived from validated configuration; they are not loops or ret
 
 ## Declared gaps and risks
 
-No functional bug identified in reading the described version.
+No functional bug was identified while reading the described version.
 Final rereading includes both invariant verifiers,
 rejection of a foreign direction symbol, and the eight-thread barrier;
 the SHAs above identify these sources. No branch should be removed from the
@@ -150,9 +150,9 @@ expiration is implemented. Gap resets dwell evidence
 and may defer a command indefinitely with overly sporadic
 samples; this is a conservative choice, not a progress guarantee.
 
-Actual is a caller-certified number, not counted by the component.
+The actual worker count is a caller-certified number, not counted by the component.
 Wrong acknowledgments or metrics may produce wrong resource
-choices, but policy cannot modify C1/C2 data. Actuator,
+choices, but the policy cannot modify C1/C2 data. Actuator,
 stale-command protocol, wake/park, and shutdown are missing; RSK-12 remains open for
 real feedback and calibration. Final product and C4 verification and
 evidence bytes belong to separate campaigns.

@@ -18,8 +18,8 @@ owner thread. Port and table must refer by EQ to the same completely IDLE
 execution context. Port type, owner, table type,
 and context identity are checked in that order before reading
 phase or applying a command. The C1 IDLE barrier is read-only.
-Factory assumes no obligations, acquires no lease, and acknowledges no pool command.
-Port may be inactive or have a pending command.
+The factory assumes no obligations, acquires no lease, and acknowledges no pool command.
+The port may be inactive or have a pending command.
 
 | API | Outcome |
 |---|---|
@@ -29,13 +29,13 @@ Port may be inactive or have a pending command.
 | `inizia-obbligo-pool dispatcher` | Only CLAIMED: current routing and one bridge begin; returns link, original token, phase and reason. |
 | `passo-dispatcher-pool dispatcher` | One step: selects claim, current or recycle from verified phase; five values with explicit origin, without begin or second acquisition. |
 
-First entry returns a link only with `:claimed`. With `:empty`,
-`:busy`, or `:inactive`, returns NIL without routing. Link is still IDLE:
+The first entry returns a link only with `:claimed`. With `:empty`,
+`:busy`, or `:inactive`, it returns NIL without routing. The link is still IDLE:
 `inizia-worker-serie`, token, pop, ack, and close remain explicit
 [bridge](worker-serie.md) steps. No implicit Serie acquisition.
 EMPTY and BUSY demonstrate neither global quiescence nor park/shutdown authorization.
 
-Second entry resumes CLAIMED retained after writer-busy, full
+The second entry resumes CLAIMED retained after writer-busy, full
 recycling, or adoption. Every selection uses the current writer;
 it does not reuse the previous slice's link. Repeatable while link
 remains IDLE, without new capabilities. Even inconsistent lifecycle words
@@ -47,20 +47,20 @@ Inconsistent binding or foreign owner are always rejected.
 ## Retirement, errors, and caller responsibility
 
 Pending retirement is acknowledged at the next IDLE entry through
-gate. It is not applied during CLAIMED, RUNNING, BATCH, FINISHING, or
-RESCHEDULE. After `:schedule`, caller explicitly invokes
+the gate. It is not applied during CLAIMED, RUNNING, BATCH, FINISHING, or
+RESCHEDULE. After `:schedule`, the caller explicitly invokes
 `ricircola-collegamento-pool` or recycles/hands off the obligation through execution
 APIs. If direct recycling assigns a new CLAIMED, use
-`collega-obbligo-pool`; recycling adapter already returns its link.
+`collega-obbligo-pool`; the recycling adapter already returns its link.
 After successful publication, context returns
 IDLE and can apply retirement at the next new acquisition.
 
 [Explicit recycling](pool-recycle.md) resolves the single obligation without
-consulting pool. [Explicit startup](pool-begin.md) uses a separate
+consulting the pool. [Explicit startup](pool-begin.md) uses a separate
 CLAIMED entry; acquisition and recycling entries include no begin. Pop, end,
-retry, cleanup, and rollback remain with caller. Writer-busy and Serie-busy rejections retain different
+retry, cleanup, and rollback remain with the caller. Writer-busy and Serie-busy rejections retain different
 bridge states: former preserves CLAIMED, latter produces CLOSING and a
-token to close explicitly. Caller retains references and tokens
+token to close explicitly. The caller retains references and tokens
 until completion; no obligation is ignored on error.
 
 [Coordinated step](pool-step.md) selects only one acquisition,
@@ -78,9 +78,9 @@ Wrong configuration type: `invalid-argument
 :pool-dispatcher-configuration`; foreign owner: `invalid-argument
 :pool-worker-owner`; different contexts: `invalid-argument
 :pool-dispatcher-binding`. Non-IDLE phase in factory or gate:
-`resource-exhausted :worker-state`, without replacing first cause.
+`resource-exhausted :worker-state`, without replacing the first cause.
 Routing rejections remain those of C1 API. A gate return
-inconsistent between writer and status reports `invariant-violation
+that is inconsistent between writer and status reports `invariant-violation
 :pool-dispatcher-state` without abandoning or mutating context.
 
 <a id="costo-e-ambito"></a>
@@ -95,8 +95,8 @@ hot-path allocation, Serie scan, hash,
 shared cross-Serie write, wait, thread, callback, or I/O.
 
 Private coupling reads only port owner/context and table
-context. C1 and lifecycle protocols remain unchanged. Dispatcher is a
-logical writer entry point, not complete server loop: thread startup/shutdown,
+context. C1 and lifecycle protocols remain unchanged. The dispatcher is a
+logical writer entry point, not a complete server loop: thread startup/shutdown,
 park/wake, real sensors, message admission, payload
 application, and Archivio coordination remain open. No complete-engine
 gate is closed by this qualification.

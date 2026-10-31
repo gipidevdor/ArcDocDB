@@ -4,7 +4,7 @@
 
 Implementation complementary to the GET functional suite, with independent package
 `arcdocdb.get-performance.bench` and fixture built only through APIs of
-system `arcdocdb`. It loads neither `arcdocdb/tests` nor depends on suite
+system `arcdocdb`. It neither loads `arcdocdb/tests` nor depends on suite
 `tests/get-performance`. Tool: [get-performance-bench.lisp](../../tools/get-performance-bench.lisp).
 This document and tool are delivered to the parent without running tests,
 compilation, or benchmarks. Every result requires recorded execution after
@@ -140,8 +140,8 @@ tick-start, heap-start, heap-end, tick-end. Record construction,
 formatting, persistence, and explicit GC are outside windows. Automatic GC
 during a window is included.
 
-Main performs full GC before each window; fixtures, closures,
-thread names, raw data, semaphores, and outputs are already allocated. **Serially**, main
+The main thread performs full GC before each window; fixtures, closures,
+thread names, raw data, semaphores, and outputs are already allocated. **Serially**, the main thread
 runs only the loop and diagnostic boundary. **In parallel**, including
 the one-worker case, time and heap start before `make-thread`: they include
 thread creation/initialization, ready, gate opening, start wait,

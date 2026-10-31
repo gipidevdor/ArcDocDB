@@ -11,26 +11,26 @@
 ## Increment and responsibilities
 
 `io:pubblica-temporaneo(directory, source, source-name, target-name)`
-receives a read-only capability for an already-verified file. Coordinator
-guarantees authoritative durable decision naming that segment,
+receives a read-only capability for an already-verified file. The coordinator
+guarantees an authoritative durable decision naming that segment,
 content integrity, and exclusive stable namespace. Suffix
 `.tmp` alone proves none of these facts. Names are ASCII components and
 `source-name` is exactly `target-name` followed by `.tmp`.
 
-Primitive verifies FD and source-name identity, performs an
-exclusive rename relative to same parent, and verifies final name
+The primitive verifies FD and source-name identity, performs an
+exclusive rename relative to the same parent, and verifies final name
 against still-open FD. Existing target, including symlink or
-alias, must prevent replacement within syscall. Absence
+alias, must prevent replacement within the syscall. An absence
 check followed by ordinary `renameat` is insufficient.
 
 Linux uses `renameat2` with `RENAME_NOREPLACE` (1); Darwin uses `renameatx_np`
 with `RENAME_EXCL` (4). No fallback to ordinary rename, link/unlink, or
 prior deletion. Absent native symbol, disallowed ABI/platform,
-and missing callback are explicit rejections. Filesystem rejecting
-primitive produces original POSIX fault, without retry.
+and missing callback are explicit rejections. A filesystem rejecting
+the primitive produces the original POSIX fault, without retry.
 
-Backend adds only optional keyword `:rename-exclusive`,
-with parent-fd/source/target arguments and zero result. Also requires
+The backend adds only the optional keyword `:rename-exclusive`,
+with parent-fd/source/target arguments and zero result. It also requires
 `identity` and `entry-identity`. Existing backends retain constructor
 call layout; instances must be recompiled after new slot.
 
@@ -38,20 +38,20 @@ call layout; instances must be recompiled after new slot.
 
 ## Effects and faults
 
-Rename is namespace atomicity point and completes an already-made
-decision. Not a new EDIT decision. Caller separately executes
+Rename is the namespace atomicity point and completes an already-made
+decision. It is not a new EDIT decision. The caller separately executes
 `durable-flush(directory)` before admitting traffic. No implicit open,
 segment write, truncation, close, or flush.
 
 Preflight and first identity check do not change capability. Once inside
 effect boundary, failed syscall, nonzero callback result,
 failed postcondition, or incomplete exit fault a still-open
-directory while preserving cause. Existing rename cleanup
-reused, without duplication. Uncertain outcome neither retried nor undone.
-If return lost after success, coordinator reconstructs inventory
+directory while preserving cause. Existing rename cleanup is
+reused, without duplication. An uncertain outcome is neither retried nor undone.
+If the return is lost after success, the coordinator reconstructs inventory
 from manifest: same call is not a retry protocol.
 
-Capabilities borrowed; remain open on success. I/O task
+Capabilities are borrowed; they remain open on success. The I/O task
 prevents FD close/reuse and source replacement throughout
 call. Target exclusivity does not make source-identity
 check atomic or authorize concurrent namespace.
@@ -82,9 +82,9 @@ and code committed before runs. Two static C1 readings distinguish
 contract and faults; independent review remains explicitly static.
 
 No new functional tests, FI, mutations, coverage, or
-benchmarks planned in this increment. PIO-D01…D09, MC/DC, Linux/macOS execution,
+benchmarks are planned in this increment. PIO-D01…D09, MC/DC, Linux/macOS execution,
 crashes/power loss, Recovery Manager integration, and admission remain
-to qualify. No throughput figure or zero-allocation promise:
+to be qualified. No throughput figure or zero-allocation promise:
 name copies and FFI belong to cold metadata path.
 
 <a id="fonti-delle-primitive"></a>

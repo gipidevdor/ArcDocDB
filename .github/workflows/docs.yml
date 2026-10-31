@@ -7,6 +7,9 @@ on:
       - '**.md'
       - 'assets/**'
       - 'tools/pages/**'
+      - 'src/**'
+      - 'examples/**'
+      - 'arcdocdb.asd'
       - 'Makefile'
       - '.gitignore'
       - '.github/actions/setup-sbcl/**'
@@ -16,6 +19,9 @@ on:
       - '**.md'
       - 'assets/**'
       - 'tools/pages/**'
+      - 'src/**'
+      - 'examples/**'
+      - 'arcdocdb.asd'
       - 'Makefile'
       - '.gitignore'
       - '.github/actions/setup-sbcl/**'
@@ -41,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-sbcl
-      - name: Build with Common Lisp Codex and check every published page
+      - name: Build with CommonDoc Codex and check every published page
         run: make docs
       - name: Upload the verified static site
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

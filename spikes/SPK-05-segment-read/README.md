@@ -35,7 +35,7 @@ against external writes nor `SIGBUS` after truncation. Those faults remain out o
 Matrix uses 1, 2, and 4 workers, deterministic random access and sequential scans,
 three replications alternating method order. Each scan partitions file into disjoint
 ranges and traverses once; random case reads the same record count and reuses the
-same plan in both methods. Buffers, plans, and samples preallocated per worker.
+same plan in both methods. Buffers, plans, and samples are preallocated per worker.
 After 32 warmup reads, a common gate starts work; no shared locks, counters, or writes
 during reads. Each worker owns buffer, descriptor, and samples. Shared mapping is read-only.
 
@@ -79,7 +79,7 @@ No numeric parameter is interpreted by Lisp reader. Runner retains one outcome
 plist and nonzero exit on error; separate FASLs per process.
 Hardware, OS, SBCL version, configured heap, sources, and observed load are recorded
 by harness. macOS/ARM64 results are local; Linux x86-64 reference platform and
-beyond-RAM dataset remain to measure.
+a beyond-RAM dataset remain to be measured.
 
 <a id="risultati"></a>
 

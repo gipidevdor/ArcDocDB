@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-IDX-001 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (u64 u64 index index) null) verifica-location-indice-recuperata))
 (defun verifica-location-indice-recuperata (csn segment offset bytes)
-  "Pre: vincitore PUT verificato. Post: CSN positivo e location rappresentabile nel primary v2/GET corrente.
-INVALID-ARGUMENT per CSN zero, ID non positivo u32, offset/fine oltre u32; nessun troncamento o effetto.
-Sono limiti del destinatario, non nuovi limiti del reader o dei segment-id u64 del recovery."
+  "Pre: verified winning PUT. Post: positive CSN and location representable in primary v2/current GET.
+INVALID-ARGUMENT for zero CSN, ID not a positive u32, offset/end beyond u32; no truncation or effect.
+These are recipient limits, not new limits on the reader or recovery u64 segment-ids."
   (unless (plusp csn) (error 'invalid-argument :reason :recovery-index-csn))
   (unless (<= 1 segment #xffffffff) (error 'invalid-argument :reason :recovery-index-segment-id))
   (unless (and (<= offset #xffffffff) (<= (+ offset bytes) #xffffffff))
@@ -20,9 +20,9 @@ Sono limiti del destinatario, non nuovi limiti del reader o dei segment-id u64 d
                           (member :none :put :tombstone) u64 u64 index index) null)
                 prepara-payload-indice-recuperato))
 (defun prepara-payload-indice-recuperato (selector source kind csn segment offset bytes)
-  "Pre: lettura del selettore riuscita, contesto libero e SOURCE distinta; chiave completa attestata dal caller.
-Post: payload vivo v2 per PUT, cinque zeri per NONE/TOMBSTONE; nessun indice modificato.
-Compatibilita prima delle scritture; incoerenza privata => selettore FAULTED, no payload consegnabile."
+  "Pre: selector read succeeded, free context, and distinct SOURCE; full key attested by the caller.
+Post: live v2 payload for PUT, five zeros for NONE/TOMBSTONE; no index modified.
+Compatibility before writes; private inconsistency => selector FAULTED, no deliverable payload."
   (case kind
     (:put
      (verifica-location-indice-recuperata csn segment offset bytes)

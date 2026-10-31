@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (octets index fixnum fixnum u32 page-error) null) verifica-sonda-pagina))
 (defun verifica-sonda-pagina (buffer start capacity slot low condition)
-  "Pre: controlli presenti e capacita' canonica. Post: slot raggiungibile per gruppi da 16.
-Condizione richiesta se un gruppo EMPTY precedente renderebbe la chiave invisibile."
+  "Pre: controls present and canonical capacity. Post: slot reachable through groups of 16.
+Condition required if an earlier EMPTY group would make key invisible."
   (unless (and (member capacity '(32 128 512)) (<= 0 slot (1- capacity))
                (<= (+ start capacity) (length buffer)))
     (error 'invariant-violation :reason :index-page-probe-range))
@@ -24,9 +24,9 @@ Condizione richiesta se un gruppo EMPTY precedente renderebbe la chiave invisibi
 ;;; REQ: REQ-IDX-009 REQ-LIM-001 REQ-LIM-003
 (declaim (ftype (function (octets index page-error) null) verifica-record-entry-pagina))
 (defun verifica-record-entry-pagina (buffer entry condition)
-  "Pre: entry di 64 byte presente. Post: candidato primario v2 rappresentabile.
-Condizione richiesta per CSN zero, record/key/documento fuori limite o fine segmento invalida.
-Non verifica CRC del record o decisione di commit; nessun dato restituito."
+  "Pre: 64-byte entry present. Post: representable v2 primary candidate.
+Condition required for zero CSN, record/key/document beyond limit, or invalid segment end.
+Does not verify record CRC or commit decision; no data returned."
   (let ((key-length (leggi-u16 buffer (+ entry +entry-key-length+)))
         (record-length (leggi-u32 buffer (+ entry +entry-length+)))
         (offset (leggi-u32 buffer (+ entry +entry-location+))))
@@ -46,8 +46,8 @@ Non verifica CRC del record o decisione di commit; nessun dato restituito."
 (declaim (ftype (function (octets index index index identita-pagina index page-error) index)
                 verifica-chiave-entry-pagina))
 (defun verifica-chiave-entry-pagina (buffer entry cursor limit identity size condition)
-  "Pre: record e range verificati; CURSOR/LIMIT relativi al corpo. Post: cursore arena.
-Condizione richiesta per flag, packing, riferimento esterno o lunghezza incoerenti."
+  "Pre: record and range verified; CURSOR/LIMIT relative to body. Post: arena cursor.
+Condition required for inconsistent flags, packing, external reference, or length."
   (unless (and (<= cursor limit (length buffer)) (<= (+ entry +entry-bytes+) (length buffer)))
     (error 'invariant-violation :reason :index-page-entry-range))
   (let ((flags (leggi-u16 buffer (+ entry +entry-flags+)))
@@ -68,8 +68,8 @@ Condizione richiesta per flag, packing, riferimento esterno o lunghezza incoeren
 (declaim (ftype (function (octets index index index identita-pagina fixnum u32 page-error) null)
                 verifica-bucket-pagina))
 (defun verifica-bucket-pagina (buffer start used size identity count parameter condition)
-  "Pre: corpo presente e limitato alla pagina. Post: controlli, entry, chiavi e packing validi.
-Condizione richiesta per geometria, occupazione, fingerprint, sonda o contenuto incoerenti."
+  "Pre: body present and bounded to page. Post: valid controls, entries, keys, and packing.
+Condition required for inconsistent geometry, occupancy, fingerprint, probe, or contents."
   (let* ((capacity (nth-value 1 (geometria-pagina size)))
          (base (* capacity (1+ +entry-bytes+))) (cursor base) (live 0))
     (esigi-pagina (and (= parameter capacity) (<= base used)

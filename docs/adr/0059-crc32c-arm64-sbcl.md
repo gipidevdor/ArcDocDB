@@ -68,7 +68,7 @@ remains in the integrity suite; a separate throughput campaign
 moves it outside timing and checks the result after every window.
 
 0.4–0.6 microseconds per CRC and 2 microseconds per GET remain targets;
-obtained numbers are published without subtraction from the historical benchmark.
+measured results are published without subtracting from the historical benchmark.
 Linux/x86-64 and Linux/ARM64 retain software; acceleration on other
 platforms requires its own detection and qualification. Different SBCL versions
 do not enable the kernel without new qualification.

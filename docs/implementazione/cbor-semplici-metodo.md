@@ -47,20 +47,20 @@ A separate author prepares and freezes the tests without reading the new
 product; only then is the product written. First compilation and
 campaigns follow both static readings and freezing of all files.
 
-Literal vectors 0/19/20/21/22/23/32/255 and cold arithmetic comparison
+The tests use literal vectors 0/19/20/21/22/23/32/255 and cold arithmetic comparison
 over all 248 allowed codes, with multiple offsets, exact and residual capacity.
-All eight reserved codes, invalid external types/ranges, destinations
+They cover all eight reserved codes, invalid external types/ranges, destinations
 that are not simple u8, empty spans, capacities 0..size-1, error priorities,
 exact arity, sentinels, reuse, and concatenation. Fuzz 2,048 cases seed
 53494D43, without a decoder-dependent oracle; the minimal reader and scanner
 are supplementary checks after byte comparison.
 
-Two real workers reused, two waves of 8,192 items per worker: 32,768
+The corpus reuses two real workers for two waves of 8,192 items per worker: 32,768
 writes with private destinations, immutable plans, verified sinks and full
-arrays. Bounded waits, joins, and cleanup. Observed intervals, without
-inferring scaling or simultaneous execution on cores.
+arrays. Waits, joins, and cleanup are bounded. Observed intervals do not imply
+scaling or simultaneous execution on cores.
 
-Serial benchmark on six fixtures 0/20/22/23/32/255, five replicates,
+The serial benchmark uses six fixtures 0/20/22/23/32/255, five replicates,
 4,096 calls, warmup 128. Every invocation verifies NEXT and all bytes,
 including external bytes. Zero baseline, positive control 16×1 MiB,
 local criterion of zero observed heap; no speed threshold.
@@ -71,8 +71,8 @@ byte; wrong NEXT; extra return value. Private copies and caches,
 full baseline and unambiguous markers; compilation/worker failures
 do not count as detection. All attempts and copies are preserved.
 
-Raw coverage of only the new file, compound-decision inventory
+Verification requires raw coverage of only the new file, a compound-decision inventory
 without exclusions or MC/DC/100% attestations, two C1 readings, driver
-self-tests, data audit, and full `make check` before push. Common Lisp
-tools (INV-X3), sources and index stable during every recorded
+self-tests, data audit, and full `make check` before push. Tools use Common Lisp
+(INV-X3); sources and the index remain stable during every recorded
 command. Local tests do not promote engine qualification.

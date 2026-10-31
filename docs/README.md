@@ -14,6 +14,7 @@ service. The complete engine remains under development.
 |---|---|
 | Try the service | [M1 server and client](implementazione/production-unix-m1.md#ingressi-eseguibili) |
 | See what is implemented | [Implementation and limits](implementazione/README.md) |
+| Use the Lisp interfaces | [Checked Unix-socket example](lisp-api.md) and [code reference coverage](code-reference.md) |
 | Understand the design | [Architecture](architettura.md) and [on-disk formats](formati-su-disco.md) |
 | Assess the guarantees | [Reliability](affidabilita/README.md) and [traceability](tracciabilita/README.md) |
 | Read decisions and evidence | [ADRs](adr/README.md) and [evaluation](valutazione/README.md) |
@@ -27,6 +28,8 @@ service. The complete engine remains under development.
 [Roadmap](roadmap.md)
 
 [Build and publish the online manual](github-pages.md).
+
+[Code reference and coverage](code-reference.md).
 
 [Editorial policy](editorial-policy.md) · [Publication, rights and privacy](legal/README.md).
 

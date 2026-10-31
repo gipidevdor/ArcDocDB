@@ -69,7 +69,7 @@ Serie ──▶ directory (vector of 2^G references) ──▶ fragment
 ### 2. Growth and cleanup: one split at a time (INV-I3)
 
 When a fragment reaches its maximum load factor, the writer builds **two**
-new fragments, redistributing live entries on the next hash bit, and publishes their references
+new fragments, redistributing live entries according to the next hash bit, and publishes their references
 in the directory. If local depth is already `G`, it first doubles the directory (copying
 references). A split copies only live entries: deleted slots and keys no longer
 referenced **do not survive**. A fragment with many deleted slots or a key area

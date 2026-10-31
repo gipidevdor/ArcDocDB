@@ -13,10 +13,10 @@
                                  (member nil :unchanged :activated :retired :busy :faulted) &optional))
                 %passo-dispatcher-fase))
 (defun %passo-dispatcher-fase (dispatcher phase)
-  "Pre: binding verificato, fase osservata accettata come T senza assunzioni C1.
-Post: un solo ingresso operativo, cinque valori senza confondere cursor/count.
-Fasi note non ammesse RESOURCE-EXHAUSTED; inattesa INVARIANT-VIOLATION.
-NOTINLINE conserva la difesa fuori ftype; nessun controllo dopo acquisizione."
+  "Pre: verified binding, observed phase accepted as T without C1 assumptions.
+Post: one operational entry, five values without confusing cursor/count.
+Known disallowed phases yield RESOURCE-EXHAUSTED; unexpected phase yields INVARIANT-VIOLATION.
+NOTINLINE retains out-of-ftype defense; no check after acquisition."
   (case phase
     (:idle
      (multiple-value-bind (link status cursor action) (prendi-collegamento-pool dispatcher)
@@ -38,10 +38,10 @@ NOTINLINE conserva la difesa fuori ftype; nessun controllo dopo acquisizione."
                                  (member nil :unchanged :activated :retired :busy :faulted) &optional))
                 passo-dispatcher-pool))
 (defun passo-dispatcher-pool (dispatcher)
-  "Pre: owner corrente, fase IDLE/CLAIMED/RESCHEDULE coerente, bridge gia chiuso.
-Post: claim/current/recycle esclusivi, al piu un trasferimento ready; nessun begin.
-Binding prima della lettura fase; rifiuti/fault delegati senza rollback o cleanup.
-Pubblicazione termina il passo; nessuna nuova presa o ACK impliciti dopo recycle."
+  "Pre: current owner, consistent IDLE/CLAIMED/RESCHEDULE phase, bridge already closed.
+Post: mutually exclusive claim/current/recycle, at most one ready transfer; no begin.
+Binding before phase read; rejections/faults delegated without rollback or cleanup.
+Publication ends step; no implicit new acquisition or ACK after recycle."
   (let ((port (dispatcher-writer-pool-port dispatcher))
         (table (dispatcher-writer-pool-table dispatcher)))
     (%check-dispatcher-binding port table)

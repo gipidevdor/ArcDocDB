@@ -3,7 +3,7 @@
 # Static review of CLOSED recovery
 
 2026-10-16; shared worktree `closed-verifica/ArcDocDB`.
-Two distinct readings by same reviewer: P1 from reader to delegation;
+Two distinct readings by the same reviewer: P1 from reader to delegation;
 P2 from public entries to parsers, findings rechecked.
 First batch saved before completion; references to locations read.
 No frozen-snapshot attestation or claim of two independent reviewers.
@@ -29,7 +29,7 @@ prepared TXIDs; comparison at line 21 does not reach orphan OUTCOMEs.
 `src/recovery-active/frames.lisp:48` compares only duplicate OUTCOMEs;
 `src/recovery-closed/build.lisp:18`–`:25` resolves, aggregates, and builds result.
 Deduced, unexecuted counterexample: OUTCOME(T, 7), SEAL CSN 8, EDIT(T, 9),
-no prepared T, intact frozen sources. Returned maximum 9,
+no prepared T, intact frozen sources. The returned maximum would be 9,
 without comparison of both proofs. No document loss demonstrated.
 ADR-0041 requires prepared resolution; additional orphan obligation
 here derives from contract `recovery-csn.md:48`/CSR-D04 (`:104`), explicitly
@@ -55,8 +55,8 @@ for every outcome check `(typep csn 'u64)` before `max`, increment
 First check also detects negative values `max` might hide;
 second detects incomplete traversal against expected source.
 Signal `invariant-violation` with dedicated reasons; preserve existing
-CLOSED check. Reasserting maximum greater than zero insufficient:
-zero valid. No runtime failure demonstrated; Serie FAULTED handling
+CLOSED check. Reasserting that the maximum is greater than zero is insufficient:
+zero is valid. No runtime failure demonstrated; Serie FAULTED handling
 at controller boundary to verify separately.
 
 <a id="passaggio-1--checklist-c1-dal-reader-alle-deleghe"></a>
@@ -104,8 +104,8 @@ at controller boundary to verify separately.
 ## Actual checks and preconditions
 
 - **End P / EOF.** `read.lisp:33` obtains P from manifest, `:70` bounds body;
-  `verify.lisp:19` verifies complete batches without TAIL scanner. Half-batch P is
-  error; later bytes unread. Short file: `src/io/transfer.lisp:34`
+  `verify.lisp:19` verifies complete batches without TAIL scanner. A P value within a batch is
+  an error; later bytes remain unread. Short file: `src/io/transfer.lisp:34`
   signals EOF/no progress. P does not measure EOF. Header plus
   `ceiling((P-64)/chunk)` are exact logical reads: short reads may
   require more syscalls with positive progress and per-byte bound.
@@ -117,8 +117,8 @@ at controller boundary to verify separately.
   Names/inodes, catalog, and physical reconciliation remain preconditions.
 - **Lifetime.** Reader: CONTROL/input before/after. Gate: each input,
   CONTROL rechecked at end. `csn-serie.lisp:16`/`:22`: ACTIVE before/after.
-  No atomic acquisition of all FDs: controller keeps open and freezes
-  file, namespace, manifest, and vector throughout operation. Individual scalar
+  No atomic acquisition of all FDs: the controller keeps the FDs open and freezes the
+  file, namespace, manifest, and vector throughout the operation. Individual scalar
   queries describe completed read without rechecking openness.
 - **Budgets.** `read.lisp:30`–`:40` checks configuration/P/outcomes/range/capacity
   before I/O; `verify.lisp:23` bounds records before workspace. ACTIVE parser
@@ -129,7 +129,7 @@ at controller boundary to verify separately.
   `csn.lisp:14` includes all EDITs, including orphans; `:35` allows only
   ordinary compaction stamps. u64 maxima, NIL/0 distinct from T/0, no increment.
   Complete set concerns this Serie: all Serie and complete decision log
-  still needed to initialize unique Archivio register.
+  are still needed to initialize the unique Archivio register.
   Orphan outcomes produce no documents/commits; maximum does not authorize traffic.
 - **Token/durability.** `publication.lisp:44` precedes every claim; ACTIVE
   and CONTROL delegates check closing, view, conservative transition.
@@ -157,9 +157,9 @@ remain tied to sources before coordinator corrections.
   u64 before `max`, and compares `used` with `expected` before return.
   Dedicated reasons: `:closed-recovery-csn-value` and `:closed-recovery-csn-outcomes`.
   Informative value/consumption checks; count does not prove concurrent
-  stability, which remains precondition. Counters only added, zero CSN allowed.
+  stability, which remains a precondition. Counters only added, zero CSN allowed.
 
-R1/R2 addressed relative to static findings; no new product
-problem identified in either patch. For CDR-D06, compound comparison now
+R1/R2 are addressed relative to the static findings; no new product
+problem was identified in either patch. For CDR-D06, compound comparison now
 EDIT present AND different CSN; OUTCOME presence implicit in loop, orphan to cover.
 Rereading complete for freeze; no execution, commit, or runtime qualification.

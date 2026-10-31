@@ -43,7 +43,7 @@
 | [RSK-02](#rsk-02) | Primary index: design not yet defined for concurrency, snapshots, relocation | M | H | SPK-01, SPK-07 | QA-24, QA-04 |
 | [RSK-03](#rsk-03) | Write amplification beyond device bandwidth | M | H | SPK-03 | QA-02 |
 | [RSK-04](#rsk-04) | Single writer per Serie ceiling below targets | M | M | SPK-04 | QA-26, QA-25 |
-| [RSK-05](#rsk-05) | Multiserie transactions: atomic visibility and PREPARED state | M | H | SPK-07 | QA-06, QA-07, QA-09 |
+| [RSK-05](#rsk-05) | Multiseries transactions: atomic visibility and PREPARED state | M | H | SPK-07 | QA-06, QA-07, QA-09 |
 | [RSK-06](#rsk-06) | `multiserie.log` as Archivio contention point | L | M | SPK-03 | QA-08 |
 | [RSK-07](#rsk-07) | Index memory and restart time | M | M | SPK-01 | QA-03 |
 | [RSK-08](#rsk-08) | MERGE never runs under sustained load | M | M | SPK-06 | QA-12 |
@@ -70,7 +70,7 @@
 | RSK-02 | mitigated in design; **open on performance** | ADR-0015/0016/0018 define structure, concurrency, relocation; SPK-01 and SPK-07 verify |
 | RSK-03 | mitigated | ADR-0013: 1× writing; residual: concurrent flushes from many Serie (SPK-03) |
 | RSK-04 | mitigated | ADR-0019: writer never blocked; ADR-0028: per-Serie target = 1/4 of aggregate |
-| RSK-05 | mitigated in design | ADR-0020/0021: CSN after decision, wait for multiserie transactions being applied, no-wait intents; SPK-07 model |
+| RSK-05 | mitigated in design | ADR-0020/0021: CSN after decision, wait for multiseries transactions being applied, no-wait intents; SPK-07 model |
 | RSK-06 | mitigated | ADR-0021: group commit and checkpoint truncation |
 | RSK-07 | accepted, quantified | ~56 B/entry (ADR-0032); restart from hints (ADR-0015) |
 | RSK-08 | explicitly accepted | ADR-0023: metric and alarm, no emergency threshold |
@@ -180,7 +180,7 @@ a Serie's maximum throughput.
 
 ### RSK-05
 
-**Multiserie transactions.** See tensions T4 and T5. Risks concern correctness
+**Multiseries transactions.** See tensions T4 and T5. Risks concern correctness
 (a snapshot seeing half a transaction) and performance (documents stuck in
 PREPARED, waiting writers).
 
@@ -189,9 +189,9 @@ PREPARED, waiting writers).
 
 ### RSK-06
 
-**Shared `multiserie.log`.** This is the only log traversed by every multiserie
+**Shared `multiserie.log`.** This is the only log traversed by every multiseries
 transaction in an Archivio. Group commit contains the risk, but a slow flush
-on this file slows all multiserie transactions. It is also a single growing file.
+on this file slows all multiseries transactions. It is also a single growing file.
 
 - *Mitigations:* group commit; truncation policy (QA-08); dedicated metric.
 
@@ -231,7 +231,7 @@ a location-indexed cache loses the warmth of moved records.
   compaction; measure before complicating.
 
 > **Proposal** — The [SPK-05 campaign](risultati-SPK-05-2026-10-08.md)
-> compares pread and mapping on 16 MiB files. It exercises no own cache,
+> compares pread and mapping on 16 MiB files. It exercises no application cache,
 > relocation, or beyond-RAM dataset: RSK-10 remains quantitatively open.
 
 ### RSK-11

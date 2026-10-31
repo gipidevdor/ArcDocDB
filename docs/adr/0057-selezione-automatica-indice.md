@@ -24,7 +24,7 @@ pinning, copies, and page management have additional costs.
 
 ## Decision
 
-1. Default, automatic behavior is local to the Serie. At startup,
+1. Default automatic behavior is local to the Serie. At startup,
    if the resident peak fits the assigned budget, resident mode is selected.
 2. During operation, resident mode remains active while the predicted peak stays within the
    budget. Exceeding it requires paged mode before admitting
@@ -37,7 +37,7 @@ pinning, copies, and page management have additional costs.
    still usable, destination, staging, delta, and retained references.
    If memory is unavailable, the selector returns insufficient budget: it does not begin
    allocations or change the root. The caller suspends or rejects new
-   work it cannot reserve, maintaining already-admitted reads.
+   work it cannot reserve, preserving already-admitted reads.
 5. Estimates include slots, keys, directory, history, metadata, retained
    garbage, and relevant transients. Budgets and estimates are conservative integer
    byte counts, not just the OS's instantaneous free RAM.
@@ -52,7 +52,7 @@ pinning, copies, and page management have additional costs.
 7. Selection is a proposal, not publication. The future actuator must
    build and verify the destination, recheck frontiers, and
    publish a single consistent view; commits, snapshots, outcomes, and epochs
-   remain the engine's. No new durable atomicity point.
+   remain the engine's responsibility. No new durable atomicity point is introduced.
 
 The first increment implements only the selector and the abstract frame-lifetime
 model. It has no paged primary backend, migration,
@@ -93,6 +93,6 @@ Hysteresis decides when to prepare a switch, not publication correctness.
 
 Tests at exact thresholds, initial selection, growth, shrinkage, budget
 changes, insufficient transient capacity, saturation, and independent Serie.
-Composed decisions listed in the contract. Before the actuator, differential
+Compound decisions are listed in the contract. Before the actuator, differential
 oracles, crashes before/after the swap, concurrent snapshots and writers,
 memory beyond RAM without swap, and measured comparisons of the two modes are needed.

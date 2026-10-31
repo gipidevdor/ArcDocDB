@@ -4,8 +4,8 @@
 
 Scope: in-memory encoder and verifier for `control.log` and
 `multiserie.log` headers, layout fixed by [ADR-0052](../adr/0052-header-dei-log-di-controllo.md).
-Method precedes campaigns. Files and contents are not modified
-by codec; returned version selects decoder for subsequent records.
+The method precedes campaigns. Files and contents are not modified
+by the codec; the returned version selects the decoder for subsequent records.
 
 <a id="correttezza"></a>
 
@@ -25,11 +25,11 @@ destination. No semantic header error is classified as record
 tail.
 
 Strict build, tests, lint, links, and traceability. Instrumented coverage
-in separate process/cache, with missing-branch detection self-test.
+in a separate process/cache, with missing-branch detection self-test.
 Targeted mutations in isolated copies: CRC, each magic half, identity,
 each reserved area, and truncation bound. Campaign has replacement
 and classification self-test; failed compilation does not count as
-detected mutant. All outcomes, including failures, preserved.
+detected mutant. All outcomes, including failures, are preserved.
 
 <a id="allocazioni-e-tempo"></a>
 
@@ -42,11 +42,11 @@ monotonic time, and SBCL heap-byte counter. Positive control allocates
 1 MiB per call for 16 calls; baseline and self-test before campaign.
 
 Criteria: no warnings, successful tests, compilable mutants detected, no
-measured heap allocation on successful paths. Counter does not demonstrate
+measured heap allocation on successful paths. The counter does not demonstrate
 absolute nonallocation; local times without performance threshold, external
-load uncontrolled. Serial in-memory codecs, without I/O, concurrency,
-or durable commit. No engine requirement promoted by these tests.
+load is uncontrolled. Serial in-memory codecs, without I/O, concurrency,
+or durable commit. No engine requirement is promoted by these tests.
 
 Two C1 readings: format/boundaries/error classification, then buffer
 ownership, loop limits, compound decisions, and integration. Findings and
-resolution recorded in implementation note.
+resolution are recorded in the implementation note.

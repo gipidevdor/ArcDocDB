@@ -21,8 +21,8 @@ in the [inventory](writer-recycle-decisioni.md) and
 | 6. Data | New reference and old head types checked; indices/shape under guard. Ring transports opaque references without interpreting payloads or persistent data. |
 | 7. Decisions | Five scalar predicates; no new compound decision. Coverage 81/86 expressions, 8/8 outcomes; top-level and legacy gaps remain in denominator 929/1060 and 134/154. No exclusion or inferred MC/DC. |
 | 8. Ownership | Local guard/ring; success transfers A→ring and C→caller together. Caller able to assume C, unique obligation as precondition, no new membership or deduplication. |
-| 9. Check | 309 tests plus smoke, lint53/zero violations, trace/links/evidence, and ten spikes. Process4000528494-command-77199-0 OK/STABLE/exit0; editorial closures checked separately. |
-| 10. Standards | Safety3, complete ftypes, docstrings, maximum20 lines per function, and local complexity≤3. Pre/post through %check-pronta and delegated helpers; unwind-protect only releases. Two C4 tools fully compiled with fatal warnings and FASL self-tests. |
+| 9. Check | 309 tests plus smoke, lint 53/zero violations, trace/links/evidence, and ten spikes. Process 4000528494-command-77199-0 OK/STABLE/exit0; editorial closures checked separately. |
+| 10. Standards | Safety 3, complete ftypes, docstrings, maximum 20 lines per function, and local complexity≤3. Pre/post through %check-pronta and delegated helpers; unwind-protect only releases. Two C4 tools fully compiled with fatal warnings and FASL self-tests. |
 | 11. Parallelism | No new global lock or common per-message write. Guard serializes only short operation on own ring, once per segment. Other-shard progress verified; no fairness or lock-freedom promised. |
 | 12. Atomicity | No durable change, I/O, or deletion. Full replaces head=tail slot and advances indices under guard; count unchanged. No cleanup can cancel a subsequent writer wave. |
 

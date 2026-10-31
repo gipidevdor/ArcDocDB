@@ -9,12 +9,12 @@
                          (values piano-csn-archivio simple-vector simple-vector &optional)) leggi-archivio-recuperato))
 (defun leggi-archivio-recuperato (set decisions controls sources limits scratch max-byte-totali
                                 &key (max-segmenti-totali 1048576) (budget-riferimenti 16777216))
-  "Pre: tutte le Serie autorevoli del catalogo incluse; sorgenti/vettori/namespace congelati e FD mantenuti aperti.
-CONTROLS/SOURCES/LIMITS paralleli alle viste; budget byte esplicito; scratch esclusivo nel pool I/O.
-Post: piano CSN completo, vettore ACTIVE e vettori CLOSED posseduti, nel medesimo ordine canonico.
-Tutti i preflight prima dei dati; piano e risultati consegnati solo dopo il gate completo dell'Archivio.
-Errori originali senza close/retry/risultati parziali; scratch modificabile, set ancora del chiamante.
-Nessun nuovo CSN, punto durevole, binding runtime, pubblicazione degli indici o ammissione."
+  "Pre: all authoritative catalog Serie included; sources/vectors/namespace frozen, FDs kept open.
+CONTROLS/SOURCES/LIMITS parallel to views; explicit byte budget; exclusive scratch in the I/O pool.
+Post: complete CSN plan, owned ACTIVE vector and CLOSED vectors, in the same canonical order.
+All preflights before data; plan and results delivered only after the complete Archivio gate.
+Original errors without close/retry/partial results; scratch may change, sets still caller-owned.
+No new CSN, durable point, runtime binding, index publication, or admission."
   (multiple-value-bind (count segments)
       (verifica-bootstrap-archivio set decisions controls sources limits scratch max-byte-totali
                                   max-segmenti-totali budget-riferimenti)

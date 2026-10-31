@@ -7,10 +7,10 @@
 (declaim (ftype (function (octets u32 u32 u8 resolver-words resolver-words index) null)
                 copia-riga-resolver))
 (defun copia-riga-resolver (buffer pos next flags proofs rows base)
-  "Pre: PUT verificato, riga privata completa; prove ordinate e immutabili.
-Post: offset/size/flag e CSN/prova, zero proof per ordinario o prepared senza esito.
-Prepared senza esito resta irraggiungibile: non inventa abort o commit nell'indice.
-CORRUPTION-DETECTED per esito precedente al PUT; INVARIANT-VIOLATION per range/forma."
+  "Pre: verified PUT, complete private row; ordered immutable proofs.
+Post: offset/size/flags and CSN/proof, zero proof for ordinary or prepared without outcome.
+Prepared without outcome remains unreachable: invents neither abort nor commit in index.
+CORRUPTION-DETECTED for outcome preceding PUT; INVARIANT-VIOLATION for range/shape."
   (unless (and (< pos next) (<= (+ base +row-words+) (length rows)))
     (error 'invariant-violation :reason :resolver-row-range))
   (let ((low (leggi-u32 buffer (+ pos +stamp-offset+)))
@@ -33,10 +33,10 @@ CORRUPTION-DETECTED per esito precedente al PUT; INVARIANT-VIOLATION per range/f
 (declaim (ftype (function (octets u32 (member 1 2) resolver-words resolver-words) null)
                 copia-righe-resolver))
 (defun copia-righe-resolver (buffer end version proofs rows)
-  "Pre: prefisso stabile verificato, array privati dimensionati/azzerati, prove ordinate.
-Post: righe PUT in ordine fisico stretto, solo parole copiate; nessun alias sorgente.
-INVARIANT-VIOLATION per conteggio/progresso; errori codec e risoluzione propagati.
-Scansione limitata dai byte; ogni lookup TXID ha al più 33 passi."
+  "Pre: stable verified prefix, sized/zeroed private arrays, ordered proofs.
+Post: PUT rows in strict physical order, only words copied; no source alias.
+INVARIANT-VIOLATION for count/progress; codec and resolution errors propagated.
+Scan bounded by bytes; each TXID lookup has at most 33 steps."
   (unless (zerop (mod (length rows) +row-words+))
     (error 'invariant-violation :reason :resolver-row-shape))
   (let ((pos +segment-header-bytes+) (used 0))

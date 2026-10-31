@@ -15,7 +15,7 @@ freeze commits and outcomes will be recorded in native evidence.
 
 The suite fixes 42 named tests: 8 for sorting/lookup, 13 for construction,
 and 21 for reading. A test may exercise multiple formats, words, or APIs;
-these iterations do not increase named-test count.
+these iterations do not increase the named-test count.
 
 The fixture owns a real file, opened read-only by the product, a canonical
 view, index, GET context, private output, and snapshot/EBR registries.
@@ -34,7 +34,7 @@ and low words. An OUTCOME before the PUT is corruption; a prepared record withou
 does not authorize a response. Invalid bytes after the CLOSED frontier
 must be neither read nor interpreted.
 
-Array budget is checked at exact limit and one byte below:
+Array budget is checked at the exact limit and one byte below:
 `24P + 20O` for O ≤ 1, `24P + 40O + 1024` for O ≥ 2. Permanent payload
 remains `24P`. Reusing the source buffer after construction must not
 alter the map. These figures describe array payload, not RSS,
@@ -49,8 +49,8 @@ it does not replace cases through `crea-mappa-segmento-get`.
 
 Reads use `risolvi-candidato-get`, `sonda-cache-risolta-get`, and
 `leggi-record-risolto-get` after `avvia-get`. The I/O observer records FD,
-offset, and quantity: resolve/probe do not read; cold prepared reads the first
-proof then PUT; warm prepared rereads proof even on cache hit.
+offset, and quantity: resolve/probe do not read; a cold prepared read reads the first
+proof and then the PUT; a warm prepared read rereads the proof even on a cache hit.
 Errors authorize no output. Provisional copy, completion with fresh time,
 sentinels, GET pins, and EBR announcement are explicitly verified.
 Fault injections concern only fixture resources and are

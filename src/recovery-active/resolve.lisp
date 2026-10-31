@@ -7,9 +7,9 @@
 (declaim (ftype (function (workspace-active arcdocdb.recovery.decisions::decision-table octets u64) null)
                 risolvi-txid-active))
 (defun risolvi-txid-active (workspace decisions identity txid)
-  "Pre: TXID prepared noto e tabella dell'Archivio completa. Post: OUTCOME, DECISION o presumed abort.
-Una DECISION presente deve nominare questa Serie e concordare con l'eventuale OUTCOME.
-CORRUPTION-DETECTED per partecipante/CSN incoerente; esiti da DECISION senza OUTCOME copiati nel workspace."
+  "Pre: known prepared TXID and complete Archivio table. Post: OUTCOME, DECISION, or presumed abort.
+A present DECISION must name this Serie and agree with any OUTCOME.
+CORRUPTION-DETECTED for inconsistent participant/CSN; DECISION outcomes without OUTCOME copied to workspace."
   (multiple-value-bind (local-csn local-present) (gethash txid (workspace-active-outcomes workspace))
     (multiple-value-bind (decision-present decision-csn participants) (trova-decisione decisions txid)
       (when decision-present
@@ -29,10 +29,10 @@ CORRUPTION-DETECTED per partecipante/CSN incoerente; esiti da DECISION senza OUT
 (declaim (ftype (function (workspace-active arcdocdb.recovery.decisions::decision-table octets) null)
                 risolvi-prepared-active))
 (defun risolvi-prepared-active (workspace decisions identity)
-  "Pre: workspace completo privato e tabella autorevole, ID della Serie canonico.
-Post: ogni TXID prepared classificato esattamente una volta; solo esiti mancanti sul file da conservare.
-Ciclo limitato ai TXID distinti già contati; zero è CSN presente, non assenza.
-INVARIANT-VIOLATION per contatori già utilizzati o conteggi discordanti; corruzione propagata."
+  "Pre: complete private workspace and authoritative table, canonical Serie ID.
+Post: each prepared TXID classified exactly once; only outcomes missing from the file need to be retained.
+Loop bounded by the distinct TXIDs already counted; zero is a present CSN, not absence.
+INVARIANT-VIOLATION for counters already used or mismatched counts; corruption propagated."
   (unless (and (zerop (workspace-active-local workspace)) (zerop (workspace-active-aborted workspace))
                (zerop (hash-table-count (workspace-active-derived workspace))))
     (error 'invariant-violation :reason :active-recovery-already-resolved))
@@ -48,10 +48,10 @@ INVARIANT-VIOLATION per contatori già utilizzati o conteggi discordanti; corruz
 (declaim (ftype (function (workspace-active) (values parole-esiti parole-esiti &optional))
                 impacchetta-esiti-active))
 (defun impacchetta-esiti-active (workspace)
-  "Pre: risoluzione completa privata. Post: due array u64 posseduti, TXID crescenti unici e CSN corrispondenti.
-SORT su vettore privato come nell'inventario, seguito da controllo d'ordine; nessuna tabella trattenuta.
-Cicli limitati al numero di esiti derivati; RESOURCE-EXHAUSTED prima degli array se la entry supera il codec.
-INVARIANT-VIOLATION per count/presenza/tipo discordanti."
+  "Pre: complete private resolution. Post: two owned u64 arrays, unique increasing TXIDs and corresponding CSNs.
+SORT on a private vector as in inventory, followed by an order check; no table retained.
+Loops bounded by the derived outcome count; RESOURCE-EXHAUSTED before arrays if the entry exceeds the codec limit.
+INVARIANT-VIOLATION for mismatched count/presence/type."
   (let* ((table (workspace-active-derived workspace)) (count (hash-table-count table)) (used 0))
     (when (> (+ arcdocdb.storage.format::+closed-fixed-bytes+
                 (* count arcdocdb.storage.format::+closure-outcome-bytes+))

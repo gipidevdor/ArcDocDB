@@ -11,10 +11,10 @@
                                  (member :unchanged :activated :retired :busy :faulted) &optional))
                 prendi-collegamento-pool))
 (defun prendi-collegamento-pool (dispatcher)
-  "Pre: owner corrente, worker IDLE libero. Post: link preallocato solo dopo CLAIMED,
-oppure NIL/esito/cursore/azione originali del gate. Nessun begin, lease o pop.
-Binding rifiutato prima del gate; errori delegati mantengono confini e obblighi.
-Un fault di routing conserva il claim e l'ACK già riuscito, senza rollback."
+  "Pre: current owner, free IDLE worker. Post: preallocated link only after CLAIMED,
+or original gate NIL/outcome/cursor/action. No begin, lease, or pop.
+Binding rejected before the gate; delegated errors preserve boundaries and obligations.
+A routing fault retains the claim and already successful ACK, without rollback."
   (let ((port (dispatcher-writer-pool-port dispatcher))
         (table (dispatcher-writer-pool-table dispatcher)))
     (%check-dispatcher-binding port table)
@@ -34,10 +34,10 @@ Un fault di routing conserva il claim e l'ACK già riuscito, senza rollback."
 (declaim (ftype (function (dispatcher-writer-pool) arcdocdb.execution.series:collegamento-worker-serie)
                 collega-obbligo-pool))
 (defun collega-obbligo-pool (dispatcher)
-  "Pre: owner corrente, CLAIMED già assunto da busy begin, ricircolo o adozione.
-Post: link corrente preallocato, selezione ripetibile senza nuove capacità.
-Non legge comandi/active e non conferma ritiro: il caller completa l'obbligo.
-Binding/owner e routing delegati; fase/fault preservati dai confini C1 esistenti."
+  "Pre: current owner, CLAIMED already assumed from busy begin, recycling, or adoption.
+Post: preallocated current link, repeatable selection without new capabilities.
+Does not read commands/active or acknowledge retirement: the caller completes the obligation.
+Binding/owner and routing delegated; phase/fault preserved by existing C1 boundaries."
   (let ((port (dispatcher-writer-pool-port dispatcher))
         (table (dispatcher-writer-pool-table dispatcher)))
     (%check-dispatcher-binding port table)

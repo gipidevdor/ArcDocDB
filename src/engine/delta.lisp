@@ -7,8 +7,8 @@
 (declaim (ftype (function (delta-indice-motore octets index index u32 u32)
                          (values index boolean &optional)) sonda-delta-indice))
 (defun sonda-delta-indice (delta key start end high low)
-  "Pre: range chiave valido, delta sano seriale. Post: slot libero o identita' esatta, senza copie.
-Linear probing limitato alla capacita'; tabella satura e' INVARIANT-VIOLATION, mai assenza."
+  "Pre: valid key range, healthy serial delta. Post: free slot or exact identity, without copies.
+Linear probing bounded to capacity; a saturated table is INVARIANT-VIOLATION, never absence."
   (b:check-range key start end)
   (unless (< start end) (error 'invariant-violation :reason :engine-delta-empty-key))
   (let* ((table (delta-indice-motore-table delta)) (capacity (/ (length table) 4))
@@ -25,9 +25,9 @@ Linear probing limitato alla capacita'; tabella satura e' INVARIANT-VIOLATION, m
 ;;; REQ: REQ-IDX-010 REQ-IDX-011 REQ-LIM-003
 (declaim (ftype (function (motore octets boolean) null) registra-chiave-delta-motore))
 (defun registra-chiave-delta-motore (engine key publish)
-  "Pre: owner READY preflight, oppure BUSY prima del CSN quando PUBLISH vero.
-Post: capienza verificata senza effetti, oppure membership copiata prima del WAL.
-Esaurimento ordinario preserva READY nel preflight; commit incompleto impone FAULTED."
+  "Pre: READY owner preflight, or BUSY before CSN when PUBLISH is true.
+Post: capacity verified without effects, or membership copied before WAL.
+Ordinary exhaustion preserves READY in preflight; incomplete commit imposes FAULTED."
   (esigi-owner-motore engine)
   (let ((delta (motore-delta engine)))
     (when delta
@@ -56,8 +56,8 @@ Esaurimento ordinario preserva READY nel preflight; commit incompleto impone FAU
 ;;; REQ: REQ-IDX-010 REQ-IDX-001
 (declaim (ftype (function (motore octets index index) boolean) chiave-nel-delta-motore-p))
 (defun chiave-nel-delta-motore-p (engine key start end)
-  "Pre: GET BUSY seriale, range valido. Post: T solo per identita' di una chiave toccata.
-NIL senza delta; digest uguali non sostituiscono il confronto dei byte, nessuna allocazione."
+  "Pre: serial BUSY GET, valid range. Post: T only for the identity of a touched key.
+NIL without delta; equal digests do not replace byte comparison, no allocation."
   (esigi-owner-motore engine)
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-read-admission))
   (let ((delta (motore-delta engine)))
@@ -70,8 +70,8 @@ NIL senza delta; digest uguali non sostituiscono il confronto dei byte, nessuna 
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-001
 (declaim (ftype (function (motore octets) null) verifica-capienza-delta-motore))
 (defun verifica-capienza-delta-motore (engine key)
-  "Pre: owner READY, input validato. Post: quota ammessa senza mutazioni o CSN.
-RESOURCE-EXHAUSTED resta ordinario; ogni guasto interno rende FAULTED conservando la primaria."
+  "Pre: READY owner, validated input. Post: quota admitted without mutations or CSN.
+RESOURCE-EXHAUSTED remains ordinary; every internal fault makes it FAULTED while preserving the primary cause."
   (handler-case (registra-chiave-delta-motore engine key nil)
     (resource-exhausted (condition) (error condition))
     (error (condition)

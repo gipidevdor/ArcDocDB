@@ -4,7 +4,7 @@
 
 The [`src/recovery-archive/`](../../src/recovery-archive/) module reads
 `Registri/multiserie.log` and connects its result to
-[ACTIVE recovery](active-recuperato.md). Applies formats and semantics of
+[ACTIVE recovery](active-recuperato.md). It applies the formats and semantics of
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) and
 [ADR-0052](../adr/0052-header-dei-log-di-controllo.md), without amendment.
 
@@ -24,16 +24,16 @@ Namespace: `arcdocdb.recovery.archive`.
 | `partecipante-decisione-recuperata-p(result, txid, id, start, end)` | exact ID16 presence; range checked even for absent TXID |
 | `leggi-active-con-decisioni(control, input, size, result, scratch, …)` | checks decision-log scope and lifetime, then delegates to canonical ACTIVE recovery |
 
-Bootstrap associates **once only** UUID and `ambito-get` of same
-Archivio from catalog. Constructor copies all sixteen bytes;
-certifies neither catalog, association uniqueness, nor filesystem
+Bootstrap associates **once only** the UUID and `ambito-get` of the same
+Archivio from the catalog. The constructor copies all sixteen bytes;
+it certifies neither the catalog, association uniqueness, nor filesystem
 paths. UUID equality alone does not replace canonical identity
 of scope shared by Serie views.
 
-Controller attests `size` as **complete stable physical EOF**. Read-only
+The controller attests `size` as **complete stable physical EOF**. A read-only
 capability measures no EOF and prevents no external writes. File,
 FD, and namespace stay frozen and open until Serie recovery
-completes; scratch exclusive until reader return. API does not open,
+completes; scratch remains exclusive until the reader returns. The API does not open,
 close, truncate, rename, or make any file durable.
 
 <a id="ordine-dei-controlli"></a>
@@ -42,7 +42,7 @@ close, truncate, rename, or make any file durable.
 
 1. Without syscall: open read-only capability, no alias with owned
    UUID, positive chunk, complete header, range, and all budgets.
-2. Read exactly 64-byte header from same FD; verify
+2. Read the exact 64-byte header from the same FD; verify
    magic `ARCDMSL1`, CRC, all UUID bytes, actual version, and reserved areas.
    Incompatible header fails before body reading.
 3. Read body through attested EOF, in bounded chunks, without
@@ -50,40 +50,40 @@ close, truncate, rename, or make any file durable.
 4. Run `ricostruisci-decisioni` with header version and
    `file-size = size`: scanner, witness search, participant
    preflight, owned copies, sorting, and conflict checking.
-5. Verify frontiers and still-open capability; deliver complete
+5. Verify frontiers and still-open capability; deliver a complete
    result without exported scratch, workspace, or arrays.
 
-SEAL with zero file-id does not replace header UUID. Tail remains
-in file: `:tail` means complete witness search and exclusion
-of incomplete batch, not partial replay of that batch. Durable-corruption
+SEAL with zero file-id does not replace the header UUID. The tail remains
+in the file: `:tail` means complete witness search and exclusion
+of the incomplete batch, not partial replay of that batch. Durable-corruption
 witness, DECISION conflict, or exhausted budget propagate
-original conditions; controller applies fail-stop.
+the original conditions; the controller applies fail-stop.
 
 [Canonical replay](decisioni-multiserie.md) retains opaque u64 TXID and CSN,
-including zero and maximum; identical duplicates idempotent, contradictory
-decisions corruption. Queries return scalars and do not
-attest file remains open or healthy at query time.
+including zero and maximum; identical duplicates are idempotent, and contradictory
+decisions are corruption. Queries return scalars and do not
+attest that the file remains open or healthy at query time.
 
 <a id="collegamento-alla-serie"></a>
 
 ## Serie connection
 
 `leggi-active-con-decisioni` accepts only `decisioni-recuperate`.
-Before any ACTIVE I/O, requires `eq` between Archivio scope and
+Before any ACTIVE I/O, it requires `eq` between Archivio scope and
 view scope in recovered CONTROL, rejects UUID aliases, and
-checks decision log open read-only. Then delegates to
-existing ACTIVE reader, forwarding all budgets; rechecks decision-log
-lifetime before returning result.
+checks that the decision log is open read-only. It then delegates to
+the existing ACTIVE reader, forwarding all budgets; rechecks decision-log
+lifetime before returning the result.
 
-Absent DECISION can thus be resolved through canonical path from
-complete scan of correct Archivio, under bootstrap and EOF
+An absent DECISION can thus be resolved through the canonical path from
+a complete scan of the correct Archivio, under bootstrap and EOF
 preconditions. Local OUTCOMEs, participants, and CSNs remain checked
-by ACTIVE resolver; no second semantics introduced.
+by the ACTIVE resolver; no second set of semantics is introduced.
 
-`leggi-active-recuperato` remains available with previous contract:
-caller passing bare table directly guarantees identity and completeness.
+`leggi-active-recuperato` remains available with its previous contract:
+a caller passing a bare table directly guarantees identity and completeness.
 No fallback from `nil` or unread log. ACTIVE result does not
-retain Archivio table. New entry does not authorize forgetting
+retain the Archivio table. The new entry does not authorize forgetting
 decisions, new CSNs, or traffic admission.
 
 <a id="budget-memoria-e-prestazioni"></a>
@@ -101,15 +101,15 @@ decisions, new CSNs, or traffic admission.
 | participants per DECISION | 65,535 |
 
 Configurable open-task budgets, not new database
-limits. Per-DECISION cap derives from format's u16 field. Zero
-allowed for DECISION/participant counts when file contains none;
-over-budget record not ignored. I/O capability permits
+limits. The per-DECISION cap derives from the format's u16 field. Zero is
+allowed for DECISION/participant counts when the file contains none;
+an over-budget record is not ignored. I/O capability permits
 `max(64, min(size-64, chunk))` bytes per transfer.
 
-Caller-supplied scratch at least `size` bytes; owned 16-byte
-UUID; replay table and workspace bounded by records and participants.
+Caller-supplied scratch is at least `size` bytes; the owned UUID is 16 bytes;
+the replay table and workspace are bounded by records and participants.
 Limits do not measure RSS or Lisp-object overhead.
-File read once: header and `ceiling((size-64)/chunk)` exact
+The file is read once: header and `ceiling((size-64)/chunk)` exact
 transfers. Binary queries and sorting remain existing replay's.
 Open path with allocations: no throughput,
 latency, or zero-heap-allocation promise. No lock or new shared write between Serie.
@@ -134,7 +134,7 @@ tests. [New verification method](decisioni-recuperate-verifica.md)
 defines functional tests, fault injection, and native chain;
 [independent review](decisioni-recuperate-revisione.md) remains separate
 from executed results. Full C1 qualification and new-entry measurements
-remain open. Component does not complete CLOSED
+remain open. The component does not complete CLOSED
 reconciliation, indexes/CSN horizon, or Recovery Manager gate.
-[Complete checkpoint builder](checkpoint-recovery.md) now available
+The [complete checkpoint builder](checkpoint-recovery.md) is now available
 with dedicated qualification still open.

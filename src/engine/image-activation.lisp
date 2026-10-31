@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (motore opzione-indice-paginato) index) payload-attivazione-immagine))
 (defun payload-attivazione-immagine (engine option)
-  "Pre: owner READY, configurazioni canoniche. Post: riserva conservativa dei payload vecchi e nuovi.
-Comprende vecchio reader/cache/delta, nuova verifica e array piccoli; esclude oggetti/header/GC/RSS."
+  "Pre: READY owner, canonical configurations. Post: conservative reservation of old and new payloads.
+Includes old reader/cache/delta, new verification, and small arrays; excludes objects/headers/GC/RSS."
   (let ((old (motore-paged-option engine)))
     (+ 65536 arcdocdb.record:+max-key-bytes+ 80
        (* (opzione-indice-paginato-size option) (+ 5 (opzione-indice-paginato-frames option)))
@@ -18,8 +18,8 @@ Comprende vecchio reader/cache/delta, nuova verifica e array piccoli; esclude og
 ;;; REQ: REQ-IDX-010 REQ-AFF-008
 (declaim (ftype (function (motore arcdocdb.index.page:fonte-indice index) null) verifica-fonte-attivazione))
 (defun verifica-fonte-attivazione (engine source revision)
-  "Pre: owner BUSY dopo verifica del candidato, prima della pubblicazione.
-Post: stessa fonte e revisione; INVARIANT-VIOLATION per mutazione o fase errata, nessuno swap."
+  "Pre: BUSY owner after candidate verification, before publication.
+Post: same source and revision; INVARIANT-VIOLATION for mutation or wrong phase, no swap."
   (p::esigi-indice-sano (motore-index engine))
   (unless (and (motore-busy engine) (= revision (p::indice-primario-revision (motore-index engine)))
                (arcdocdb.index.page::stessa-fonte-indice-p source (fonte-canonica-indice-motore engine)))
@@ -31,9 +31,9 @@ Post: stessa fonte e revisione; INVARIANT-VIOLATION per mutazione o fase errata,
                          &optional (or null delta-indice-motore)) null)
                 installa-vista-paginata-motore))
 (defun installa-vista-paginata-motore (engine view file option &optional delta)
-  "Pre: candidato verificato della fonte corrente e file locale vivo; owner BUSY senza borrower.
-Post: ownership e root trasferite, poi un solo close del precedente. Nessun commit durevole.
-Errore dopo lo swap non ripristina un file gia' chiuso; il confine chiamante rende FAULTED."
+  "Pre: verified candidate for current source and live local file; BUSY owner without borrower.
+Post: ownership and root transferred, then one close of the previous file. No durable commit.
+An error after swap does not restore an already closed file; caller boundary makes the engine FAULTED."
   (esigi-owner-motore engine)
   (let ((proof (arcdocdb.index.page::vista-indice-paginato-current view)) (old (motore-paged-file engine)))
     (unless (and (motore-busy engine) proof (not (eq old file))
@@ -47,9 +47,9 @@ Errore dopo lo swap non ripristina un file gia' chiuso; il confine chiamante ren
 ;;; REQ: REQ-IDX-010 REQ-AFF-004 REQ-LIM-003
 (declaim (ftype (function (motore opzione-indice-paginato &optional (or null delta-indice-motore)) null) prepara-attivazione-immagine))
 (defun prepara-attivazione-immagine (engine option &optional delta)
-  "Pre: richiesta BUSY, quota payload verificata. Post: root completa e file posseduti dal motore.
-Prima dello swap ogni uscita chiude soltanto il candidato e conserva la vecchia root.
-Dopo lo swap il cleanup finale dell'handle possiede il nuovo file, anche su nonlocal exit."
+  "Pre: BUSY request, verified payload quota. Post: complete root and files owned by engine.
+Before swap, every exit closes only the candidate and preserves the old root.
+After swap, final handle cleanup owns the new file, even on nonlocal exit."
   (let ((input nil) (source (fonte-canonica-indice-motore engine))
         (revision (p::indice-primario-revision (motore-index engine))))
     (unwind-protect
@@ -74,10 +74,10 @@ Dopo lo swap il cleanup finale dell'handle possiede il nuovo file, anche su nonl
                 attiva-indice-paginato-motore))
 (defun attiva-indice-paginato-motore (engine option &key (max-activation-payload 16777216)
                                                        (delta-keys 0) (delta-key-bytes 0))
-  "Pre: owner READY seriale, candidato esistente immutabile; quota payload separata da runtime/GC.
-Post: GET paginato con delta opzionale bounded senza riavvio; una sola capacita' attiva, nessun CSN o file modificato.
-Preflight invalido/esaurito preserva READY. Ogni errore/nonlocal exit ammesso rende FAULTED,
-conservando la causa; prima della pubblicazione la vecchia root resta intatta, senza fallback."
+  "Pre: serial READY owner, existing immutable candidate; payload quota separate from runtime/GC.
+Post: paged GET with optional bounded delta without restart; one active capability, no CSN or file modified.
+Invalid/exhausted preflight preserves READY. Every admitted error/nonlocal exit makes the engine FAULTED,
+preserving the cause; before publication the old root remains intact, without fallback."
   (esigi-motore-pronto engine)
   (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (unless (typep max-activation-payload '(integer 0 536870912))

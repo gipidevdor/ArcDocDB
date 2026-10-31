@@ -2,7 +2,7 @@
 
 # CBOR structural-scanning decisions
 
-Static inventory on kernel frozen before campaigns. The 20 new compound
+This is a static inventory of the kernel frozen before campaigns. The 20 new compound
 decisions are listed below; unchanged CBOR headers and UTF-8 retain
 their own inventories. Lines refer to the snapshot from the
 [second reading](cbor-struttura-revisione.md). No guard is removed from the
@@ -10,7 +10,7 @@ coverage denominator. Fixtures indicate verification intent;
 condition and branch outcomes remain to be acquired. This is not
 MC/DC qualification and no exclusions are approved.
 
-Fixtures are in `tests/codec/cbor-structure.lisp`; name prefix is
+Fixtures are in `tests/codec/cbor-structure.lisp`; the name prefix is
 `test-REQ-AFF-004-cbor-structure-` or `test-REQ-AFF-008-cbor-structure-`.
 "Internal defense" indicates a state that must not be produced by the public
 path when respecting types, ownership, and helpers; this classification does not prove
@@ -52,5 +52,5 @@ Simple selections also preserve contractual precedence:
 | Tag | node counted and pending; no frame or child charged until non-tag terminal begins. |
 
 Simple guards, `otherwise` in `case`, loop fallback, and capacity/progress
-conditions also remain in source and denominator. Inventory
+conditions also remain in the source and denominator. The inventory
 does not restrict future coverage to public errors or the 20 decisions.

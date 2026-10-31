@@ -7,9 +7,9 @@
 (declaim (ftype (function (selettore-versione-recuperata octets index index) null)
                 inizializza-chiave-recuperata))
 (defun inizializza-chiave-recuperata (selector key start end)
-  "Pre: worker esclusivo, precedente chiave terminata o abbandonata esplicitamente; span stabile.
-Post: copia privata della chiave, nessun vincitore e tuple azzerate; nessun array per nuova chiave.
-Rifiuti di stato/range/budget prima delle mutazioni; interruzione della copia => FAULTED terminale."
+  "Pre: exclusive worker, previous key completed or explicitly abandoned; stable span.
+Post: private key copy, no winner, zeroed tuples; no array per new key.
+State/range/budget rejections before mutations; copy interruption => terminal FAULTED."
   (when (eq (selection-state selector) :faulted)
     (error 'invalid-argument :reason :recovery-selection-state))
   (check-range key start end)
@@ -32,8 +32,8 @@ Rifiuti di stato/range/budget prima delle mutazioni; interruzione della copia =>
 (declaim (ftype (function (selettore-versione-recuperata octets index index) boolean)
                 chiave-selezione-uguale-p))
 (defun chiave-selezione-uguale-p (selector buffer start end)
-  "Pre: span candidato verificato dal codec, chiave inizializzata. Post: confronto binario esatto senza copia.
-Nessuna normalizzazione, hash o confronto del solo prefisso; ciclo entro la capacita della chiave."
+  "Pre: candidate span verified by codec, initialized key. Post: exact binary comparison without copy.
+No normalization, hash, or prefix-only comparison; loop within key capacity."
   (and (= (- end start) (selection-length selector))
        (loop for i below (selection-length selector)
              always (= (aref (selection-key selector) i) (aref buffer (+ start i))))))

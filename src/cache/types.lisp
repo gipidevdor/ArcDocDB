@@ -18,9 +18,9 @@
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
 (defstruct (classe-cache (:constructor %make-classe-cache)
                         (:copier nil))
-  "Pre: array privati all'avvio, capacità fissa e otto posti per insieme.
-Post: slot contigui senza oggetti per entry; sequenze senza wrap, mutex solo in inserimento.
-REJECTED scarta un dato dubbio; DISABLED è terminale dopo interruzione/esaurimento."
+  "Pre: private arrays at startup, fixed capacity, eight slots per set.
+Post: contiguous slots without per-entry objects; sequences without wrap, mutexes only for insertion.
+REJECTED discards doubtful data; DISABLED terminal after interruption/exhaustion."
   (size 1024 :type (integer 1024 33554432) :read-only t)
   (sets 1 :type (integer 1 65536) :read-only t)
   (arena (make-array 0 :element-type 'u8) :type octets :read-only t)
@@ -36,8 +36,8 @@ REJECTED scarta un dato dubbio; DISABLED è terminale dopo interruzione/esaurime
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
 (defstruct (cache-serie (:constructor %make-cache-serie (classes payload)) (:copier nil))
-  "Pre: controller possiede una partizione indipendente per Serie e la pubblica una volta.
-Post: budget del payload preallocato; nessun riferimento a indice, file, snapshot o altre Serie.
-Con classi vuote tutte le richieste saltano la cache; nessuna risorsa persistente."
+  "Pre: controller owns an independent partition per Serie and publishes it once.
+Post: preallocated payload budget; no reference to index, file, snapshot, or other Serie.
+With empty classes, all requests bypass cache; no persistent resource."
   (classes #() :type simple-vector :read-only t)
   (payload 0 :type index :read-only t))

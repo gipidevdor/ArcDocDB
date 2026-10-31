@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (t t t) index) verifica-configurazione-directory-get))
 (defun verifica-configurazione-directory-get (maps maximum budget)
-  "Pre: input e budget del caller. Post: cardinalità finita ammessa PRIMA di scansioni/array.
-INVALID-ARGUMENT per forma/configurazione; RESOURCE-EXHAUSTED per segmenti/payload.
-Nessun ordinamento implicito, nuova apertura, espansione o allocazione di array."
+  "Pre: caller input and budgets. Post: finite cardinality admitted BEFORE scans/arrays.
+INVALID-ARGUMENT for shape/configuration; RESOURCE-EXHAUSTED for segments/payload.
+No implicit sorting, new opening, expansion, or array allocation."
   (unless (and (typep maximum 'index) (<= 1 maximum +directory-max-segments+)
                (typep budget 'index))
     (error 'invalid-argument :reason :directory-configuration))
@@ -22,9 +22,9 @@ Nessun ordinamento implicito, nuova apertura, espansione o allocazione di array.
 ;;; REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (vista-get-serie t u32) u32) verifica-mappa-directory-get))
 (defun verifica-mappa-directory-get (view map previous)
-  "Pre: input stabile, ID precedente zero o positivo. Post: mappa canonica CLOSED e ID crescente.
-INVALID-ARGUMENT per tipo, vista, ID, ordine o FD non readonly/aperto.
-Non tronca ID storage u64 e non certifica identità fisica, salute o quiescenza dei FD."
+  "Pre: stable input, previous ID zero or positive. Post: canonical CLOSED map and increasing ID.
+INVALID-ARGUMENT for type, view, ID, order, or FD not readonly/open.
+Does not truncate storage u64 IDs or certify physical identity, health, or FD quiescence."
   (unless (typep map 'mappa-segmento-get) (error 'invalid-argument :reason :directory-maps))
   (let* ((segment (mappa-segmento-get-segment map)) (id (segmento-get-low segment)))
     (unless (eq view (segmento-get-owner segment))
@@ -41,10 +41,10 @@ Non tronca ID storage u64 e non certifica identità fisica, salute o quiescenza 
 (declaim (ftype (function (vista-get-serie t &key (:max-segments t) (:budget-payload t))
                          directory-get-serie) crea-directory-get-serie))
 (defun crea-directory-get-serie (view maps &key (max-segments 65536) (budget-payload 786432))
-  "Pre: controller, simple-vector di mappe CLOSED ordinate, stabile/esclusivo fino al ritorno.
-Post: directory completa, due array copiati/posseduti; input riusabile, zero segmenti valido.
-Budget/identità/ordine/FD controllati prima di allocare; errori typed non pubblicano parziali.
-Il controller acquisisce/pubblica la directory con EBR, separatamente dalle location del primary."
+  "Pre: controller, simple-vector of sorted CLOSED maps, stable/exclusive until return.
+Post: complete directory, two copied/owned arrays; reusable input, zero segments valid.
+Budgets/identity/order/FD checked before allocation; typed errors publish no partial results.
+The controller acquires/publishes the directory with EBR, separately from primary locations."
   (let ((count (verifica-configurazione-directory-get maps max-segments budget-payload)) (previous 0))
     (declare (type u32 previous))
     (dotimes (i count) (setf previous (verifica-mappa-directory-get view (svref maps i) previous)))

@@ -6,8 +6,8 @@
 ;;; REQ: REQ-THR-001 REQ-AFF-008 REQ-AFF-013
 (declaim (ftype (function (controllore-pool t t t t t) pool-tick) %pool-sample))
 (defun %pool-sample (controller tick queue cpu p99 actual)
-  "Pre: owner verificato. Post: tutto il campione valido prima di qualsiasi scrittura.
-INVALID-ARGUMENT dominio, actual fuori min..max, clock regressivo o intervallo troppo breve."
+  "Pre: owner verified. Post: entire sample valid before any write.
+INVALID-ARGUMENT for domain, actual outside min..max, regressing clock, or interval too short."
   (%pool-range tick 0 1099511627775 :pool-tick)
   (%pool-range queue 0 1048576 :pool-queue)
   (%pool-range cpu 0 1000 :pool-cpu)
@@ -24,10 +24,10 @@ INVALID-ARGUMENT dominio, actual fuori min..max, clock regressivo o intervallo t
                          (values pool-workers (member :hold :pending :grow :shrink) &optional))
                 aggiorna-controllore-pool))
 (defun aggiorna-controllore-pool (controller tick queue cpu p99 actual)
-  "Pre: owner esclusivo; tempo, coda, CPU/P99 in millimi e worker effettivi iniettati.
-Post: target limitato e azione; :PENDING conserva target se actual diverso, senza attesa.
-Gap >2 periodi resetta EWMA/permanenza. Propaga preflight tipizzato senza mutazione.
-Non crea/ritira thread, non revoca target pending, non tratta ready EMPTY come quiescenza."
+  "Pre: exclusive owner; injected time, queue, CPU/P99 in thousandths, and actual workers.
+Post: bounded target and action; :PENDING retains target if actual differs, without waiting.
+Gap >2 periods resets EWMA/dwell time. Propagates typed preflight errors without mutation.
+Does not create/retire threads, revoke pending target, or treat ready EMPTY as quiescence."
   (%check-pool controller)
   (%pool-sample controller tick queue cpu p99 actual)
   (let ((reset (or (not (controllore-pool-initialized controller))

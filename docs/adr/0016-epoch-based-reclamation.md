@@ -12,7 +12,7 @@
 ## Context
 
 Reclaiming an `OBSOLETE` segment, a replaced index table, or a secondary index base requires
-knowing when no reader uses it anymore, with negligible cost on the read path and without
+knowing when no reader is still using it, with negligible cost on the read path and without
 shared counters.
 
 <a id="decisione"></a>

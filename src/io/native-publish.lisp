@@ -17,8 +17,8 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function () null) esigi-rinomina-esclusiva-nativa))
 (defun esigi-rinomina-esclusiva-nativa ()
-  "Pre: nessun effetto richiesto. Post: ABI/piattaforma/simbolo della rinomina esclusiva disponibili.
-UNSUPPORTED-FORMAT prima dell'I/O sui file; la presenza del simbolo non prova il supporto del volume."
+  "Pre: no effect requested. Post: exclusive-rename ABI/platform/symbol available.
+UNSUPPORTED-FORMAT before file I/O; symbol presence does not prove volume support."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)
@@ -29,10 +29,10 @@ UNSUPPORTED-FORMAT prima dell'I/O sui file; la presenza del simbolo non prova il
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (fd simple-base-string simple-base-string) integer) native-rename-exclusive))
 (defun native-rename-exclusive (directory source target)
-  "Pre: ABI/simbolo gia' ammessi, foglie private e namespace esclusivo posseduto.
-Post: una rinomina relativa esclusiva, nessun target sostituito e nessun flush.
-Punto atomico: syscall riuscita; completamento di decisione autorevole preesistente.
-SYSCALL-ERROR con errno immediato; nessun retry/fallback neppure per EINVAL/ENOSYS/EEXIST."
+  "Pre: ABI/symbol already admitted, private leaves, owned exclusive namespace.
+Post: one exclusive relative rename, no target replaced and no flush.
+Atomic point: successful syscall; completes a preexisting authoritative decision.
+SYSCALL-ERROR with immediate errno; no retry/fallback even for EINVAL/ENOSYS/EEXIST."
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)
   (let ((result (%rename-exclusive directory source directory target +rename-exclusive-flag+)))

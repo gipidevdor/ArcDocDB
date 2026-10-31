@@ -8,10 +8,10 @@
                          (values (member :found :absent) b:index &optional))
                 leggi-documento-corrente-motore))
 (defun leggi-documento-corrente-motore (engine key target start)
-  "Pre: owner, MOTORE-BUSY vero, input validati; vista senza cache e contesto GET esclusivo.
-Post: FOUND con numero byte autorizzati dopo copia e conclusione; ABSENT con zero,
-senza modificare TARGET. Clock del motore letto all'avvio e fresco alla conclusione.
-Ogni uscita abbandona GET; un errore di cleanup non sostituisce l'uscita primaria."
+  "Pre: owner, MOTORE-BUSY true, validated inputs; cache-free view and exclusive GET context.
+Post: FOUND with authorized byte count after copying and completion; ABSENT with zero,
+without modifying TARGET. Engine clock read at startup and fresh at completion.
+Every exit abandons GET; a cleanup error does not replace the primary exit."
   (let ((context (motore-get-context engine)) (clock (motore-clock engine)) (complete nil))
     (declare (type (function () b:u64) clock))
     (unwind-protect
@@ -57,12 +57,12 @@ Ogni uscita abbandona GET; un errore di cleanup non sostituisce l'uscita primari
                          (values (member :found :absent) b:index &optional))
                 leggi-documento))
 (defun leggi-documento (engine key target &key (start 0))
-  "Pre: thread owner, motore READY; KEY stabile e TARGET esclusivo, distinto dalla chiave;
-START indice nel target, capacità sufficiente per il valore. API seriale non rientrabile.
-Post: (values :FOUND byte-copiati) in TARGET da START, oppure (:ABSENT 0) senza mutarlo.
-Il clock predefinito è la funzione senza argomenti del motore; nessun clock/I/O aggiuntivo.
-Input invalido prima del GET; ogni errore nella richiesta ammessa rende FAULTED e propaga
-la stessa causa. Su errore il contenuto di TARGET non è un risultato autorizzato."
+  "Pre: owner thread, READY engine; stable KEY and exclusive TARGET distinct from the key;
+START is an index in target, sufficient capacity for the value. Nonreentrant serial API.
+Post: (values :FOUND byte-copiati) in TARGET from START, or (:ABSENT 0) without modifying it.
+The default clock is the engine's no-argument function; no additional clock/I/O.
+Invalid input before GET; every error in the admitted request makes it FAULTED and propagates
+the same cause. On error, TARGET contents are not an authorized result."
   (esigi-motore-pronto engine)
   (unless (<= 1 (length key) arcdocdb.record:+max-key-bytes+)
     (error 'arcdocdb.conditions:invalid-argument :reason :engine-key-length))

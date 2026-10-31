@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-STO-003 REQ-AFF-001
 (declaim (ftype (function (control-preparato active-recuperato) null) verifica-chiusura-active))
 (defun verifica-chiusura-active (prepared recovered)
-  "Pre: recovery esclusivo senza mutazioni dei file o namespace; inventario già riconciliato.
-Post: checkpoint chiude il vecchio ACTIVE esattamente a P, con tutti e soli gli esiti derivati.
-INVALID-ARGUMENT per lunghezza/stato/esiti, IO-FAULT per FD chiuso; nessun claim o syscall."
+  "Pre: exclusive recovery without file or namespace mutations; inventory already reconciled.
+Post: checkpoint closes old ACTIVE exactly at P, with all and only derived outcomes.
+INVALID-ARGUMENT for length/state/outcomes, IO-FAULT for closed FD; no claim or syscall."
   (arcdocdb.io::esigi-aperto (arcdocdb.get::segmento-get-file (active-recuperato-segment recovered)) :input)
   (let ((manifest (manifest-control-preparato prepared)) (id (id-active-recuperato recovered))
         (ids (active-recuperato-ids recovered)) (csns (active-recuperato-csns recovered)))
@@ -25,10 +25,10 @@ INVALID-ARGUMENT per lunghezza/stato/esiti, IO-FAULT per FD chiuso; nessun claim
 ;;; REQ: REQ-REC-001 REQ-STO-003 REQ-TXM-007 REQ-AFF-001 REQ-AFF-018
 (declaim (ftype (function (control-preparato active-recuperato) control-pubblicato) pubblica-control-da-active))
 (defun pubblica-control-da-active (prepared recovered)
-  "Pre: pool I/O, recovery esclusivo; inventario/CLOSED verificati, file e tabella originaria autorevoli.
-Post: chiusura da scanner/esiti e transizione conservativa verificate, publisher unico completato.
-Punto di atomicità: rinomina del control log; conferma solo dopo fsync parent del publisher canonico.
-Rifiuti prima del claim non pubblicano; dopo, errori originali e stato FAULTED del publisher.
-Non decide dimenticabilità globale, ricostruisce indici o ammette traffico sulla Serie."
+  "Pre: I/O pool, exclusive recovery; inventory/CLOSED verified, files and original table authoritative.
+Post: scanner/outcome closure and conservative transition verified, unique publisher completed.
+Atomicity point: control log rename; confirmation only after parent fsync by the canonical publisher.
+Rejections before claim do not publish; afterward, original errors and publisher FAULTED state.
+Does not decide global forgettability, reconstruct indexes, or admit traffic to the Serie."
   (verifica-chiusura-active prepared recovered)
   (pubblica-control-validato prepared (active-recuperato-control recovered)))

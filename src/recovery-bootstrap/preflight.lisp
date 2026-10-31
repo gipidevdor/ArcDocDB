@@ -7,10 +7,10 @@
 (declaim (ftype (function (insieme-serie-recovery decisioni-recuperate t t t octets index index index)
                          (values index index &optional)) verifica-bootstrap-archivio))
 (defun verifica-bootstrap-archivio (set decisions controls sources limits scratch byte-budget segment-budget references-budget)
-  "Pre: recovery esclusivo dell'Archivio, nessun writer o close concorrente. Post: count Serie/segmenti completi.
-Ogni vista EQ, insieme Serie e preflight file prima dei dati; budget globali prima degli array.
-Byte: somma EOF ACTIVE + P CLOSED. Riferimenti nuovi: 8*(Serie+segmenti), non RSS.
-Propaga condizioni canoniche; nessuna lettura di header/corpi o consegna di dati parziali."
+  "Pre: exclusive Archivio recovery, no concurrent writer or close. Post: complete Serie/segment counts.
+Each EQ view, Serie set, and file preflight before data; global budgets before arrays.
+Bytes: sum of ACTIVE EOF + CLOSED P. New references: 8*(Serie+segments), not RSS.
+Propagates canonical conditions; no header/body reads or partial data delivery."
   (let* ((count (verifica-ingressi-bootstrap set decisions controls sources limits segment-budget references-budget))
          (views (arcdocdb.recovery.archive.csn::insieme-serie-recovery-views set))
          (segments 0) (references (* 16 count)) (bytes 0))

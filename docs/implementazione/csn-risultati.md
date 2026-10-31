@@ -64,7 +64,7 @@ Medians of five samples; a pair includes two APIs, not two documents:
 | Oldest pending, second slot reused, K=2 | 4.89 | 4.85 |
 | Consistent read of last and H | 13.29 | 13.30 |
 
-The K-word scan dominates as K grows; default 256 remains an
+The K-word scan dominates as K grows; the default of 256 remains an
 initial configuration to reassess in the WAL path. No heap or cost of the
 controller, index, document, or flush is inferred from these measurements.
 
@@ -81,7 +81,7 @@ created before the window. Median pairs/s:
 | 2 | 1.16 | 2.47 |
 | 4 | 1.01 | 5.14 |
 
-Every replicate checks exact emitted identities with bitmap and checksum,
+Every replicate checks exact emitted identities with a bitmap and checksum,
 and last=H at completion. In the shared case, three replicates total 50,644
 busy retries with two workers and 348,290 with four; full is zero. In independent
 registries, busy/full are zero. Sharing per Archivio serializes coordination
@@ -114,7 +114,7 @@ remain subsequent integrations. No complete requirement is promoted.
 The [WAL–CSN campaign](wal-csn-risultati.md) found that the previous
 ASDF mapping of only the root did not enforce a private cache for descendant
 files. The tool was corrected with recursive wildcards and a
-destination check before compilation. CSN reports above remain
+destination check before compilation. The CSN reports above remain
 observations from their campaign; isolation claimed by the old
 configuration is not retroactively certified. No historical data is
 replaced by results from the subsequent campaign.

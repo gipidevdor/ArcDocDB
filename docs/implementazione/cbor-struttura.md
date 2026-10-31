@@ -17,7 +17,7 @@ connection to operation admission remains subsequent work.
 
 Span `[start,end)` belongs to the caller and remains immutable.
 Each worker owns a separate workspace, used by only one call at a
-time and reusable after error. The factory creates a structure and two fixed
+time and reusable after an error. The factory creates a structure and two fixed
 102-cell arrays; the workspace does not retain the buffer. Budgets below
 defaults are available, including zero depth for scalars/strings.
 
@@ -43,7 +43,7 @@ structure. The result certifies neither full semantic validity nor deterministic
 encoding.
 
 Verification includes independent oracles, generated corpus, finite fuzz,
-16MiB and 100-level boundaries, and two threads with private buffers/workspaces.
+16 MiB and 100-level boundaries, and two threads with private buffers/workspaces.
 [First reading](cbor-struttura-lettura.md),
 [second reading](cbor-struttura-revisione.md),
 [decision inventory](cbor-struttura-decisioni.md), and

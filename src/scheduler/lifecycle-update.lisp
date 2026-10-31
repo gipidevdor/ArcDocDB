@@ -6,8 +6,8 @@
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (porta-worker-pool pool-command pool-command) null) %pool-request-command))
 (defun %pool-request-command (port old word)
-  "Pre: coordinatore esclusivo, parola validata, OLD corrente. Post: REQUEST pubblicata.
-INVARIANT-VIOLATION :POOL-PORT-STATE su conflitto; non attesta un comando fallito."
+  "Pre: exclusive coordinator, validated word, current OLD. Post: REQUEST published.
+INVARIANT-VIOLATION :POOL-PORT-STATE on conflict; does not attest a failed command."
   (sb-thread:barrier (:write))
   (unless (= old (sb-ext:compare-and-swap (porta-worker-pool-request port) old word))
     (error 'invariant-violation :reason :pool-port-state))
@@ -16,9 +16,9 @@ INVARIANT-VIOLATION :POOL-PORT-STATE su conflitto; non attesta un comando fallit
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (registro-pool) null) %pool-generation-budget))
 (defun %pool-generation-budget (registry)
-  "Pre: owner e porte stabili. Post: una nuova generazione disponibile su ogni porta.
-RESOURCE-EXHAUSTED :POOL-GENERATION prima di campione/comandi; nessun wrap/reset.
-Preflight conservativo anche per hold: l'esaurimento richiede sostituzione amministrativa."
+  "Pre: owner and stable ports. Post: one new generation available on every port.
+RESOURCE-EXHAUSTED :POOL-GENERATION before sample/commands; no wrap/reset.
+Conservative preflight even for hold: exhaustion requires administrative replacement."
   (let ((ports (registro-pool-ports registry)))
     (dotimes (i (length ports))
       (unless (< (ash (porta-worker-pool-request (svref ports i)) -1)
@@ -29,9 +29,9 @@ Preflight conservativo anche per hold: l'esaurimento richiede sostituzione ammin
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (registro-pool pool-workers) null) %pool-publish-target))
 (defun %pool-publish-target (registry target)
-  "Pre: porte stabili, generazioni disponibili, nuovo target validato dal controller.
-Post: solo bit modificati ricevono generation+1; ACK esclusivo resta al worker.
-Un'ondata cresce oppure ritira: finché pending, actual differisce dal target."
+  "Pre: stable ports, available generations, new target validated by the controller.
+Post: only changed bits receive generation+1; exclusive ACK remains with the worker.
+A wave grows or retires: while pending, actual differs from target."
   (let ((ports (registro-pool-ports registry)))
     (dotimes (i (length ports))
       (let* ((port (svref ports i)) (old (porta-worker-pool-request port))
@@ -47,10 +47,10 @@ Un'ondata cresce oppure ritira: finché pending, actual differisce dal target."
                          (values pool-workers (member :hold :pending :grow :shrink)
                                  pool-workers boolean &optional)) aggiorna-registro-pool))
 (defun aggiorna-registro-pool (registry tick queue cpu p99)
-  "Pre: owner esclusivo; tempo e metriche iniettati come nel controller.
-Post: target, azione, actual letto prima del campione, pending corrente/conservativo.
-Nessuna nuova ondata finché esistono ACK pendenti; nessun blocco/allocazione normale.
-Preflight typed prima delle scritture; controller collegato aggiornato solo qui."
+  "Pre: exclusive owner; time and metrics injected as in the controller.
+Post: target, action, actual read before the sample, current/conservative pending.
+No new wave while ACKs remain pending; no blocking/normal-path allocation.
+Typed preflight before writes; bound controller updated only here."
   (multiple-value-bind (actual old-target pending) (leggi-registro-pool registry)
     (unless pending (%pool-generation-budget registry))
     (multiple-value-bind (target action)

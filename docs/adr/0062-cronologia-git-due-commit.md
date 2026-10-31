@@ -24,7 +24,7 @@ results retain their original identifiers.
 Before replacement, a complete Git bundle of the three previous public refs
 is created, verified, published in the external asset, and reread
 with SHA-256. The local Codex checkpoint matches a tree already present
-in the saved history; no additional content to integrate.
+in the saved history; there is no additional content to integrate.
 
 `main` and the release tag are updated together with leases on the observed
 hashes. The obsolete remote branch is deleted in the same operation.

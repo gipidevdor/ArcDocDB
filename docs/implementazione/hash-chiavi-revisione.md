@@ -8,7 +8,7 @@
 
 Herschel read the product at commit
 `0460a6e723325ff925b8c678e81544fbad2a2684` without running build or tests.
-Subsequent `68a4125` changed only documentation. Initial findings
+Subsequent `68a4125` changed only documentation. Initial findings are
 preserved, including after correction:
 
 | ID | Priority | Deduced finding, not executed by reviewer | Parent correction |
@@ -32,7 +32,7 @@ Pauli separately read the four hash files from the same freeze,
 tree `e1968e56faef339fd7b29b2b93f77e35e30c0eef`, after writing
 the independent oracle. No static defect found in formulas,
 the five public typep checks, high/low seed, or return order.
-Seven u64 helpers declared inline; actual call and boxing
+Seven u64 helpers are declared inline; actual call and boxing
 elimination is not inferred from declarations.
 
 <a id="lettura-dellautore-sulle-correzioni"></a>
@@ -71,7 +71,7 @@ The parent adds `hash-con-seme-indice` to both APIs: it catches only
 INVARIANT-VIOLATION, invalidates the owner, and reraises the same condition.
 The regression injects a concrete condition and verifies identity,
 FAULTED, and unchanged maps. External-argument rejections are not transformed.
-Block/tail docstrings updated with classes and reasons (COD-50).
+Block/tail docstrings were updated with classes and reasons (COD-50).
 
 The first full check had exit 0 (622 tests plus two smokes), but the
 recorder detected a late update only to output paths in the

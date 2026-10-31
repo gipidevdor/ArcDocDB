@@ -8,8 +8,8 @@
                           arcdocdb.binary:u32 arcdocdb.binary:u32)
                          arcdocdb.recovery.manifest::manifest) valida-checkpoint-control))
 (defun valida-checkpoint-control (bytes identity version active max-segments max-outcomes)
-  "Pre: file privato intero, solo EDIT completo e SEAL. Post: header e manifest coerenti con ACTIVE.
-Propaga errori del recovery; INVARIANT-VIOLATION per costruzione interna; niente I/O."
+  "Pre: entire private file, only complete EDIT and SEAL. Post: header and manifest consistent with ACTIVE.
+Propagates recovery errors; INVARIANT-VIOLATION for internal construction; no I/O."
   (multiple-value-bind (next actual-version) (verifica-header-log bytes 0 (length bytes) :control identity)
     (unless (and (= next +log-header-bytes+) (= actual-version version))
       (error 'invariant-violation :reason :control-checkpoint-header))
@@ -26,9 +26,9 @@ Propaga errori del recovery; INVARIANT-VIOLATION per costruzione interna; niente
 ;;; REQ: REQ-FOR-003 REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (octets u64 integer octets) octets) codifica-checkpoint-control))
 (defun codifica-checkpoint-control (payload stamp version identity)
-  "Pre: payload entro budget, identità canonica, versione del nuovo ACTIVE. Post: file privato sigillato.
-EDIT completo, TXID zero, stamp caller e durable storico zero: nessun CSN preso.
-Errori dei codec propagati; INVARIANT-VIOLATION per ritorni interni; nessun buffer caller modificato."
+  "Pre: payload within budget, canonical identity, new ACTIVE version. Post: sealed private file.
+Complete EDIT, zero TXID, caller stamp, and historical durable zero: no CSN taken.
+Codec errors propagated; INVARIANT-VIOLATION for internal returns; no caller buffer modified."
   (let* ((batch-bytes (+ +header-bytes+ (length payload) +header-bytes+ +seal-bytes+))
          (batch (crea-lotto :control 0 :version version :capacity batch-bytes :max-records 1))
          (bytes (make-array (+ +log-header-bytes+ batch-bytes)
@@ -49,10 +49,10 @@ Errori dei codec propagati; INVARIANT-VIOLATION per ritorni interni; nessun buff
                                (:max-esiti arcdocdb.binary:u32)) checkpoint-control) crea-checkpoint-control))
 (defun crea-checkpoint-control (active payload stamp
                               &key (max-payload +metadata-max-bytes+) (max-segmenti 65536) (max-esiti 65536))
-  "Pre: nuovo ACTIVE esclusivo, payload di uno stato completo da fonte autorevole e stamp u64.
-Post: copia privata header/EDIT/SEAL e manifest verificato; nessuna mutazione degli input o I/O.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED per budget; corruzione/applicabilità dal recovery.
-Il piano non dimostra presenza dei CLOSED o correttezza dell'allocatore degli ID."
+  "Pre: exclusive new ACTIVE, payload of a complete state from an authoritative source, and u64 stamp.
+Post: private header/EDIT/SEAL copy and verified manifest; no input mutation or I/O.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED for budget; corruption/applicability from recovery.
+The plan does not prove CLOSED presence or ID allocator correctness."
   (verifica-active-checkpoint active)
   (unless (<= +edit-min-bytes+ max-payload +metadata-max-bytes+)
     (error 'invalid-argument :reason :control-checkpoint-budget))

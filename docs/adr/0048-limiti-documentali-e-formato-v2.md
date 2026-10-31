@@ -11,7 +11,7 @@
 
 ## Decision
 
-1. A deterministic CBOR document occupies at most **exactly 16 MiB (16,777,216 bytes)**, including its CBOR encoding, excluding the key and storage header. This is also the default; a Serie can configure a lower maximum. The limit applies to uncompressed bytes.
+1. A deterministic CBOR document has an exact maximum size of **16 MiB (16,777,216 bytes)**, including its CBOR encoding, excluding the key and storage header. This is also the default; a Serie can configure a lower maximum. The limit applies to uncompressed bytes.
 2. A document allows **100 container levels**: a root map or array counts as level 1; each nested map or array adds 1. Map keys and values are traversed. The decoder maintains explicit counters and budgets; it does not depend on the native stack. Nodes, bytes, requests, and responses have separate budgets. The document is validated before admission to the writer.
 3. `_id` remains a binary sequence compared byte by byte, **1–65,535 bytes** long. The default allows the full range; lower limits are configurable per Serie. Generated identifiers remain 16 bytes. BSON type semantics are not introduced; extending to 65,535 bytes is an ArcDocDB choice, not a limit copied from MongoDB.
 4. Records and hints adopt **format version 2**. The frame remains 24 bytes: offset 10 is `u16 key-len`, without a reserved byte at 11; header and body CRCs are unchanged. Maximum PUT length: **16,842,775 bytes** (24 + 65,535 + 16,777,216). Hint entries remain 24 bytes: `u32 offset`, `u32 len`, `u64 csn`, `u32 key-off`, `u16 key-len`, `u8 tipo`, `u8 flag`.
@@ -22,7 +22,7 @@
 
 ## Versioning and migration
 
-Decoders select the layout from the file version; they do not interpret v1 as v2. Existing spikes remain v1 experiments and their measurements do not verify v2. An offline converter reads v1, writes and verifies v2 in new files, publishes the new manifest with EDIT, and retains sources until reclamation. Never in-place updates. This converter is designed, not implemented.
+Decoders select the layout from the file version; they do not interpret v1 as v2. Existing spikes remain v1 experiments and their measurements do not verify v2. An offline converter reads v1, writes and verifies v2 in new files, publishes the new manifest with EDIT, and retains sources until reclamation. Updates are never performed in place. This converter is designed, not implemented.
 
 <a id="costi-e-verifica"></a>
 

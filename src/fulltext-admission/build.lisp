@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (simple-vector) null) verifica-configurazioni-riserve))
 (defun verifica-configurazioni-riserve (configs)
-  "Pre: vettore di 1..16 configurazioni canoniche. Post: ordine (indice,generazione),
-al piu otto indici e due generazioni per indice; nessuna copia di ID sul percorso caldo."
+  "Pre: vector of 1..16 canonical configurations. Post: (index,generation) order,
+at most eight indexes and two generations per index; no ID copy on the hot path."
   (let ((prior 0) (generation 0) (indices 0) (generations 0))
     (dotimes (i (length configs))
       (let ((config (svref configs i)))
@@ -24,8 +24,8 @@ al piu otto indici e due generazioni per indice; nessuna copia di ID sul percors
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text index index index index index) riserva-full-text) costruisci-slot-riserva))
 (defun costruisci-slot-riserva (pool position tokens bytes fields memory)
-  "Pre: budget complessivo gia verificato. Post: run e vettori privati per ogni generazione.
-Nessun input del worker viene trattenuto alla costruzione."
+  "Pre: total budget already verified. Post: private run and vectors for every generation.
+No worker input retained at construction."
   (let* ((count (length (riserve-full-text-configs pool))) (runs (make-array count)))
     (dotimes (i count)
       (setf (svref runs i) (r:crea-indice-posizionale :max-tokens tokens :max-bytes bytes
@@ -40,9 +40,9 @@ Nessun input del worker viene trattenuto alla costruzione."
 (defun crea-riserve-full-text (queue configs segment &key (capacity 8) (max-tokens 4096) (term-bytes 262144)
                                               (max-memory 268435456) (delta-bytes 268435456)
                                               (staging-bytes 67108864) (file-bytes 17179869184))
-  "Pre: coda canonica, configurazioni immutabili e ACTIVE nuovo vuoto con ID u32 positivo.
-Post: pool privato; costo fisso prenotato una volta per file. Non adotta un catalogo o file esistente.
-INVALID-ARGUMENT per forma/ordine, RESOURCE-EXHAUSTED prima delle allocazioni oltre budget."
+  "Pre: canonical queue, immutable configurations, new empty ACTIVE with a positive u32 ID.
+Post: private pool; fixed cost reserved once per file. Does not adopt a catalog or existing file.
+INVALID-ARGUMENT for shape/order, RESOURCE-EXHAUSTED before allocations beyond budget."
   (unless (and (typep queue 'ex:coda-writer) (typep configs 'simple-vector) (<= 1 (length configs) 16)
                (typep segment '(integer 1 4294967295)) (typep capacity '(integer 1 1024))
                (typep max-tokens '(integer 1 4294967295)) (typep term-bytes '(integer 1 4294967295))

@@ -1,11 +1,13 @@
 <a id="consegna-locale-dei-tratti-del-writer"></a>
 
-# Local writer segment handoff
+<a id="local-writer-segment-handoff"></a>
+
+# Local writer slice handoff
 
 `arcdocdb.execution` adds `writer-programmabile`: it owns a private
-[writer queue](code-writer.md) and coordinates acceptance and segment end
+[writer queue](code-writer.md) and coordinates acceptance and slice end
 through the same ring guard. A message arriving after the last pop
-preserves the obligation to run the next segment. Each object belongs
+preserves the obligation to run the next slice. Each object belongs
 to a distinct Serie, without a guard between Serie.
 
 | Operation | Result |
@@ -16,7 +18,7 @@ to a distinct Serie, without a guard between Serie.
 | `preleva-lavori-writer writer lease target start end` | FIFO, cumulative quota, and span as in `preleva-messaggi`. |
 | `termina-tratto-writer writer lease` | Releases lease; ready and `:schedule` if work remains, idle and `:idle` if empty. |
 
-The consumer processes extracted messages before terminating the segment.
+The consumer processes extracted messages before terminating the slice.
 It may finish before the quantum: any remaining messages still require
 a new task. Acceptance and completion share the guard; the lease preserves
 writer exclusivity during processing.
@@ -37,9 +39,9 @@ would invalidate the protocol.
 | Writer terminates empty, then producer accepts | `:idle`, then idle→ready acceptance with `:schedule`. |
 | Other producers accept while ready | `:queued`; the single already owed task remains. |
 
-In each order, accepted work remains associated with a current segment
+In each order, accepted work remains associated with a current slice
 or a next task. Count is not read without the guard to decide reenqueuing.
-The future ready Serie list is touched only to start or reenqueue a segment;
+The future ready Serie list is touched only to start or reenqueue a slice;
 ordinary messages modify only their own Serie's state, as required by
 [ADR-0045 §8](../adr/0045-modello-di-esecuzione.md).
 

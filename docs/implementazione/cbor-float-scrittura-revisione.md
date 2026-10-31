@@ -22,7 +22,7 @@ allocation, coverage, or MC/DC test.
 
 Also read: existing helpers `cbor-float-minimal.lisp` and
 `scrivi-parola-header-cbor`, exports, ASDF order, coverage driver
-scope, requirement and matrix, as well as the cold corpus and workers.
+scope, the requirement and matrix, as well as the cold corpus and workers.
 
 The first version of `riduci-significando64-cbor`, blob
 `31a61d565e17607fd9498b0a423923a28b6e0159`, had a post-guard
@@ -36,7 +36,7 @@ u64. The original and revision remain preserved in preparatory evidence.
 
 ## Sizes and paths
 
-Counted from `defun` to its end, including docstring and declarations.
+Line counts run from `defun` to its end, including the docstring and declarations.
 Conservative paths: base one, one increment per choice, guard, and
 additional short-circuit branch of AND/OR; a four-outcome `case` counts as three choices.
 Chained comparisons are Lisp predicates, not loops added by the module.
@@ -71,8 +71,8 @@ future coverage.
 | 13–14, range | AND: octet buffer; START index; END index; `START <= END <= LENGTH` | Non-simple/displaced destinations, types/ranges and precedence; separate internal guards |
 | 36, AI25 words | AND: HIGH zero; LOW <= u16 maximum | Inconsistent words and LOW/consistency/capacity precedence |
 | 51, input selection | OR: AI27; HIGH zero | Validated public inputs; internal guard inventoried |
-| 55, reduction64 | AND: AI27; exactly narrowable to32 | 64 retained/reduced, thresholds and NaN payloads |
-| 57, reduction32 | AND: AI26; exactly narrowable to16 | 32 retained/reduced, half expansions and subnormals |
+| 55, reduction64 | AND: AI27; exactly narrowable to 32 bits | 64 retained/reduced, thresholds and NaN payloads |
+| 57, reduction32 | AND: AI26; exactly narrowable to 16 bits | 32 retained/reduced, half expansions and subnormals |
 | 59, output selection | OR: AI27 selected; HIGH zero | Selected forms and internal guard inventoried |
 
 <a id="controlli-e-ragionamento-aritmetico"></a>
@@ -102,7 +102,7 @@ does it construct NEXT and write the lead. The nine-byte path writes HIGH4
 and LOW4; the other forms write LOW2 or LOW4. The final guard compares
 the cursor with NEXT; return is `(values next)`.
 
-COD-24: reductions32/64 check input narrowability and output sign;
+COD-24: binary32/64 reductions check input narrowability and output sign;
 the quotient checks width/alignment and word reconstruction;
 the range checks input and span identity; words check
 external types and returned-form consistency; selection checks
@@ -130,16 +130,16 @@ and must reach the owner's fail-stop boundary.
    at most four steps; at most two words and nine bytes per call.
    No waits in the product; test workers have timeouts and cleanup.
 5. **Allocations.** No measurement performed yet: COD-30 remains to be
-   verified with preregistered benchmark, baseline, and positive control.
+   verified with the preregistered benchmark, baseline, and positive control.
    Static form alone is not proof of zero heap.
 6. **Module boundary.** External words are validated before restrictive
    declarations and writing. The public result is
    NEXT; no native floats, ASTs, or shared references escape.
 7. **Compound decisions.** Complete inventory above; raw coverage and
    demonstrations condition by condition remain to be produced. No
-   MC/DC certification or automatic exclusion of guards.
+   MC/DC certification or automatic exclusion of guards is claimed.
 8. **Ownership.** OWNER/SHARED declare exclusive destination and local
-   words. No mutable global, arena, lock, or new scratch area in the product.
+   words. There is no mutable global state, arena, lock, or new scratch area in the product.
 9. **Traceability and checks.** Requirement and matrix are statically updated;
    exports, ASDF, and exact two-file scope in the coverage driver are consistent.
    `make check` and tool self-tests remain to be run.
@@ -150,7 +150,7 @@ and must reach the owner's fail-stop boundary.
     state or introduces a lock/wait/shared write. The product
     allows independent calls; future tests do not imply scaling.
 12. **Durability.** No durable change, publication point,
-    removal, or rollback introduced. Docstrings and contract explicitly
+    removal, or rollback is introduced. Docstrings and contract explicitly
     declare this boundary and fail-stop on internal errors.
 
 Outcome: no further static defect found in the identified version.

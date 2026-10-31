@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (delta-indice-motore politica-rinnovo-indice) boolean) delta-oltre-soglia-p))
 (defun delta-oltre-soglia-p (delta policy)
-  "Pre: delta privato stabile. Post: T se chiavi o byte raggiungono la soglia inclusiva.
-Confronti interi esatti senza divisione: anche u32*100 resta fixnum SBCL64; nessuna allocazione.
-Contatori fuori quota o nullita' incoerente segnalano INVARIANT-VIOLATION, mai un falso mantenimento."
+  "Pre: stable private delta. Post: T if keys or bytes reach inclusive threshold.
+Exact integer comparisons without division: even u32*100 remains an SBCL64 fixnum; no allocation.
+Out-of-quota counters or inconsistent emptiness signal INVARIANT-VIOLATION, never a false hold result."
   (let ((count (delta-indice-motore-count delta)) (used (delta-indice-motore-used delta))
         (limit (delta-indice-motore-limit delta)) (bytes (length (delta-indice-motore-arena delta)))
         (percent (politica-rinnovo-indice-soglia policy)))
@@ -21,9 +21,9 @@ Contatori fuori quota o nullita' incoerente segnalano INVARIANT-VIOLATION, mai u
 ;;; REQ: REQ-IDX-010 REQ-CON-002 REQ-AFF-001
 (declaim (ftype (function (motore politica-rinnovo-indice) boolean) rinnovo-indice-richiesto-p))
 (defun rinnovo-indice-richiesto-p (engine policy)
-  "Pre: owner READY con immagine e delta attivi. Post: decisione copiata, nessun I/O o prenotazione.
-INVALID-ARGUMENT per modo senza delta; contatori corrotti rendono FAULTED conservando la primaria.
-Non autorizza un PUT futuro e non garantisce spazio per una chiave non ancora osservata."
+  "Pre: READY owner with active image and delta. Post: copied decision, no I/O or reservation.
+INVALID-ARGUMENT for mode without delta; corrupt counters cause FAULTED, preserving primary cause.
+Does not authorize a future PUT or guarantee space for an as-yet-unobserved key."
   (esigi-motore-pronto engine)
   (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (let ((delta (motore-delta engine)))
@@ -41,10 +41,10 @@ Non autorizza un PUT futuro e non garantisce spazio per una chiave non ancora os
                          &key (:max-maintenance-payload t) (:max-pages t)) (member :mantieni :rinnovato))
                 mantieni-indice-paginato-motore))
 (defun mantieni-indice-paginato-motore (engine policy option &key (max-maintenance-payload 67108864) (max-pages 65536))
-  "Pre: owner READY con delta; OPTION candidato da usare soltanto quando la soglia richiede il rinnovo.
-Post: MANTIENI senza I/O oppure RINNOVATO dopo richiesta completa, con le stesse quote del delta.
-Nessun timer, retry, scelta di modo o nome generato; configurazioni errate rifiutate anche nel no-op.
-Il rinnovo eredita preflight e confine FAULTED; non si consuma un CSN e non si ammette una scrittura."
+  "Pre: READY owner with delta; candidate OPTION used only when threshold requires renewal.
+Post: MANTIENI without I/O or RINNOVATO after complete request, with unchanged delta quotas.
+No timer, retry, mode choice, or generated name; invalid configurations rejected even for no-op.
+Renewal inherits preflight and FAULTED boundary; no CSN consumed or write admitted."
   (esigi-motore-pronto engine)
   (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (unless (and (typep max-maintenance-payload '(integer 0 536870912)) (typep max-pages '(integer 1 65536)))

@@ -7,10 +7,10 @@
 ;;; REQ: REQ-CBR-009 REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values index &optional)) check-input-string-cbor-read))
 (defun check-input-string-cbor-read (buffer start end max-bytes)
-  "Pre: argomenti esterni. Post: span verificato entro il budget dell'intera finestra.
-INVALID-ARGUMENT per range, poi :cbor-byte-limit; RESOURCE-EXHAUSTED
-:cbor-byte-budget, offset NIL, prima di leggere byte. Nessuna mutazione.
-INVARIANT-VIOLATION per span oltre il limite interno di lavoro."
+  "Pre: external arguments. Post: verified span within whole-window budget.
+INVALID-ARGUMENT for range, then :cbor-byte-limit; RESOURCE-EXHAUSTED
+:cbor-byte-budget, NIL offset, before reading bytes. No mutation.
+INVARIANT-VIOLATION for span exceeding internal work limit."
   (let ((span (check-span-string-cbor-write buffer start end :cbor-range)))
     (declare (type index span))
     (unless (and (typep max-bytes 'index) (<= max-bytes +cbor-scan-max-bytes+))
@@ -25,14 +25,14 @@ INVARIANT-VIOLATION per span oltre il limite interno di lavoro."
 (declaim (ftype (function (t t t &key (:max-bytes t))
                          (values (integer 2 3) index index &optional)) leggi-stringa-cbor-minima))
 (defun leggi-stringa-cbor-minima (buffer start end &key (max-bytes +cbor-scan-max-bytes+))
-  "Pre: simple u8 stabile e finestra verificati dal preflight, budget 0..16MiB.
-Post: esattamente MAJOR, PAYLOAD-START, NEXT; START<PAYLOAD-START<=NEXT<=END.
-MT2 opaco, MT3 UTF-8 valido; payload vuoto ammesso e coda non letta.
-MAX-BYTES limita tutta la finestra, inclusa la coda. Nessuna copia o scratch.
-Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED, errori header minimo e UTF-8;
-CORRUPTION-DETECTED :cbor-string-type a START, :cbor-truncated a END prima
-dell'UTF-8; INVARIANT-VIOLATION per forma, conteggio o frontiere incoerenti.
-Lavoro: testata fino a nove byte, UTF-8 entro il payload; nessuna attesa o I/O."
+  "Pre: stable simple u8 and window verified by preflight, budget 0..16MiB.
+Post: exactly MAJOR, PAYLOAD-START, NEXT; START<PAYLOAD-START<=NEXT<=END.
+Opaque MT2, valid UTF-8 MT3; empty payload allowed, tail unread.
+MAX-BYTES limits the whole window, including tail. No copy or scratch.
+Propagates INVALID-ARGUMENT, RESOURCE-EXHAUSTED, minimal-header and UTF-8 errors;
+CORRUPTION-DETECTED :cbor-string-type at START, :cbor-truncated at END before
+UTF-8; INVARIANT-VIOLATION for inconsistent shape, count, or frontiers.
+Work: header up to nine bytes, UTF-8 within payload; no waiting or I/O."
   (check-input-string-cbor-read buffer start end max-bytes)
   (let ((bytes (the octets buffer)) (begin (the index start)) (limit (the index end)))
     (multiple-value-bind (major ai high low payload-start form)

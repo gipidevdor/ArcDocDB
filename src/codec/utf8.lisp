@@ -14,9 +14,9 @@
 ;;; REQ: REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values index &optional)) check-utf8-arguments))
 (defun check-utf8-arguments (buffer start end max-bytes)
-  "Pre: argomenti esterni non verificati. Post: span index entro budget, anche vuoto.
-INVALID-ARGUMENT per tipo/range o budget; RESOURCE-EXHAUSTED se lo span supera
-il budget. Controlli nell'ordine range, budget, esaurimento; nessun byte letto."
+  "Pre: unverified external arguments. Post: index span within budget, possibly empty.
+INVALID-ARGUMENT for type/range or budget; RESOURCE-EXHAUSTED if the span exceeds
+the budget. Checks in order: range, budget, exhaustion; no bytes read."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :utf8-range))
@@ -32,9 +32,9 @@ il budget. Controlli nell'ordine range, budget, esaurimento; nessun byte letto."
 (declaim (ftype (function (octets index index (integer 1 4))
                          (values index &optional)) verifica-suite-utf8))
 (defun verifica-suite-utf8 (buffer cursor end width)
-  "Pre: CURSOR sul lead e WIDTH 1..4. Post: fine index e continuazioni verificate
-da sinistra a destra. INVARIANT-VIOLATION per confini interni incoerenti;
-CORRUPTION-DETECTED per sequenza troncata (offset END) o continuazione invalida."
+  "Pre: CURSOR at the lead and WIDTH 1..4. Post: index end and continuations verified
+from left to right. INVARIANT-VIOLATION for inconsistent internal bounds;
+CORRUPTION-DETECTED for a truncated sequence (offset END) or invalid continuation."
   (unless (< cursor end)
     (error 'invariant-violation :reason :utf8-continuation-range :offset cursor))
   (unless (<= end (length buffer))
@@ -52,9 +52,9 @@ CORRUPTION-DETECTED per sequenza troncata (offset END) o continuazione invalida.
 ;;; REQ: REQ-AFF-004
 (declaim (ftype (function (u8 u8 index) (values null &optional)) verifica-scalare-utf8))
 (defun verifica-scalare-utf8 (lead second position)
-  "Pre: lead di 3/4 byte e SECOND continuazione verificata. Post: scalare Unicode
-senza codifiche lunghe, surrogati o valori oltre U+10FFFF; non lo materializza.
-INVARIANT-VIOLATION per contesto interno; CORRUPTION-DETECTED all'offset POSITION."
+  "Pre: 3/4-byte lead and SECOND a verified continuation. Post: Unicode scalar
+without overlong encodings, surrogates, or values beyond U+10FFFF; does not materialize it.
+INVARIANT-VIOLATION for internal context; CORRUPTION-DETECTED at offset POSITION."
   (unless (<= #xe0 lead #xf4)
     (error 'invariant-violation :reason :utf8-scalar-context :offset position))
   (unless (<= #x80 second #xbf)
@@ -70,9 +70,9 @@ INVARIANT-VIOLATION per contesto interno; CORRUPTION-DETECTED all'offset POSITIO
 (declaim (ftype (function (octets index index) (values index &optional))
                 verifica-carattere-utf8))
 (defun verifica-carattere-utf8 (buffer cursor end)
-  "Pre: span stabile e non vuoto. Post: cursore crescente entro END per un solo
-scalare verificato. INVARIANT-VIOLATION per confini/progresso; CORRUPTION-DETECTED
-per lead invalido (offset CURSOR); propaga errori ordinati di suite e scalare."
+  "Pre: stable nonempty span. Post: increasing cursor within END for one
+verified scalar. INVARIANT-VIOLATION for bounds/progress; CORRUPTION-DETECTED
+for an invalid lead (offset CURSOR); propagates ordered continuation-sequence and scalar errors."
   (unless (< cursor end)
     (error 'invariant-violation :reason :utf8-character-range :offset cursor))
   (unless (<= end (length buffer))
@@ -94,9 +94,9 @@ per lead invalido (offset CURSOR); propaga errori ordinati di suite e scalare."
 
 ;;; REQ: REQ-SEC-007 REQ-AFF-004
 (defun leggi-scalare-utf8 (buffer start end)
-  "Pre: span simple u8 stabile. Post: scalare verificato e cursore successivo.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED per input/budget; CORRUPTION-DETECTED per
-UTF-8 invalido o vuoto. Nessuna allocazione, modifica, normalizzazione o locale."
+  "Pre: stable simple u8 span. Post: verified scalar and next cursor.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED for input/budget; CORRUPTION-DETECTED for
+invalid or empty UTF-8. No allocation, modification, normalization, or locale."
   (check-utf8-arguments buffer start end +max-utf8-bytes+)
   (when (= start end) (error 'corruption-detected :reason :utf8-truncated :offset end))
   (let* ((bytes (the octets buffer)) (begin (the index start))
@@ -113,11 +113,11 @@ UTF-8 invalido o vuoto. Nessuna allocazione, modifica, normalizzazione o locale.
 (declaim (ftype (function (t t t &key (:max-bytes t)) (values index &optional))
                 verifica-utf8))
 (defun verifica-utf8 (buffer start end &key (max-bytes +max-utf8-bytes+))
-  "Pre: BUFFER immutabile, simple u8; span half-open e budget 0..16 MiB verificati.
-Post: numero di scalari solo dopo verifica integrale; vuoto 0, nessuna mutazione.
-Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED e CORRUPTION-DETECTED; INVARIANT-
-VIOLATION per conteggio/fine interni. Al piu 16 MiB di passi, senza attese o CBOR;
-NUL, BOM e noncaratteri ammessi; nessuna normalizzazione o sostituzione."
+  "Pre: immutable simple u8 BUFFER; half-open span and budget 0..16 MiB verified.
+Post: scalar count only after complete verification; empty gives 0, no mutation.
+Propagates INVALID-ARGUMENT, RESOURCE-EXHAUSTED, and CORRUPTION-DETECTED; INVARIANT-
+VIOLATION for internal count/end. At most 16 MiB steps, without waiting or CBOR;
+NUL, BOM, and noncharacters allowed; no normalization or replacement."
   (let ((span (check-utf8-arguments buffer start end max-bytes)))
     (declare (type index span))
     (let ((bytes (the octets buffer)) (begin (the index start))

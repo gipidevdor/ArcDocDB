@@ -8,9 +8,9 @@
 (declaim (ftype (function (t t t t) (values index &optional))
                 check-input-simple-cbor-write))
 (defun check-input-simple-cbor-write (buffer start end value)
-  "Pre: destinazione e codice wire esterni. Post: span index e VALUE ammesso.
-INVALID-ARGUMENT per range o codice 24..31/tipo, offset NIL, prima di scrivere.
-INVARIANT-VIOLATION per span incoerente; nessuna mutazione, span anche vuoto."
+  "Pre: external destination and wire code. Post: index span and admitted VALUE.
+INVALID-ARGUMENT for range or code 24..31/type, offset NIL, before writing.
+INVARIANT-VIOLATION for inconsistent span; no mutation, span may be empty."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :cbor-range))
@@ -26,13 +26,13 @@ INVARIANT-VIOLATION per span incoerente; nessuna mutazione, span anche vuoto."
 (declaim (ftype (function (t t t t) (values index &optional))
                 scrivi-semplice-cbor-minimo))
 (defun scrivi-semplice-cbor-minimo (buffer start end value)
-  "Pre: simple u8 esclusivo, span half-open e codice wire 0..23 oppure 32..255.
-Post: un solo NEXT, uno/due byte minimi MT7; fuori [START,NEXT) tutto invariato.
-Preflight range/codice/capacita prima di scrivere; INVALID-ARGUMENT oppure
-RESOURCE-EXHAUSTED :cbor-simple-capacity, offset NIL e intero array intatto.
-INVARIANT-VIOLATION interno senza rollback, fail-stop del proprietario.
-Al massimo due byte; nessuna allocazione prevista, attesa, I/O o AST.
-Profilo e budget documentale superiori; nessuna pubblicazione atomica/durevole."
+  "Pre: exclusive simple u8, half-open span, wire code 0..23 or 32..255.
+Post: one NEXT only, one/two minimal MT7 bytes; everything outside [START,NEXT) unchanged.
+Range/code/capacity preflight before writing; INVALID-ARGUMENT or
+RESOURCE-EXHAUSTED :cbor-simple-capacity, offset NIL and entire array intact.
+Internal INVARIANT-VIOLATION without rollback, owner fail-stop.
+At most two bytes; no intended allocation, waiting, I/O, or AST.
+Profile and document budget belong to upper layers; no atomic/durable publication."
   (let* ((span (check-input-simple-cbor-write buffer start end value))
          (bytes (the octets buffer)) (begin (the index start))
          (limit (the index end)) (code (the u8 value))

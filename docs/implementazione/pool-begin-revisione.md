@@ -5,7 +5,7 @@
 Static reading on 2026-10-14, base
 `ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`, by an agent other
 than the author. Outcome: **positive for the C3 scope read**, without open product
-findings. Reviewer changed only this document and ran no
+findings. The reviewer changed only this document and ran no
 campaigns: the reading certifies neither compilation, tests, coverage,
 nor allocations.
 
@@ -23,7 +23,7 @@ it does not replace their reviews or class verification.
 
 ## Scope identity
 
-Qualification denominator includes all six dispatch files,
+The qualification denominator includes all six dispatch files,
 without manual exclusions or limiting it to new lines. Results
 must retain per-file counts and missing entries in the new entry point too.
 C1 delegate probes are outside the C3 denominator; no coverage
@@ -85,7 +85,7 @@ before writer lease. No permanent reason authorizes infinite
 retry, generation reset, or wrap.
 
 Invalid routing precedes begin. Subsequent errors retain
-same condition and capabilities under C1 barriers without rollback
+the same condition and capabilities under C1 barriers without rollback
 or new C3 fault marking. An unexpected error after acquisition does not
 return four values: context and preallocated link retain diagnosis
 and any references/leases for Archivio coordination.
@@ -149,7 +149,7 @@ each with a fresh fixture, 4096 cycles, and 128 warmup. One actual symbolic payl
 queued: clock excludes pop, ACK, or payload application. Every
 cycle includes new startup with four-value and dual-lease oracle,
 bridge end, C1 room recycling, and explicit C1 acquisition. Expected monotonic
-token, identities, and states checked without private resets.
+token, identities, and states are checked without private resets.
 
 Factory, API lookup, GC, and final drain stay outside clock. Public
 drain consumes/acknowledges the single payload and completes IDLE before

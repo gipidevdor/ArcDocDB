@@ -4,29 +4,29 @@
 
 > **Decided (authorized incremental implementation → ADR-0058)** — Local C1
 > codec, REQ-IDX-009, INV-I8, INV-A2, INV-A8, INV-P6. Backend, cache,
-> engine publication remain to integrate; current index stays resident.
+> and engine publication remain to be integrated; current index stays resident.
 
 [ADR-0058](../adr/0058-pagine-indice-primario.md) defines binary representation
 without changing segments, WAL, control log, SEAL, EDIT, DECISION.
-[Automatic selector](indice-automatico.md) remains separate component.
+The [automatic selector](indice-automatico.md) remains a separate component.
 
 <a id="identita-e-pageref"></a>
 
 ## Identity and PageRef
 
 A page belongs to (16-byte Serie UUID, image, offset, generation,
-size). Image/offset/generation positive, below 2^60.
-Offset aligned to size, zero reserved; one image uses one size.
-Offset an address in future image file, not location in document
-segments. Container header/publication not implemented.
+size). Image/offset/generation are positive, below 2^60.
+The offset is aligned to size, zero reserved; one image uses one size.
+The offset is an address in a future image file, not a location in document
+segments. Container header/publication is not implemented.
 
-PageRef contains u64 offset/generation; Serie/image/size inherited
-from context. Zero/zero absence, partial pair corrupt.
+PageRef contains u64 offset/generation; Serie/image/size are inherited
+from context. Zero/zero means absence; a partial pair is corrupt.
 Child offset strictly less than parent's, generation no
 greater, both checked even with valid CRC. Writer will build
 children/tails before parents/heads. No offset/image reuse
 or generation rollback. Reader checks expected identity on
-every load; same offset in another image is different page.
+every load; the same offset in another image is a different page.
 
 Rules prevent local reference cycles but certify neither presence,
 durable frontier, nor graph coverage. Future file allocator
@@ -56,11 +56,11 @@ will also check file-system limits, quotas, reservations before append.
 | 88 | 4 | CRC32C of bytes [0,88) |
 | 92 | 4 | CRC32C of whole body [96,size), including padding |
 
-Header CRC checked before fields. Unknown versions/types with
+The header CRC is checked before fields. Unknown versions/types with
 intact header produce `unsupported-format`. Incomplete body, wrong CRC,
 inconsistent identity/geometry/references produce `corruption-detected`.
 Unused padding must be zero even after CRC verification.
-Valid checksum does not mean valid semantics/committed data.
+A valid checksum does not mean valid semantics/committed data.
 
 ```text
 page = header96 | used body | zero padding
@@ -81,13 +81,13 @@ key = contiguous byte fragment of the complete key
 
 Layout calculations, not performance/RSS measurements. Parameter = C, count =
 live slots. Control EMPTY 255 or fingerprint 0..127, digest's seven
-low bits. DELETED/other values not persisted: new pages
+low bits. DELETED/other values are not persisted: new pages are
 compact copies, not in-place updates.
 
 Initial group `(digest-low32 >> 7) & (C-16)`; groups of 16 advance
-circularly by 16 as resident primary. All group candidates
-examined before declaring absence on EMPTY. Verifier
-rejects slot placed after earlier group containing EMPTY: checksum
+circularly by 16 as resident primary. All group candidates are
+examined before declaring absence on EMPTY. The verifier
+rejects a slot placed after an earlier group containing EMPTY: checksum
 alone would not prevent false miss. No probe exceeds C/16 groups.
 
 Each 64-byte entry contains:
@@ -106,12 +106,12 @@ Each 64-byte entry contains:
 | 48 | 8 | First key-page generation, or zero if inline |
 | 56 | 8 | Reserved zero |
 
-EMPTY slots have all 64 bytes zero. Inline keys packed
+EMPTY slots have all 64 bytes zero. Inline keys are packed
 in physical slot order from C*65, without gaps/overlaps;
 end must match USED. External keys consume no arena, require
-non-null PageRef. Complete key decides equality, never hash alone.
-CSN/location/length meet primary v2-payload limits; seqlock
-not serialized. Codec neither checks key-derived digest,
+a non-null PageRef. The complete key decides equality, never hash alone.
+CSN/location/length meet primary v2-payload limits; the seqlock is
+not serialized. The codec neither checks key-derived digest,
 detects every duplicate, nor certifies visibility/document CRC.
 These are builder/lookup obligations integrated with seed/snapshot.
 
@@ -119,7 +119,7 @@ NEXT allows overflow for collisions/full buckets. Future split/
 overflow policy must have work/I/O budgets, distinguish every outcome;
 arbitrary chains not accepted as complete lock-free lookup.
 Local EMPTY-group miss does not finish chain search:
-when NEXT present, backend must continue even if bucket has
+when NEXT is present, the backend must continue even if bucket has
 free slots, through last verified page. Codec does not traverse.
 Cold validation may probe C/16 groups per entry:
 conservative O(C^2) bound, C <=512, to measure during loading.
@@ -131,7 +131,7 @@ conservative O(C^2) bound, C <=512, to measure during loading.
 Parameter = `bits | (shift << 8)`, high bits zero; bits 1..7/9/11 for
 4/16/64 KiB, shift 0..63, bits+shift <=64. Child index uses
 corresponding digest range. Exact body `2^bits * 16` bytes,
-count non-null PageRefs, null NEXT. Repeated references legal
+count non-null PageRefs, null NEXT. Repeated references are legal
 for buckets covering multiple positions. Root/subsequent levels
 will be connected by backend with prefix/coverage checks;
 local codec knows neither parent nor entire dataset.
@@ -146,10 +146,10 @@ not yet concurrent-split algorithm/publication implementation.
 ## Key fragments
 
 Count = total key length, parameter = fragment position.
-USED = min(body space, total-position). Every nonfinal fragment full;
+USED = min(body space, total-position). Every nonfinal fragment is full;
 NEXT non-null iff content remains. For 65535 bytes, 17/5/2
-pages required at three sizes, buildable tail-to-head with offsets decreasing
-in read order. Future lookup checks total equals entry,
+pages are required at the three sizes, buildable tail-to-head with offsets decreasing
+in read order. Future lookup checks that the total equals the entry,
 contiguous positions, generations, byte comparison without mandatory
 full buffer. Correct pages alone do not prove complete chain.
 
@@ -160,22 +160,22 @@ full buffer. Correct pages alone do not prove complete chain.
 Package `arcdocdb.index.page`:
 
 - `crea-identita-pagina(serie, immagine, offset, generazione)` copies 16 Serie
-  bytes into immutable descriptor. Invalid numbers/length rejected
-  before copy; alignment checked when size known.
+  bytes into immutable descriptor. Invalid numbers/length are rejected
+  before copying; alignment is checked when size is known.
 - `crea-descrittore-pagina(identita, tipo, count, parametro, :next, :next-generation)`
   prepares immutable metadata. Neither reserves engine memory nor writes files.
 - `scrivi-pagina-indice(buffer, start, end, descrittore, body, from, to)` verifies
   caller-prepared canonical body, then writes page/CRC.
-  Ranges, aliases, limits, structure checked before destination
+  Ranges, aliases, limits, and structure are checked before destination
   modification. Returns END; guards/source preserved.
 - `verifica-pagina-indice(buffer, start, end, identita)` returns type,
   count, parameter, used, next, next-generation only after all checks.
   No buffer modification, per-entry object allocation, retained references.
 
-Operations on preparation/loading path, outside hot resident
+Operations are on the preparation/loading path, outside hot resident
 lookup. Reading u64 values may produce SBCL bignums; no
 zero-allocation, lock-freedom, GC-pause immunity claim for
-codec. Buffers/descriptors stable during call;
+codec. Buffers/descriptors are stable during the call;
 future cache supplies separate lifetime protocol (I3). No per-Serie shared
 lock/counter/write added.
 
@@ -206,11 +206,11 @@ blobs before/after/every failure, then global `make check`.
 
 Arithmetically dependent conditions/private checks already guaranteed
 by preflight do not imply reachable independent MC/DC pairs.
-Functional campaign neither C1/MC/DC qualification nor full-graph proof.
+The functional campaign is neither C1/MC/DC qualification nor a full-graph proof.
 Raw corruption of every 4 KiB page byte/alterations with recalculated CRC
 distinguish physical integrity from structural validation. Three-size,
 maximum-key, collision, split-image tests remain separate from
-write-amplification, latency, beyond-RAM capacity measurements still to produce.
+write-amplification, latency, beyond-RAM capacity measurements still to be produced.
 
 [Initial results](pagine-indice-risultati.md) also preserve failed
 attempts/fixture corrections, distinguishing targeted/global verification.

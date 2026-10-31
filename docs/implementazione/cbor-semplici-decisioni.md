@@ -3,10 +3,10 @@
 # Decisions in writing CBOR simple values
 
 Static inventory before compilation and campaigns; existing
-dependencies are not rewritten. No exclusion from the coverage
-denominator, MC/DC attestation, or full coverage.
+dependencies are not rewritten. No coverage-denominator exclusion, MC/DC attestation, or claim of full
+coverage is made.
 
-| Function / form | Conditions, from left | Planned witnesses |
+| Function / form | Conditions, left to right | Planned witnesses |
 |---|---|---|
 | `check-input-simple-cbor-write` / `unless and` | BUFFER octets; START index; END index; ordered range within length | wrong array/START type/END type, START>END, END>length; valid and empty |
 | `scrivi-semplice-cbor-minimo` / `unless and` | BEGIN<NEXT; NEXT≤LIMIT | positive, bounded footprint on success; internal guard retained |

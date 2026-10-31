@@ -2,8 +2,8 @@
 
 # CBOR scanning decisions with minimal headers
 
-Inventory and static self-reading by the refactor author before
-campaigns. Does not constitute an independent C1 reading or human approval.
+This inventory records the refactor author's static self-reading before
+campaigns. It does not constitute an independent C1 reading or human approval.
 The product author has not read the new tests. Strict build,
 lint, traceability, tests, coverage, mutations, and heap measurement are pending;
 lines below refer to sources in this delivery.
@@ -16,7 +16,7 @@ lines below refer to sources in this delivery.
 `verifica-struttura-cbor-interna`; `verifica-struttura-cbor` retains its
 public signature with the same keywords and defaults, passing NIL. No new
 mode is exposed on the generic API. The internal positional
-boolean directly selects the reader in `passo-struttura-cbor`;
+Boolean directly selects the reader in `passo-struttura-cbor`;
 it introduces no closure, callback, dynamic keywords, or second traversal.
 
 The shared core performs preflight before scratch reset.
@@ -38,7 +38,7 @@ controller must implement the FAULTED transition outside this API.
 
 The **three compound decisions in the refactored file are preserved**;
 new reader selection is a simple decision. Wrappers contain
-no decisions: they delegate with a constant boolean. Existing inventories
+no decisions: they delegate with a constant Boolean. Existing inventories
 of minimal header, input, scratch, stack, and item remain separate.
 
 | ID | File, function, and line | Conditions | Planned verification or limit |
@@ -74,13 +74,13 @@ it approves no exclusions of guards, declarations, defaults, or fallbacks.
 | 1. Requirements/ADRs | REQ-LIM-001/002 and AFF-004/008 declared; ADR-0014/0048 for headers, ADR-0031/0035 for C1 discipline. Complete profile out of scope. |
 | 2. Invariants | Immutable buffer, exclusive scratch, checked progress and results; INV-F1/A8/P6. Oracles and boundary tests still pending. |
 | 3. Errors | Typed conditions propagated; syntax/minimality and trailing priority described above. No new handler; Serie FAULTED transition outside kernel. |
-| 4. Limits | Single repeat SPAN loop and unchanged drain102, maximum nine-byte header; no new recursion or wait. |
-| 5. Heap | Only local arguments/values in refactor, existing preallocated scratch, and direct calls. Nonallocation not attested: measurement and positive sensor pending. |
+| 4. Limits | Single SPAN-bounded loop and unchanged drain bounded to 102 frames, maximum nine-byte header; no new recursion or wait. |
+| 5. Heap | Only local arguments/values in refactor, existing preallocated scratch, and direct calls. Nonallocation not attested: measurement and a positive control are pending. |
 | 6. Output | Only three values after shared postconditions, no decoded or copied AST/payload. |
 | 7. Decisions | D01–D03 compared with code; simple T/NIL selection and priorities inventoried. Raw coverage and MC/DC not attested. |
 | 8. Ownership | OWNER/SHARED comments in both files: caller buffer, scratch of one worker/call; no new mutable global. |
 | 9. Integration | Export added. ASDF, matrix, build/lint/trace, and `make check` are coordinator tasks and remain pending. |
-| 10. Standard | safety3, complete FTYPEs, docstrings/REQ, functions within 60 lines. Step, result, and core have at least two active checks; wrappers are trivial delegations. No deviation introduced or approved. |
+| 10. Standard | safety 3, complete FTYPEs, docstrings/REQ, functions within 60 lines. Step, result, and core have at least two active checks; wrappers are trivial delegations. No deviation introduced or approved. |
 | 11. Parallelism | No lock, shared state, wait, I/O, or thread creation. Concurrent sharing of the same scratch violates the precondition; independent workers must each have one. |
 | 12. Durability | No durable write, publication, or deletion. Atomicity point not applicable. |
 
@@ -88,4 +88,4 @@ Static findings contain no open issues. Coordinator campaigns
 must still verify observable behavior,
 including generic API behavior after moving its body, and quantify
 heap allocation and coverage without narrowing the denominator. This delivery does not
-close an engine gate or human approval.
+close an engine gate or constitute human approval.

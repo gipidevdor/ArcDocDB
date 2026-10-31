@@ -6,8 +6,8 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index index) (values u64 u32 index &optional)) meta-limiti))
 (defun meta-limiti (buffer start end)
-  "Pre: META bounded, percorso freddo. Post: cinque limiti positivi, termine/token e fine.
-Interi u64 ricomposti solo qui, prima dei percorsi caldi. Token oltre u32 e corruzione."
+  "Pre: bounded META, cold path. Post: five positive limits, term/token and end.
+u64 integers reassembled only here, before hot paths. Tokens beyond u32 are corruption."
   (multiple-value-bind (count cursor) (meta-conteggio buffer start end 5 5)
     (unless (= count 5) (error 'invariant-violation :reason :fulltext-limits-width))
     (let ((term 0) (tokens 0))
@@ -24,7 +24,7 @@ Interi u64 ricomposti solo qui, prima dei percorsi caldi. Token oltre u32 e corr
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index index) index) meta-identificativi))
 (defun meta-identificativi (meta start end)
-  "Pre: dopo l'array radice. Post: tre identificativi u64 positivi consumati."
+  "Pre: after the root array. Post: three positive u64 identifiers consumed."
   (let ((cursor start))
     (dotimes (i 3)
       (multiple-value-bind (high low next) (meta-positivo meta cursor end)
@@ -37,8 +37,8 @@ Interi u64 ricomposti solo qui, prima dei percorsi caldi. Token oltre u32 e corr
 (declaim (ftype (function (octets u64 octets index index simple-bit-vector)
                          (values vettore-u32 u64 u32 &optional)) verifica-meta-descrittore))
 (defun verifica-meta-descrittore (meta source-bytes hint hint-start hint-end rows)
-  "Pre: span e tipi validati. Post: META completo e legato ai byte hint e mappa PUT.
-La validita dell'hint e gli esiti dei record sono responsabilita del chiamante."
+  "Pre: validated span and types. Post: complete META bound to hint bytes and PUT map.
+Hint validity and record outcomes are the caller's responsibility."
   (let* ((end (length meta)) (cursor 0))
     (multiple-value-bind (count next) (meta-conteggio meta 0 end 12 12)
       (unless (= count 12) (error 'invariant-violation :reason :fulltext-meta-root)) (setf cursor next))
@@ -62,12 +62,12 @@ La validita dell'hint e gli esiti dei record sono responsabilita del chiamante."
                 crea-descrittore-full-text))
 (defun crea-descrittore-full-text (meta identity segment source-bytes hint hint-start hint-end rows
                                  &key (max-memory 67108864))
-  "Pre: configurazione autorevole, hint verificato immutabile e bitmap PUT committed risolta.
-META array CBOR minimo; ROWS[i]=1 solo per PUT committed del prefisso, anche storico.
-Post: copie private immutabili di META/identita/bitmap e campi; nessun riferimento all'hint.
-Non certifica hint, documenti, inventario, MVCC o readiness. INVALID-ARGUMENT per argomenti;
-CORRUPTION-DETECTED per META incoerente, UNSUPPORTED-FORMAT per profilo ignoto;
-RESOURCE-EXHAUSTED prima delle copie oltre budget. Costruttore freddo, nessun I/O."
+  "Pre: authoritative configuration, immutable verified hint, resolved committed-PUT bitmap.
+META is a minimal CBOR array; ROWS[i]=1 only for committed PUTs in the prefix, including historical ones.
+Post: immutable private copies of META/identity/bitmap and fields; no hint reference.
+Does not certify hint, documents, inventory, MVCC, or readiness. INVALID-ARGUMENT for arguments;
+CORRUPTION-DETECTED for inconsistent META, UNSUPPORTED-FORMAT for an unknown profile;
+RESOURCE-EXHAUSTED before copies beyond budget. Cold constructor, no I/O."
   (unless (and (typep meta 'octets) (<= 1 (length meta) 65536)
                (typep identity 'octets) (= (length identity) 16) (typep segment 'u64)
                (typep source-bytes 'u64) (typep hint 'octets) (typep hint-start 'index)

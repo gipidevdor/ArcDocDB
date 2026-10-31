@@ -5,7 +5,7 @@
 2026-10-15. Independent static reading preceding first compilation
 of the new product. Local outcome: **static PASS, no concrete defect
 detected**. The reviewer proposed the contract but wrote neither kernel,
-corpus, nor driver; did not consult first C1 review. No product LOAD,
+corpus, nor driver; did not consult the first C1 review. No product LOAD,
 compilation, or execution during this reading.
 Dynamic verification, heap measurement, and C1/MC/DC qualification remain open.
 
@@ -15,7 +15,7 @@ Dynamic verification, heap measurement, and C1/MC/DC qualification remain open.
 
 HEAD `b83a0bdaa597d1cb53c7ae4a5ebadc11ae2511ff`; kernel was
 delivered after corpus and driver freeze. Pins were read
-directly from worktree, without changing sources, corpus, index, or HEAD.
+directly from the worktree, without changing sources, corpus, index, or HEAD.
 
 | File | Git blob |
 |---|---|
@@ -63,7 +63,7 @@ of at least 2^32 does not fit the maximum 16 MiB window and produces
 `:cbor-truncated` at END. Complete payload precedes every UTF-8 read.
 
 MT2 does not read payload bytes. MT3 passes only
-`[PAYLOAD-START,NEXT)` to validator, with budget LOW; returned
+`[PAYLOAD-START,NEXT)` to the validator, with budget LOW; returned
 count is checked. A byte beyond NEXT does not complete a truncated
 UTF-8 sequence. No tail reading, copy, Lisp-string conversion,
 normalization, or tag semantics introduced. The caller
@@ -164,7 +164,7 @@ this primitive does not own Serie state.
 
 ## Corpus and verification status
 
-Sixteen serial tests and one with two workers, frozen before kernel.
+Sixteen serial tests and one with two workers, frozen before the kernel was written.
 Literal oracle and arithmetically constructed headers without product
 writer: empty cases, all MT2 bytes, UTF-8 and absolute offsets, thresholds
 23/24–255/256–65535/65536, u64 HIGH, all selected truncations,

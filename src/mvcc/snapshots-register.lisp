@@ -6,8 +6,8 @@
 ;;; REQ: REQ-MVC-007 REQ-MVC-004 REQ-AFF-008
 (declaim (ftype (function (contesto-snapshot u64) csn-slot) prepara-registrazione-snapshot))
 (defun prepara-registrazione-snapshot (context now)
-  "Pre: mutex snapshot posseduto. Post: slot libero e tutti i budget prevalidati, senza mutazione.
-INVALID-ARGUMENT per contesto con pin; RESOURCE-EXHAUSTED per K, generazioni o deadline u64."
+  "Pre: snapshot mutex owned. Post: free slot and all budgets prevalidated, without mutation.
+INVALID-ARGUMENT for pinned context; RESOURCE-EXHAUSTED for K, generations, or u64 deadline."
   (let* ((registry (contesto-snapshot-registry context))
          (generation (aref (contesto-snapshot-word context) 0)) (slot (contesto-snapshot-slot context))
          (capacity (length (registro-snapshot-states registry))))
@@ -28,9 +28,9 @@ INVALID-ARGUMENT per contesto con pin; RESOURCE-EXHAUSTED per K, generazioni o d
 (declaim (ftype (function (contesto-snapshot csn-slot u64 u64 u64 u64) boolean)
                 pubblica-registrazione-snapshot))
 (defun pubblica-registrazione-snapshot (context slot generation now horizon csn)
-  "Pre: mutex snapshot, soglia già annunciata, frontiere catturate dal registro canonico.
-Post: pin e identità pubblicati, T se H>=CSN. Nessun accesso CSN o errore di contesa nel corpo.
-Uscita non locale durante mutazione: registro FAULTED, niente rollback della pubblicazione."
+  "Pre: snapshot mutex, threshold already announced, frontiers captured from canonical registry.
+Post: pin and identity published, T if H>=CSN. No CSN access or contention error in body.
+Nonlocal exit during mutation: registry FAULTED, no publication rollback."
   (let* ((registry (contesto-snapshot-registry context)) (word (contesto-snapshot-word context))
          (words (registro-snapshot-words registry)) (capacity (length (registro-snapshot-states registry)))
          (ready (>= horizon csn)) (complete nil))
@@ -60,9 +60,9 @@ Uscita non locale durante mutazione: registro FAULTED, niente rollback della pub
 (declaim (ftype (function (contesto-snapshot u64) (values u64 u64 boolean &optional))
                 registra-snapshot-sotto-mutex))
 (defun registra-snapshot-sotto-mutex (context now)
-  "Pre: mutex snapshot posseduto. Post: pin nato dopo annuncio e cattura coerente del CSN.
-CSN-BUSY nella seconda cattura ripristina solo la soglia: nessun pin/identità/cursore consumato.
-Ogni altra interruzione dopo l'annuncio rende FAULTED; nessun rollback di metadata pubblicati."
+  "Pre: snapshot mutex owned. Post: pin created after announcement and coherent CSN capture.
+CSN-BUSY during second capture restores only threshold: no pin/identity/cursor consumed.
+Every other interruption after announcement causes FAULTED; no rollback of published metadata."
   (let* ((registry (contesto-snapshot-registry context))
          (slot (prepara-registrazione-snapshot context now))
          (words (registro-snapshot-words registry)) (generation (1+ (aref words 0)))
@@ -93,9 +93,9 @@ Ogni altra interruzione dopo l'annuncio rende FAULTED; nessun rollback di metada
 ;;; REQ: REQ-MVC-007 REQ-MVC-005 REQ-MVC-004 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (contesto-snapshot u64) (values u64 u64 boolean &optional)) registra-snapshot))
 (defun registra-snapshot (context now)
-  "Pre: NOW fresco dalla stessa base monotona; nessun vecchio consumatore o pin del contesto.
-Post: generazione, CSN e attività dal solo registro canonico, soglia annunciata prima della cattura.
-SNAPSHOT-BUSY/CSN-BUSY senza attesa: conservare e riprogrammare la richiesta con NOW nuovo."
+  "Pre: fresh NOW from the same monotonic base; no old consumer or context pin.
+Post: generation, CSN, and active state from canonical registry only, threshold announced before capture.
+SNAPSHOT-BUSY/CSN-BUSY without waiting: retain and reschedule request with fresh NOW."
   (let ((registry (contesto-snapshot-registry context)) (acquired nil))
     (esigi-ingresso-snapshot registry)
     (multiple-value-prog1

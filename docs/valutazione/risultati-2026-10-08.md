@@ -25,7 +25,7 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --benc
 ```
 
 The harness runs processes **serially**. The workspace is a development
-machine: external load uncontrolled, `vm.loadavg` observed at startup
+machine: external load is uncontrolled, `vm.loadavg` observed at startup
 `{4.60 3.77 3.12}`, CPU frequency and temperature not recorded. An initial campaign,
 not a distribution of replicas. Children disable user and
 system initialization; commands, revision, and local changes
@@ -107,7 +107,7 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp \
 ```
 
 All 10 million INSERTs complete; GET: 75,400,960 operations, stopped
-by phase budget before the 80-million ceiling. Campaign measures
+by phase budget before the 80-million ceiling. The campaign lasts
 42.214258 seconds. Live payload is **822,099,968 bytes, 82.2099968 B/doc**,
 before and after 50,000 replacements. 2,048 fragments, depth 11, 2,047 splits,
 no rebuild in this brief churn. 234,766,336 key bytes copied;
@@ -260,7 +260,7 @@ does not change preserved documents. This outcome does not close product gates.
 23,370 CRC comparisons; PUT and OUTCOME corruptions and truncations rejected in
 declared cases. `verify-prepared-record` compares TXID and CSN against validated
 OUTCOME under ADR-0047; provenance, SEAL, and manifest resolver remain
-to implement.
+to be implemented.
 
 CRC slicing-by-8 at `safety 3`, initial campaign:
 

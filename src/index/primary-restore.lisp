@@ -7,8 +7,8 @@
 (declaim (ftype (function (frammento-indice fixnum (or null contenuto-slot) contesto-indice) null)
                 verifica-payload-ripristino))
 (defun verifica-payload-ripristino (fragment key-bytes source context)
-  "Pre: chiave e frammento writer verificati. Post: contesto libero e source valida/distinta se presente.
-NIL significa assenza attesa, mai rimozione; INVALID-ARGUMENT prima di toccare lo scratch o l'indice."
+  "Pre: verified key and writer fragment. Post: free context and valid/distinct source if present.
+NIL means expected absence, never removal; INVALID-ARGUMENT before touching scratch or index."
   (esigi-contesto-libero context)
   (when source
     (when (eq source (contesto-indice-words context))
@@ -22,9 +22,9 @@ NIL significa assenza attesa, mai rimozione; INVALID-ARGUMENT prima di toccare l
 (declaim (ftype (function (indice-primario boolean (or null contenuto-slot) contenuto-slot)
                          (member nil :present :absent)) esito-voce-ripristinata))
 (defun esito-voce-ripristinata (index found source current)
-  "Pre: probe writer completo; CURRENT significativo solo se FOUND. Post: esito idempotente o NIL da inserire.
-Una voce esistente deve avere identici CSN/location/length/end/key-len; offset arena escluso.
-INVALID-ARGUMENT per voce diversa o presente dove attesa assenza, senza aggiornamenti o rimozioni."
+  "Pre: complete writer probe; CURRENT meaningful only if FOUND. Post: idempotent outcome or NIL for insertion.
+An existing entry must have identical CSN/location/length/end/key-len; arena offset excluded.
+INVALID-ARGUMENT for a different entry or presence where absence expected, without updates or removals."
   (esigi-indice-sano index)
   (if source
       (when found
@@ -39,9 +39,9 @@ INVALID-ARGUMENT per voce diversa o presente dove attesa assenza, senza aggiorna
 (declaim (ftype (function (indice-primario frammento-indice octets fixnum fixnum u32
                                          contenuto-slot contenuto-slot) null) inserisci-voce-ripristinata))
 (defun inserisci-voce-ripristinata (index fragment key start end low source work)
-  "Pre: primo probe assente, writer esclusivo e source immutata. Post: inserimento canonico verificato.
-Secondo probe/preflight usa i normali budget; trovato inatteso o copia discordante => indice FAULTED.
-Rifiuti di capacita prima della mutazione; interruzioni dopo l'avvio delegate al writer canonico."
+  "Pre: first probe absent, exclusive writer, unchanged source. Post: verified canonical insertion.
+Second probe/preflight uses normal budgets; unexpected presence or differing copy => index FAULTED.
+Capacity rejections before mutation; interruptions after start delegated to canonical writer."
   (multiple-value-bind (slot found offset) (prepara-chiave-writer index fragment key start end low source work)
     (when found (guasto-indice index :primary-recovery-probe-changed))
     (applica-chiave-writer index fragment key start end low slot found offset work)
@@ -57,12 +57,12 @@ Rifiuti di capacita prima della mutazione; interruzioni dopo l'avvio delegate al
                                          (or null contenuto-slot) contesto-indice)
                          (member :inserted :present :absent)) ripristina-chiave-indice))
 (defun ripristina-chiave-indice (index key start end high low source context)
-  "Pre: candidato privato di bootstrap, writer esclusivo; chiave completa e digest della Serie.
-SOURCE viva gia committed e finale, oppure NIL per assenza finale; nessuna retention o ammissione qui.
-Post: INSERTED, PRESENT identico o ABSENT verificato, senza sovrascrivere/rimuovere una voce esistente.
-Proba al massimo C slot per passaggio: due probe solo al primo inserimento, nessun retry o array nuovo.
-Input/budget invalidi prima delle mutazioni; invarianti => indice FAULTED, causa originale conservata.
-Il caller mantiene chiave/source stabili; aggiornamenti in esercizio usano il normale protocollo writer."
+  "Pre: private bootstrap candidate, exclusive writer; complete key and Serie digest.
+SOURCE already committed, live and final, or NIL for final absence; no retention or admission here.
+Post: INSERTED, identical PRESENT, or verified ABSENT, without overwriting/removing an existing entry.
+Probes at most C slots per pass: two probes only for initial insertion, no retry or new array.
+Invalid inputs/budgets before mutations; invariant failures => index FAULTED, original cause preserved.
+Caller keeps key/source stable; operational updates use the normal writer protocol."
   (let* ((fragment (frammento-corrente-indice index high)) (work (contesto-indice-words context)))
     (esigi-chiave key start end)
     (verifica-payload-ripristino fragment (- end start) source context)

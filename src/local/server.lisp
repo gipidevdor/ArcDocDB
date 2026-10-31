@@ -5,8 +5,8 @@
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-001
 (defun local-transfer-step (socket buffer start end direction &optional io-backend)
-  "Pre: socket posseduto e span valido. Post: un passo nativo, progresso/wait/EOF; niente retry.
-EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta."
+  "Pre: owned socket and valid span. Post: one native step, progress/wait/EOF; no retry.
+EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
   (unless (and (typep buffer 'b:octets) (member direction '(:input :output))
                (<= 0 start end (length buffer)) (< start end))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-transfer-span))
@@ -23,7 +23,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun local-prefix-size (buffer limit)
-  "Pre: quattro byte ricevuti nel buffer posseduto. Post: corpo valido prima di riceverlo."
+  "Pre: four bytes received in the owned buffer. Post: valid body before receiving it."
   (let ((size (logior (ash (aref buffer 0) 24) (ash (aref buffer 1) 16)
                       (ash (aref buffer 2) 8) (aref buffer 3))))
     (unless (<= 1 size limit) (error 'protocol-error :reason :local-frame-length))
@@ -31,7 +31,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun close-local-connection (connection)
-  "Pre: slot dell'attore. Post: ownership consumata prima di close, anche se close fallisce."
+  "Pre: actor's slot. Post: ownership consumed before close, even if close fails."
   (let ((socket (local-connection-socket connection)))
     (setf (local-connection-socket connection) nil (local-connection-state connection) :closed)
     (when socket (close-local-socket socket)))
@@ -39,7 +39,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun reset-local-input (connection now)
-  "Pre: risposta interamente inviata. Post: sola richiesta successiva, nessun residuo riusato."
+  "Pre: response fully sent. Post: next request only, no residual state reused."
   (setf (local-connection-received connection) 0 (local-connection-needed connection) 4
         (local-connection-written connection) 0 (local-connection-size connection) 0
         (local-connection-frame-started connection) nil (local-connection-state connection) :request
@@ -48,7 +48,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun queue-local-output (connection size state now)
-  "Pre: frame completo gia' copiato nel buffer riservato. Post: deadline non rinnovabile all'invio."
+  "Pre: complete frame already copied into the reserved buffer. Post: deadline cannot be renewed during sending."
   (unless (<= 5 size (+ 4 (local-connection-limit connection)))
     (error 'arcdocdb.conditions:invariant-violation :reason :local-response-budget))
   (setf (local-connection-written connection) 0 (local-connection-size connection) size
@@ -57,7 +57,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-REC-001
 (defun finish-local-input (engine connection clock)
-  "Pre: corpo esatto ricevuto. Post: WELCOME o risposta prenotata; mai richiesta prima di WELCOME."
+  "Pre: exact body received. Post: WELCOME or reserved response; never a request before WELCOME."
   (let* ((buffer (local-connection-input connection))
          (envelope (decode-local-envelope buffer 4 (local-connection-needed connection)
                      :space (local-connection-space connection))))
@@ -77,7 +77,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun step-local-input (engine connection now clock)
-  "Pre: slot en HELLO/REQUEST. Post: al piu' un recv, prefisso verificato prima del corpo."
+  "Pre: slot in HELLO/REQUEST. Post: at most one recv, prefix verified before body."
   (multiple-value-bind (status count)
       (local-transfer-step (local-connection-socket connection) (local-connection-input connection)
         (local-connection-received connection) (local-connection-needed connection) :input
@@ -99,7 +99,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun step-local-output (connection now)
-  "Pre: risposta riservata, nessun pin EBR. Post: un send, conservazione fino all'ultimo byte."
+  "Pre: reserved response, no EBR pin. Post: one send, retained until the last byte."
   (multiple-value-bind (status count)
       (local-transfer-step (local-connection-socket connection) (local-connection-output connection)
         (local-connection-written connection) (local-connection-size connection) :output
@@ -113,7 +113,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun step-local-connection (engine connection now clock)
-  "Pre: slot attivo nell'attore. Post: passo finito o scadenza; un peer non arresta gli altri."
+  "Pre: active actor slot. Post: finite step or expiration; one peer does not stop the others."
   (let ((state (local-connection-state connection)))
     (unless (eq state :closed)
       (cond
@@ -125,7 +125,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun accept-local-connection (listener connections now)
-  "Pre: listener non bloccante. Post: al piu' un accept; senza slot il nuovo peer viene chiuso."
+  "Pre: nonblocking listener. Post: at most one accept; without a slot, the new peer is closed."
   (let ((socket (accept-local-socket listener)))
     (when socket
       (let ((slot (find :closed connections :key #'local-connection-state)))
@@ -140,8 +140,8 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun local-server-loop (engine listener connections clock stop waiter)
-  "Pre: READY, tutte le risorse riservate. Post: arresto esplicito o errore motore propagato.
-Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire eventi estranei."
+  "Pre: READY, all resources reserved. Post: explicit stop or propagated engine error.
+Each iteration visits every slot once; finite idle wait without serving unrelated events."
   (loop until (funcall stop) do
     (let* ((now (local-now clock)) (progress (accept-local-connection listener connections now)))
       (loop for connection across connections do
@@ -158,7 +158,7 @@ Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire 
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defun cleanup-local-server (connections listener engine namespace primary)
-  "Pre: admission fermata. Post: tutte le risorse tentate; primaria e secondarie conservate."
+  "Pre: admission stopped. Post: all resource cleanup attempted; primary and secondary causes preserved."
   (let ((failures nil))
     (flet ((attempt (function)
              (handler-case (funcall function) (error (condition) (push condition failures)))))
@@ -177,10 +177,10 @@ Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire 
                     &key create (version 2) (clock #'get-internal-real-time) observer
                          (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery
                          (index-policy (if index-discovery :legacy :automatic)))
-  "Pre: directory dati/runtime distinte e private, identita' esplicite, un attore chiamante.
-Post: startup e recovery reali prima del listener; servizio fino a STOP, cleanup completo.
+  "Pre: distinct private data/runtime directories, explicit identities, one calling actor.
+Post: real startup and recovery before listener; service until STOP, complete cleanup.
 INDEX-DISCOVERY and INDEX-POLICY are validated before resources and delegated before listen.
-Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery. Nessun retry."
+Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
   (unless (and (functionp clock) (functionp stop) (typep ready '(or null function))
                (typep max-connections '(integer 1 8)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-config))

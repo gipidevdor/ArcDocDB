@@ -8,10 +8,10 @@
 (declaim (ftype (function (octets index index spazio-cbor index index)
                          (values index index &optional)) verifica-figlio-mappa-cbor))
 (defun verifica-figlio-mappa-cbor (source start end space remaining child-depth)
-  "Pre: item non vuoto, scratch esclusivo e budget residui. Post: nodi/picco.
-Residuo0: RESOURCE-EXHAUSTED :cbor-map-node-budget all'offset START, prima
-del reset. Errori scanner propagati con offset SOURCE; dati sempre intatti,
-scratch riusabile. INVARIANT-VIOLATION per confini/risultato interni."
+  "Pre: nonempty item, exclusive scratch, remaining budgets. Post: nodes/peak.
+Remainder0: RESOURCE-EXHAUSTED :cbor-map-node-budget at offset START, before
+reset. Scanner errors propagated with SOURCE offsets; data always intact,
+scratch reusable. INVARIANT-VIOLATION for internal boundaries/result."
   (unless (<= start end (length source))
     (error 'invariant-violation :reason :cbor-map-child-range))
   (when (zerop remaining)
@@ -36,11 +36,11 @@ scratch riusabile. INVARIANT-VIOLATION per confini/risultato interni."
                                 spazio-cbor index index) (values index index &optional))
                 verifica-figli-mappa-cbor))
 (defun verifica-figli-mappa-cbor (source start end item-ends items space max-nodes max-depth)
-  "Pre: partizione/radice/budget verificati, ITEMS=2*COUNT e input stabili.
-Post: nodi/picco inclusa radice e tutti gli item esatti/minimi.
-Loop ITEMS limitato a16MiB; reset/drain102 per item. Errori scanner propagati,
-residuo0 prima del prossimo reset; INVARIANT-VIOLATION per contratto interno.
-ITEMS0 non usa SPACE; nessun byte/tabella/destinazione modificato."
+  "Pre: verified partition/root/budgets, ITEMS=2*COUNT and stable inputs.
+Post: nodes/peak including root and all exact/minimal items.
+ITEMS loop bounded to 16MiB; reset/drain102 per item. Scanner errors propagated,
+remainder0 before next reset; INVARIANT-VIOLATION for internal contract.
+ITEMS0 does not use SPACE; no bytes/table/destination modified."
   (unless (<= start end (length source))
     (error 'invariant-violation :reason :cbor-map-children-range))
   (unless (<= items (length item-ends))
@@ -72,16 +72,16 @@ ITEMS0 non usa SPACE; nessun byte/tabella/destinazione modificato."
 (defun scrivi-mappa-cbor-minima (buffer start end source source-start source-end item-ends count space
                                &key (max-bytes +cbor-scan-max-bytes+)
                                  (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8, span half-open, fini simple u32; COUNT coppie e dati stabili,
-destinazione/scratch esclusivi. Post: testata MT5 minima per COUNT e payload
-esatto nello stesso ordine, un solo NEXT; solo [START,NEXT) cambia.
-Budget includono radice e testata. Preflight e scansione di chiavi/valori
-prima di scrivere: errori pubblici preservano interi array, offset NIL
-o assoluto SOURCE per scanner. Scratch intatto nel preflight, riusabile
-dopo parsing fallito; mappa vuota non lo usa. BUFFER=SOURCE solo disgiunto
-dal footprint completo; alias scratch rifiutati. Nessun ordinamento/unicita.
-INVARIANT-VIOLATION interno senza rollback, anche dalla copia MT2/3.
-Costo O(SPAN+2*COUNT*102); nessun AST, thread, attesa, I/O o pubblicazione."
+  "Pre: simple u8, half-open spans, simple u32 ends; COUNT pairs and stable data,
+exclusive destination/scratch. Post: minimal MT5 header for COUNT and exact
+payload in the same order, one NEXT only; only [START,NEXT) changes.
+Budgets include root and header. Preflight and key/value scanning
+before writing: public errors preserve entire arrays, NIL offset
+or absolute SOURCE offset for scanner. Scratch intact during preflight, reusable
+after failed parsing; empty map does not use it. BUFFER=SOURCE only when disjoint
+from complete footprint; scratch aliases rejected. No ordering/uniqueness.
+Internal INVARIANT-VIOLATION without rollback, including from MT2/3 copy.
+Cost O(SPAN+2*COUNT*102); no AST, thread, wait, I/O, or publication."
   (multiple-value-bind (span header-size item-size item-count)
       (check-input-mappa-cbor buffer start end source source-start source-end item-ends count space
                              max-bytes max-nodes max-depth)

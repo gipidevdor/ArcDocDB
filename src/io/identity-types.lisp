@@ -9,9 +9,9 @@
 
 ;;; REQ: REQ-AFF-001 REQ-FOR-001
 (defstruct (associazione-file (:constructor %make-associazione-file (input append)) (:copier nil))
-  "Pre: due capacità aperte dello stesso backend e identità POSIX esatta verificata.
-Post: associazione immutabile delle capacità, non dei numeri FD o dei nomi.
-Valida finché entrambe restano aperte; non autorizza close, reclaim o durability."
+  "Pre: two open capabilities of the same backend and verified exact POSIX identity.
+Post: immutable capability association, not FD-number or name association.
+Valid while both remain open; does not authorize close, reclamation, or durability."
   (input nil :type file-io :read-only t)
   (append nil :type file-io :read-only t))
 

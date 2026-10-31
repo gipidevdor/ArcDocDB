@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-009 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (cache-pagine identita-pagina index) octets) carica-frame-pagina))
 (defun carica-frame-pagina (cache identity slot)
-  "Pre: owner, BUSY, slot FIFO scelto. Post: frame verificato prima di renderlo HIT.
-Qualsiasi uscita incompleta lascia slot invalido, anche su THROW; errori propagati.
-Nessun dato committed e' modificato: la cache e' un derivato sacrificabile."
+  "Pre: owner, BUSY, FIFO slot selected. Post: frame verified before making it HIT.
+Any incomplete exit leaves the slot invalid, including THROW; errors propagated.
+No committed data is modified: the cache is a disposable derivative."
   (let* ((identities (cache-pagine-identities cache))
          (frame (aref (cache-pagine-frames cache) slot))
          (size (cache-pagine-size cache)) (complete nil))
@@ -33,8 +33,8 @@ Nessun dato committed e' modificato: la cache e' un derivato sacrificabile."
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (cache-pagine identita-pagina octets index) null) preflight-copia-pagina))
 (defun preflight-copia-pagina (cache identity target start)
-  "Pre: input caller stabili. Post: owner, non rientro, geometria e target verificati senza effetti.
-INVALID-ARGUMENT lascia target, frame e FIFO intatti. Nessun borrower del buffer interno."
+  "Pre: stable caller input. Post: owner, nonreentry, geometry, and target verified without effects.
+INVALID-ARGUMENT leaves target, frames, and FIFO intact. No borrower of the internal buffer."
   (unless (eq (cache-pagine-owner cache) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :index-page-cache-owner))
   (when (cache-pagine-busy cache)
@@ -50,10 +50,10 @@ INVALID-ARGUMENT lascia target, frame e FIFO intatti. Nessun borrower del buffer
 (declaim (ftype (function (cache-pagine identita-pagina octets &key (:start index))
                          (values index (member :hit :miss) &optional)) copia-pagina-cache))
 (defun copia-pagina-cache (cache identity target &key (start 0))
-  "Pre: attore I/O owner, target privato. Post: pagina verificata copiata, fine e HIT/MISS.
-Miss sincrono e potenzialmente bloccante; nessuna promessa lock-free. Ricerca <= numero frame.
-Target intatto se caricamento/verifica fallisce; BUSY rilasciato su ogni uscita.
-Nessun riferimento ai frame lascia il modulo; il riuso non invalida copie precedenti."
+  "Pre: owning I/O actor, private target. Post: verified page copied, end and HIT/MISS.
+Miss is synchronous and potentially blocking; no lock-free promise. Search <= frame count.
+Target intact if loading/verification fails; BUSY released on every exit.
+No frame reference leaves the module; reuse does not invalidate previous copies."
   (preflight-copia-pagina cache identity target start)
   (let ((identities (cache-pagine-identities cache)))
     (setf (cache-pagine-busy cache) t)

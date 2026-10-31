@@ -9,8 +9,8 @@
                          (values index u32 &optional)) preflight-edit))
 (defun preflight-edit (buffer start next-id completo chiusi numero-chiusi rimossi
                       max-chiusi max-rimossi max-esiti max-bytes)
-  "Pre: input tipizzati, sezioni senza alias con BUFFER. Post: tutte le sezioni e budget validi.
-Restituisce fine output/count rimossi; errori tipizzati senza modificare BUFFER."
+  "Pre: typed input, sections not aliasing BUFFER. Post: all sections and budgets valid.
+Returns output end/removed count; typed errors without modifying BUFFER."
   (when (or (eq buffer chiusi) (eq buffer rimossi))
     (error 'invalid-argument :reason :input-alias :offset start))
   (unless (or completo (zerop next-id))
@@ -38,9 +38,9 @@ Restituisce fine output/count rimossi; errori tipizzati senza modificare BUFFER.
                          &key completo (max-chiusi +default-list-budget+)
                               (max-rimossi +default-list-budget+) (max-esiti +default-list-budget+)
                               (max-bytes +metadata-max-bytes+))
-  "Pre: BUFFER esclusivo; CHIUSI entry codificate senza count, RIMOSSI ID u64 concatenati.
-Post: payload EDIT canonico; restituisce fine. Nessun rifiuto di preflight modifica BUFFER.
-Propaga errori tipizzati; completa la preparazione dei byte, senza punto di commit."
+  "Pre: exclusive BUFFER; CHIUSI encoded entries without count, RIMOSSI concatenated u64 IDs.
+Post: canonical EDIT payload; returns end. No preflight rejection modifies BUFFER.
+Propagates typed errors; completes byte preparation, without a commit point."
   (multiple-value-bind (end removed-count)
       (preflight-edit buffer start next-id completo chiusi numero-chiusi rimossi
                       max-chiusi max-rimossi max-esiti max-bytes)
@@ -62,9 +62,9 @@ Propaga errori tipizzati; completa la preparazione dei byte, senza punto di comm
 (defun scrivi-valore-decision (buffer start csn partecipanti
                              &key (max-partecipanti +max-participants+)
                                   (max-bytes +metadata-max-bytes+))
-  "Pre: BUFFER esclusivo; PARTECIPANTI ID16 concatenati senza alias, almeno due.
-Post: payload DECISION canonico, fine restituita; fuori range invariato.
-INVALID-ARGUMENT per sezioni, RESOURCE-EXHAUSTED per budget; preflight non mutante."
+  "Pre: exclusive BUFFER; PARTECIPANTI nonaliasing concatenated ID16 values, at least two.
+Post: canonical DECISION payload, end returned; outside the range unchanged.
+INVALID-ARGUMENT for sections, RESOURCE-EXHAUSTED for budgets; nonmutating preflight."
   (when (eq buffer partecipanti)
     (error 'invalid-argument :reason :input-alias :offset start))
   (unless (zerop (mod (length partecipanti) +participant-id-bytes+))

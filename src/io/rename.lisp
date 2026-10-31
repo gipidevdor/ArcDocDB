@@ -9,8 +9,8 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (string) null) verifica-nome-rinomina))
 (defun verifica-nome-rinomina (name)
-  "Pre: nome string stabile. Post: componente ASCII di 1..255 byte, senza slash/NUL o dot/dotdot.
-INVALID-ARGUMENT prima di I/O; ciclo limitato a 255 caratteri. Nomi storage canonici ASCII."
+  "Pre: stable string name. Post: ASCII component of 1..255 bytes, without slash/NUL or dot/dotdot.
+INVALID-ARGUMENT before I/O; loop bounded to 255 characters. Canonical ASCII storage names."
   (unless (<= 1 (length name) +max-rename-name-bytes+)
     (error 'invalid-argument :reason :io-rename-name))
   (when (member name '("." "..") :test #'string=)
@@ -24,8 +24,8 @@ INVALID-ARGUMENT prima di I/O; ciclo limitato a 255 caratteri. Nomi storage cano
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (file-io keyword &optional (or null fixnum)) nil) fallisci-rinomina))
 (defun fallisci-rinomina (directory reason &optional errno)
-  "Pre: effetto fallito. Post: capacità aperta guastata prima di IO-FAULT, chiusa mai riaperta.
-Transizione locale protetta dalle interruzioni; nessuna close o sostituzione della causa."
+  "Pre: failed effect. Post: open capability faulted before IO-FAULT; a closed one is never reopened.
+Local transition protected from interruptions; no close or cause replacement."
   (sb-sys:without-interrupts
     (when (eq (file-state directory) :open)
       (setf (file-state directory) :faulted)))
@@ -36,9 +36,9 @@ Transizione locale protetta dalle interruzioni; nessuna close o sostituzione del
                           &optional boolean) null)
                 esegui-rinomina))
 (defun esegui-rinomina (directory backend source destination &optional (exclusive nil))
-  "Pre: capacità/preflight verificati e callback presente se iniettato. Post: ritorno POSIX zero.
-EXCLUSIVE sceglie solo la primitiva senza sostituzione; mai fallback sulla rinomina ordinaria.
-IO-FAULT per syscall/ritorno impossibile; capacità faulted prima della segnalazione, nessun retry."
+  "Pre: capability/preflight verified and callback present if injected. Post: POSIX zero return.
+EXCLUSIVE selects only the no-replacement primitive; never falls back to ordinary rename.
+IO-FAULT for syscall/impossible return; capability faulted before signaling, no retry."
   (handler-case
       (let ((result (if backend
                         (funcall (if exclusive (backend-rename-exclusive backend) (backend-rename backend))
@@ -55,11 +55,11 @@ IO-FAULT per syscall/ritorno impossibile; capacità faulted prima della segnalaz
 (declaim (ftype (function (file-io simple-base-string simple-base-string
                           &optional (or null function) boolean) null) rinomina-con-nomi-privati))
 (defun rinomina-con-nomi-privati (directory source destination &optional verify-after (exclusive nil))
-  "Pre: foglie private validate, backend/callback ammessi, unico proprietario nel pool I/O.
-Post: rename e postcondizione facoltativa completate, capacità ancora aperta.
-Qualsiasi uscita incompleta guasta una capacità aperta; mai riapre CLOSED o maschera la causa.
-La postcondizione interna restituisce NIL; IO-FAULT se ritorna altro, nessun retry/flush/close.
-EXCLUSIVE seleziona la rinomina che rifiuta un target presente, con lo stesso cleanup."
+  "Pre: validated private leaves, admitted backend/callback, sole owner in the I/O pool.
+Post: rename and optional postcondition complete, capability still open.
+Any incomplete exit faults an open capability; never reopens CLOSED or masks the cause.
+The internal postcondition returns NIL; IO-FAULT for any other return, no retry/flush/close.
+EXCLUSIVE selects rename that rejects an existing target, with the same cleanup."
   (esigi-aperto directory :directory)
   (let ((backend (file-backend directory)) (complete nil))
     (unwind-protect
@@ -79,12 +79,12 @@ EXCLUSIVE seleziona la rinomina che rifiuta un target presente, con lo stesso cl
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io string string) null) rinomina-nella-directory))
 (defun rinomina-nella-directory (directory source destination)
-  "Pre: pool I/O, parent aperto esclusivo e namespace riservato; nomi/capacità stabili.
-Post: una rinomina POSIX relativa al FD, senza close/flush/mutazione delle frontiere.
-Punto atomico: renameat riuscita; fsync del parent è completamento durevole separato.
-Non attesta identità/contenuto dei file, EDIT, catalogo o assenza di alias fisici.
-INVALID-ARGUMENT/UNSUPPORTED-FORMAT in preflight; IO-FAULT e uscita incompleta => FAULTED.
-Il caller riconcilia un esito incerto dalla fonte autorevole, senza retry o rollback qui."
+  "Pre: I/O pool, exclusive open parent and reserved namespace; stable names/capabilities.
+Post: one FD-relative POSIX rename, without close/flush/frontier mutation.
+Atomicity point: successful renameat; parent fsync is separate durable completion.
+Attests to neither file identity/contents, EDIT, catalog, nor absence of physical aliases.
+INVALID-ARGUMENT/UNSUPPORTED-FORMAT in preflight; IO-FAULT and incomplete exit => FAULTED.
+The caller reconciles an uncertain outcome from the authoritative source, without retry or rollback here."
   (esigi-aperto directory :directory)
   (verifica-nome-rinomina source)
   (verifica-nome-rinomina destination)

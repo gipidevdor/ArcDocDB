@@ -38,7 +38,7 @@ at most key length (65535 bytes); no waiting or recursion.
 Exhausting a quota raises RESOURCE-EXHAUSTED before CSN/WAL, without mutating
 membership. An already touched key may update even at full quota.
 To free quota the controller builds a new name with the M1
-producer and activates it: verifies current source and publishes an empty delta.
+producer and activates it: it verifies the current source and publishes an empty delta.
 An old derivative cannot be reactivated after a write.
 
 Commit registers the key only after BUSY, before WAL; it lends no
@@ -75,7 +75,7 @@ backend. Reproducible tests and limits in the
 ## Quota renewal
 
 The [single renewal request](rinnovo-indice-m1.md), introduced by ADR-0068,
-builds and activates a new image with empty delta under continuous BUSY.
+builds and activates a new image with an empty delta under continuous BUSY.
 Preflight reserves payload for all phases before creating the file.
 
 ADR-0069's [threshold maintenance](manutenzione-indice-m1.md) lets

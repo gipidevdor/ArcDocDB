@@ -6,10 +6,10 @@
 ;;; REQ: REQ-IDX-001 REQ-FOR-002 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (contesto-get segmento-get u32 u8) null) verifica-target-get))
 (defun verifica-target-get (context segment valid-bytes flags)
-  "Pre: CANDIDATE/LOADING, capacità e limite committed acquisiti dal controller sotto EBR.
-Post: stessa vista/segmento, record entro prefisso e formato; flag storage verificati.
-INVALID-ARGUMENT per vista/flag; discordanza della location rende il contesto FAULTED.
-Non inventa il limite da stat/file size; non interpreta LIVE come PREPARED."
+  "Pre: CANDIDATE/LOADING, capability and committed limit acquired from the controller under EBR.
+Post: same view/segment, record within prefix and format; storage flags verified.
+INVALID-ARGUMENT for view/flags; location mismatch makes the context FAULTED.
+Does not invent the limit from stat/file size; does not interpret LIVE as PREPARED."
   (unless (eq (segmento-get-owner segment) (contesto-get-view context))
     (error 'invalid-argument :reason :get-source-owner))
   (unless (zerop (logand flags (logxor 255 (allowed-flags +put+))))
@@ -37,9 +37,9 @@ Non inventa il limite da stat/file size; non interpreta LIVE come PREPARED."
                          (values (member :hit :miss :verify-failed :disabled) index index &optional))
                 verifica-cache-get))
 (defun verifica-cache-get (context segment flags prepared)
-  "Pre: target valido, scratch sufficiente, prova own già letta se PREPARED.
-Post: esito cache e range verificati; nessun esito negativo autorizza lo scratch.
-NIL cache => DISABLED; gli errori tipizzati del modulo cache propagano al confine del compito."
+  "Pre: valid target, sufficient scratch, owned proof already read if PREPARED.
+Post: cache outcome and range verified; no negative outcome authorizes scratch.
+NIL cache => DISABLED; typed cache-module errors propagate to the task boundary."
   (let* ((cache (vista-get-serie-cache (segmento-get-owner segment)))
          (content (contesto-get-content context)))
     (unless cache (return-from verifica-cache-get (values :disabled 0 0)))
@@ -55,9 +55,9 @@ NIL cache => DISABLED; gli errori tipizzati del modulo cache propagano al confin
 ;;; REQ: REQ-CCH-002 REQ-AFF-002
 (declaim (ftype (function (contesto-get index index) null) marca-valore-get))
 (defun marca-valore-get (context start end)
-  "Pre: range dal verificatore comune su scratch privato stabile.
-Post: VERIFIED solo per un valore non vuoto interamente presente; nulla consegnato al client.
-Range incoerente rende FAULTED; CRC/chiave/CSN sono stati controllati dal verificatore."
+  "Pre: range from the common verifier on stable private scratch.
+Post: VERIFIED only for a nonempty value fully present; nothing delivered to the client.
+Inconsistent range makes it FAULTED; CRC/key/CSN have been checked by the verifier."
   (unless (< start end) (guasto-get context :get-empty-value))
   (unless (<= end (length (contesto-get-bytes context))) (guasto-get context :get-value-overflow))
   (setf (contesto-get-value-start context) start (contesto-get-value-end context) end
@@ -69,9 +69,9 @@ Range incoerente rende FAULTED; CRC/chiave/CSN sono stati controllati dal verifi
                          (member :hit :miss :verify-failed :disabled :proof-required :buffer-required))
                 sonda-cache-get))
 (defun sonda-cache-get (context segment valid-bytes flags)
-  "Pre: CANDIDATE, target autorevole del resolver. Post: HIT lascia VERIFIED; altri esiti CANDIDATE.
-Nessun I/O: PREPARED richiede prova dal pool I/O; BUFFER-REQUIRED richiede worker più capiente.
-VERIFY-FAILED richiede metrica/allarme e percorso I/O. Errori/uscite non locali liberano EBR."
+  "Pre: CANDIDATE, authoritative resolver target. Post: HIT leaves VERIFIED; other outcomes CANDIDATE.
+No I/O: PREPARED requires proof from the I/O pool; BUFFER-REQUIRED requires a larger-capacity worker.
+VERIFY-FAILED requires metric/alarm and the I/O path. Errors/nonlocal exits release EBR."
   (esigi-stato-get context :candidate)
   (let ((completed nil))
     (unwind-protect

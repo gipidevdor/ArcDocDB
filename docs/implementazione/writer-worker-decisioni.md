@@ -15,7 +15,7 @@ REQ-CON-001/002/004/005, REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8 and INV-V4;
 The context belongs to its creating thread and is nonreentrant. Phases
 idle, claimed, running, batch, finishing, and reschedule respectively
 represent no obligations, ready obligation, active lease, batch
-awaiting acknowledgment, completion to finish, and obligation to recycle. The seventh
+awaiting acknowledgment, completion still to be finished, and obligation to recycle. The seventh
 phase, faulted, is terminal and retains the original condition. The context
 does not own payload in the caller's buffer: it retains the count of
 messages to acknowledge. Ack attests to caller processing and does not
@@ -327,7 +327,7 @@ compilation-failures, before-tests, and worker-errors. Campaign
 
 Benchmark `4000547268-command-97066-0`, data
 `worker-allocations/report.lisp`: four configurations, five complete
-samples of 4096 cycles each, all heap0. Independent derivation
+samples of 4096 cycles each, all heap 0. Independent derivation
 from cycle gives full `189+115C+3C(C+1)/2+5Σpayload+7(C+1)next`, room
 `227+14next`; overall payload 1..M, M=K(C+1), and cursor sum
 K(K−1)/2. Token follows the method, calls
@@ -335,19 +335,19 @@ K(K−1)/2. Token follows the method, calls
 578/10754048, 858/11900928, 2520/18708480, 4084/25114624;
 calls 35/49/137/193. Real generations persist through warmup and
 replicas; they are not zeroed to obtain the sink. Positive control
-16777472 bytes, wrong sink rejected; clockzero, partial report, and
+16777472 bytes, wrong sink rejected; clock zero, partial report, and
 previous destination remain distinct checks.
 
 Strict C4 `4000547221-command-94073-0` and `94074-0`: complete COMPILE-FILE
 and FASL self-test, OK/STABLE/exit0. Inherited marker contains
 RECYCLE, but argv and tool identify worker; original data preserved.
 Actual SIGKILL fixture `4000547222-worker-signal-self-test-94121`:
-signal9/exit137, one worker-error, zero detected. This is not detection.
+signal 9/exit 137, one worker-error, zero detected. This is not detection.
 
-Check `4000547204-command-93189-0`, OK/STABLE/exit0, wall112.229559s:
+Check `4000547204-command-93189-0`, OK/STABLE/exit0, wall 112.229559 s:
 387 tests from ten modules plus smoke, with counts
-28/17/17/24/20/89/44/18/82/48. Lint63/zero; trace114 REQ/65 INV/13 FI/52 ADR
-without errors; links221 documents/2007 links/zero broken. No actual
+28/17/17/24/20/89/44/18/82/48. Lint 63/zero; trace 114 REQ/65 INV/13 FI/52 ADR
+without errors; links: 221 documents/2007 links/zero broken. No actual
 warning/style-warning line in read records. Master `4000547284-check-97964-0`:
 complete, ten run/artifact, all exit0/stable; nine ok and SPK-07 pass.
 These document snapshots precede final conclusions;
@@ -359,12 +359,12 @@ they are not described as verification of the subsequent editorial version.
 | 2 | Invariants and three findings closed in code and fixtures; oracle, contention, new wave, and transfer preserve obligations/debt. No exhaustive pool proof. |
 | 3 | COD-21 boundary records original condition and terminal transition; recoverable reasons per API, owner/gate before handler, fault cannot be cleared. Serie controller still absent. |
 | 4 | No new explicit loop/wait/recursion; member over bounded literal lists, delegated bounded scan/copy. Fixture-only threads with timeouts. |
-| 5 | Twenty composite heap0 measurements, positive control detected, and independent sink; preallocated success only, no universal proof. |
+| 5 | Twenty composite heap 0 measurements, positive control detected, and independent sink; preallocated success only, no universal proof. |
 | 6 | Ftype/outcomes/count/token/buffer checked; ack attests to caller. Diagnostic getters do not transfer obligations or authorize replay. |
 | 7 | Decisions inventoried, macro expansion/behavior test; native=HTML=export on eleven files. 233 uncovered forms/31 outcomes retained, no exclusion or deduced MC/DC. |
 | 8 | Immutable owner and ready, nonreentrant local fields; transfers only without lease/debt. Four live threads/producers and two competing consumers verified. |
-| 9 | Frozen check 387 tests+smoke, lint/trace/link and ten green spikes; execution89 baseline, strict C4, and 12/12 mutants. New base integration separate, below. |
-| 10 | Safety3, ftype/slots/docstrings, pre/post, short functions; error handler limited to boundary with diagnosis/transition. No global C1 or Serie FAULTED qualification. |
+| 9 | Frozen check 387 tests+smoke, lint/trace/link and ten green spikes; execution 89 baseline, strict C4, and 12/12 mutants. New base integration separate, below. |
+| 10 | Safety 3, ftype/slots/docstrings, pre/post, short functions; error handler limited to boundary with diagnosis/transition. No global C1 or Serie FAULTED qualification. |
 | 11 | Ready per segment, no new global per-message write/wait. Independent fixture progress; no speedup, fairness, or P99 measurement. |
 | 12 | No durable change. Finishing before end; only local state after end, no cleanup can erase a new wave. No rollback after internal fault. |
 
@@ -386,9 +386,9 @@ After scoped campaigns, primary advances to `e2f7a75` with independent
 recovery components. Execution/worker-test bytes and both worker tools
 remain unchanged: this second reading and scoped campaigns remain
 tied to copy cf60913. Full check of new integration
-is distinct: `4000548048-command-40192-0`, OK/STABLE/exit0, wall116.613258s,
-400 tests plus smoke, execution89/recovery95, lint66/zero,
-trace114 REQ/65 INV/13 FI/52 ADR without errors, and links224 files/2017 links/zero
+is distinct: `4000548048-command-40192-0`, OK/STABLE/exit0, wall 116.613258 s,
+400 tests plus smoke, execution 89/recovery95, lint 66/zero,
+trace 114 REQ/65 INV/13 FI/52 ADR without errors, and links: 224 files/2017 links/zero
 broken. Ten-spike master: `4000548134-check-44515-0`.
 
 Scope record `4000548017-command-37007-0`, OK/STABLE/exit0,

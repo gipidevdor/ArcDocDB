@@ -24,8 +24,8 @@ State 0 is unpublished, 1 LIVE, 2 TOMBSTONE; public reads require the sole M1 ow
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (t t) index) payload-delta-indice))
 (defun payload-delta-indice (keys bytes)
-  "Pre: configurazione caller non fidata. Post: payload esatto dei quattro array o INVALID-ARGUMENT.
-Zero/zero disabilita; altrimenti 1..65536 chiavi, 1..16 MiB arena; tabella al piu' meta' piena."
+  "Pre: untrusted caller configuration. Post: exact payload of the four arrays or INVALID-ARGUMENT.
+Zero/zero disables; otherwise 1..65536 keys, 1..16 MiB arena; table at most half full."
   (unless (and (typep keys '(integer 0 65536)) (typep bytes '(integer 0 16777216)))
     (error 'invalid-argument :reason :engine-delta-configuration))
   (if (zerop keys)

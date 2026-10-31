@@ -130,7 +130,7 @@ boundary and coordinator cleanup handling remain open.
 
 Method: product-only compilation without warnings, style, traceability,
 links, disassembly without calling the new APIs, C4 archive checking,
-and retention of originals. Two author readings separate from independent
+and retention of originals. Two author readings are separate from independent
 review. No new functional test, FI, MC/DC, coverage, model, or benchmark
 is added or run in this increment. RBA-D01…D11, C1 qualification, effect
 publication, and traffic gate remain open; general CI and static checks

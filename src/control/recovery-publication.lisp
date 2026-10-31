@@ -7,12 +7,12 @@
 (declaim (ftype (function (control-preparato control-recuperato) control-pubblicato)
                 pubblica-control-validato))
 (defun pubblica-control-validato (prepared recovered)
-  "Pre: pool I/O, recovery esclusivo; inventario, vecchio ACTIVE ed esiti già riconciliati.
-Il file letto e il namespace restano immutati; nuova chiusura dal prefisso autorevole del vecchio ACTIVE.
-Post: stessa vista canonica, transizione conservativa verificata prima di claim/rinomina; risultato durevole.
-Punto di atomicità: renameat di control.log, conferma dopo fsync parent dal publisher canonico.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT prima del claim; dopo, errori propagano e gettone FAULTED.
-Non crea un secondo gettone, ripete letture, chiude FD, ammette traffico o completa il Recovery Manager."
+  "Pre: I/O pool, exclusive recovery; inventory, old ACTIVE, and outcomes already reconciled.
+File read and namespace remain unchanged; new closure from old ACTIVE's authoritative prefix.
+Post: same canonical view, conservative transition verified before claim/rename; durable result.
+Atomicity point: control.log renameat, acknowledgment after parent fsync by canonical publisher.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT before claim; afterward errors propagate and token becomes FAULTED.
+Does not create a second token, repeat reads, close FDs, admit traffic, or complete Recovery Manager."
   (let* ((active (control-preparato-active prepared))
          (view (arcdocdb.get::segmento-get-owner (arcdocdb.active::segmento-attivo-preparato-segment active)))
          (previous (control-recuperato-input recovered)))

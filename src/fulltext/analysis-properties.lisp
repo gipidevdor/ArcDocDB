@@ -5,8 +5,8 @@
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text vettore-u32 scalare) u32) proprieta-unicode))
 (defun proprieta-unicode (space ranges cp)
-  "Pre: range immutabili ordinati a triple, scalare. Post: valore oppure zero.
-Ricerca limitata dal numero di triple; RESOURCE-EXHAUSTED se termina il lavoro."
+  "Pre: immutable ranges sorted as triples, scalar. Post: value or zero.
+Search bounded by triple count; RESOURCE-EXHAUSTED if work is exhausted."
   (let ((low 0) (high (floor (length ranges) 3)))
     (loop repeat (1+ high) while (< low high) do
       (consuma-lavoro-full-text space)
@@ -19,8 +19,8 @@ Ricerca limitata dal numero di triple; RESOURCE-EXHAUSTED se termina il lavoro."
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text vettore-u32 scalare) fixnum) trova-mapping))
 (defun trova-mapping (space records cp)
-  "Pre: record a triple ordinati per scalare. Post: offset della tripla o -1.
-Nessuna mutazione delle tabelle; ricerca e lavoro limitati."
+  "Pre: triple records sorted by scalar. Post: triple offset or -1.
+No table mutation; bounded search and work."
   (let ((low 0) (high (floor (length records) 3)))
     (loop repeat (1+ high) while (< low high) do
       (consuma-lavoro-full-text space)
@@ -32,8 +32,8 @@ Nessuna mutazione delle tabelle; ricerca e lavoro limitati."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text scalare scalare) u32) composizione-unicode))
 (defun composizione-unicode (space first second)
-  "Pre: due scalari, spazio esclusivo. Post: composizione canonica o zero.
-Hangul algoritmico, altre coppie UCD non escluse; nessun bignum o stato globale."
+  "Pre: two scalars, exclusive workspace. Post: canonical composition or zero.
+Algorithmic Hangul, other nonexcluded UCD pairs; no bignum or global state."
   (cond ((and (<= #x1100 first #x1112) (<= #x1161 second #x1175))
          (+ #xac00 (* (- first #x1100) 588) (* (- second #x1161) 28)))
         ((and (<= #xac00 first #xd7a3) (zerop (mod (- first #xac00) 28))

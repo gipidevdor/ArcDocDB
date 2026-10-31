@@ -5,7 +5,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (defun esigi-local-client (client state)
-  "Pre: handle esterno. Post: tipo, owner e stato esatti; rientro e handle chiusi rifiutati."
+  "Pre: external handle. Post: exact type, owner, and state; reentry and closed handles rejected."
   (unless (and (typep client 'local-client) (eq (local-client-owner client) sb-thread:*current-thread*)
                (eq (local-client-state client) state))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-state))
@@ -13,7 +13,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun close-local (client)
-  "Pre: handle del thread owner. Post: ownership consumata una volta, anche con close fallita."
+  "Pre: handle of the owner thread. Post: ownership consumed once, even if close fails."
   (unless (and (typep client 'local-client) (eq (local-client-owner client) sb-thread:*current-thread*))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-owner))
   (let ((socket (local-client-socket client)))
@@ -23,7 +23,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun fail-local-client (client primary mutation)
-  "Pre: errore primario, eventuale richiesta mutante iniziata. Post: close senza retry e causa intatta."
+  "Pre: primary error, possibly a started mutating request. Post: close without retry and cause intact."
   (let ((cause primary))
     (handler-case (close-local client)
       (error (cleanup)
@@ -33,7 +33,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun transfer-local-client (client buffer start end direction until)
-  "Pre: buffer esclusivo e deadline assoluta. Post: span esatto o errore senza conferma parziale."
+  "Pre: exclusive buffer and absolute deadline. Post: exact span or error without partial acknowledgment."
   (loop while (< start end) do
     (when (>= (local-now (local-client-clock client)) until)
       (error 'protocol-error :reason :local-client-deadline))
@@ -47,7 +47,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun receive-local-client (client limit until)
-  "Pre: attesa di un solo frame. Post: envelope esatto; coalescenza residua rimane nel kernel."
+  "Pre: waiting for one frame only. Post: exact envelope; residual coalesced data remain in the kernel."
   (let ((buffer (local-client-input client)))
     (transfer-local-client client buffer 0 4 :input until)
     (let ((end (+ 4 (local-prefix-size buffer limit))))
@@ -56,8 +56,8 @@
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
 (defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend)
-  "Pre: path Unix esplicito e clock monotono fidato. Post: client owner dopo WELCOME verificato.
-Nessuna operazione dati durante handshake; errore chiude sempre il socket posseduto."
+  "Pre: explicit Unix path and trusted monotonic clock. Post: owned client after verified WELCOME.
+No data operation during handshake; an error always closes the owned socket."
   (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-configuration))
   (%native-check-backend io-backend)
@@ -81,8 +81,8 @@ Nessuna operazione dati durante handshake; errore chiude sempre il socket possed
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (defun exchange-local-client (client opcode key document)
-  "Pre: owner READY e argomenti verificati dal codec. Post: risultato terminale correlato.
-Dal primo tentativo di invio mutante, la perdita della risposta produce OUTCOME-UNKNOWN."
+  "Pre: READY owner and codec-verified arguments. Post: correlated terminal result.
+From the first mutating send attempt, a lost response produces OUTCOME-UNKNOWN."
   (esigi-local-client client :ready)
   (let* ((id (local-client-next-id client)) (out (local-client-output client)))
     (unless (<= id #xffffffffffffffff)
@@ -106,20 +106,20 @@ Dal primo tentativo di invio mutante, la perdita della risposta produce OUTCOME-
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006
 (defun client-put (client key document)
-  "Pre: owner READY, ottetti chiave/CBOR stabili. Post: CSN strong o rifiuto/esito ignoto espliciti."
+  "Pre: READY owner, stable key/CBOR octets. Post: strong CSN or explicit rejection/unknown outcome."
   (exchange-local-client client 1 key document))
 
 ;;; REQ: REQ-IPC-002 REQ-IDX-001
 (defun client-get (client key)
-  "Pre: owner READY, chiave binaria. Post: values :FOUND documento copiato oppure :ABSENT NIL."
+  "Pre: READY owner, binary key. Post: values :FOUND copied document or :ABSENT NIL."
   (exchange-local-client client 2 key nil))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006
 (defun client-delete (client key)
-  "Pre: owner READY, chiave binaria. Post: CSN strong della tombstone, senza retry."
+  "Pre: READY owner, binary key. Post: strong tombstone CSN, without retry."
   (exchange-local-client client 3 key nil))
 
 ;;; REQ: REQ-IPC-002
 (defun client-ping (client)
-  "Pre: owner READY dopo WELCOME. Post: NIL dopo risposta PING correlata del motore operativo."
+  "Pre: READY owner after WELCOME. Post: NIL after a correlated PING response from the operational engine."
   (exchange-local-client client 0 nil nil))

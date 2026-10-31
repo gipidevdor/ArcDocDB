@@ -4,10 +4,10 @@
 
 Independent reviewer Russell, agent `01a145a0-029b-7b80-af19-35be4a3efe9f`:
 first schema reading, second threat reading on stable source and
-[method](runtime-archivio.md). Same reviewer wrote only
+[method](runtime-archivio.md). The same reviewer wrote only
 FI `tests/runtime/guards.lisp`; two readings are not two reviewers.
 Coordinator separately reread implementation and fixture.
-No run attributed to static review.
+No run is attributed to the static review.
 
 | C1 checklist | First reading | Second reading |
 |---|---|---|
@@ -28,10 +28,10 @@ No run attributed to static review.
 
 ## Clarifications incorporated before runs
 
-Reviewer requested distinguishing unchanged binding
+The reviewer requested distinguishing unchanged binding
 from a still-free binding: another attempt may have published it.
 Docstring now says pre-CAS error publishes no candidates.
-Constructor uses existing register locks, not an additional protocol;
+The constructor uses existing register locks, not an additional protocol;
 docstring makes invariant propagation and bootstrap stop explicit.
 Coordinator clarifications, without changes to reviewed protocol.
 
@@ -40,10 +40,10 @@ Observed coverage will be distinct from scheduling guarantee. Recovery
 after interruption immediately after CAS: static argument, dedicated
 dynamic test open. No hook or replacement of CL primitives.
 
-Reviewer found no functional defect under preconditions;
+The reviewer found no functional defect under preconditions;
 compilation, runs/FI, coverage, MC/DC, measurements, and reference
-platform remain to verify separately. Canonicality, temporal plan validity,
+platform remain to be verified separately. Canonicality, temporal plan validity,
 capability rebuilding, and traffic gates are controller obligations.
 An invariant prevents bootstrap continuation.
 
-Review does not confer full C1 qualification.
+The review does not confer full C1 qualification.

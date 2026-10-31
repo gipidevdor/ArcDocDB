@@ -75,7 +75,7 @@ Final cleanup still attempts all other resources and preserves every
 secondary failure. No derived file is deleted or rewritten.
 
 Observer phases: `:before-image-activation`, `:image-activation-verified`,
-`:before-image-publication`, `:image-published`. It returns NIL, retains no
+`:before-image-publication`, `:image-published`. The observer returns NIL, retains no
 capabilities, and does not reenter the engine. Ownership/root changes occur
 without an intermediate callback.
 
@@ -120,7 +120,7 @@ selection, writer delta, snapshots, or durable catalog is claimed.
 ## Delta extension
 
 [ADR-0067](../adr/0067-delta-seriale-indice-m1.md) adds the
-`:delta-keys` and `:delta-key-bytes` options: both zero retain the retirement described
-here; both positive preserve the image through PUT/DELETE with
+`:delta-keys` and `:delta-key-bytes` options: when both are zero, the retirement described
+here still applies; when both are positive, the image is preserved through PUT/DELETE with
 [exact membership and separate quotas](delta-indice-m1.md). The previous
 and new deltas are added to the payload formula above.

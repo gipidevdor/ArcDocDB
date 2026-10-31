@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-WAL-005
 (declaim (ftype (function (t t t t t t t t) index) preflight-inizio-put))
 (defun preflight-inizio-put (request key value row prepared high low max-work)
-  "Pre: ingresso non fidato. Post: forma, stato, capacita e lavoro verificati senza mutare.
-Flags 0/1 soltanto; TXID positivo in parole u32 per prepared, zero per ordinario."
+  "Pre: untrusted entry. Post: shape, state, capacity, and work verified without mutation.
+Flags 0/1 only; positive TXID as u32 words for prepared, zero for ordinary."
   (unless (and (typep request 'preparazione-put-full-text) (typep key 'octets) (typep value 'octets)
                (typep row 'u32) (typep prepared 'boolean) (typep high 'u32) (typep low 'u32)
                (typep max-work 'index) (plusp max-work))
@@ -29,10 +29,10 @@ Flags 0/1 soltanto; TXID positivo in parole u32 per prepared, zero per ordinario
 (declaim (ftype (function (t t t t &key (:prepared t) (:txid-high t) (:txid-low t) (:max-work t)) index)
                 inizia-put-full-text))
 (defun inizia-put-full-text (request key value row &key (prepared nil) (txid-high 0) (txid-low 0) (max-work 268435456))
-  "Pre: input stabili fino al ritorno, proprietario esclusivo. Post: generation e cornice privata,
-key/value originari riutilizzabili; tutte le analisi useranno questo esatto valore.
-Rifiuti ordinari preservano il risultato precedente. Non valida il contratto generale della Serie.
-Una copia/CRC e limitata a un record del formato; nessuna promessa realtime o I/O."
+  "Pre: inputs stable until return, exclusive owner. Post: generation and private frame,
+original key/value reusable; all analyses will use this exact value.
+Ordinary rejections preserve the previous result. Does not validate the general Serie contract.
+One copy/CRC bounded to one format record; no real-time promise or I/O."
   (let ((size (preflight-inizio-put request key value row prepared txid-high txid-low max-work)) (complete nil))
     (unwind-protect
          (progn

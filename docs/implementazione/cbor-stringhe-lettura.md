@@ -5,7 +5,7 @@
 The subsequent [data reading](cbor-stringhe-dati.md) compares this
 static reading with runtime records, without changing product or tests.
 
-Static reading by the blind-corpus lead, on 2026-10-11, after
+This static reading was performed by the blind-corpus lead on 2026-10-11, after
 test freeze and before campaigns. Base
 `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`; product examined
 `src/codec/cbor-string-write.lisp`, Git blob
@@ -15,7 +15,7 @@ The [preregistered contract](cbor-stringhe-metodo.md) retains blob
 The [first reading](cbor-stringhe-revisione.md) and [inventory](cbor-stringhe-decisioni.md)
 are separate artifacts; this reading changes neither product nor tests.
 
-No functional defect or open static finding identified in the examined
+No functional defect or open static finding was identified in the examined
 blobs. Build, corpus results, heap, observed concurrency,
 coverage, and mutations are still pending. This outcome does not close
 C1 gates, certify MC/DC or full coverage, or qualify the engine.
@@ -30,7 +30,7 @@ C1 gates, certify MC/DC or full coverage, or qualify the engine.
 | 2. Invariants | Exclusive simple u8 destination, stable source, half-open ranges, complete budget, and disjoint footprint precede every mutation. Guards check span, selection, copy boundaries, and final cursors. Frozen tests falsify public violations through whole arrays and sentinels; runtime outcomes remain to be recorded. |
 | 3. Errors | Conforming order: destination → major → source → budget type/limit → payload budget → item budget → capacity → overlap → UTF-8. Reasons match the method; preflight offsets are NIL via condition initform. UTF-8 propagates class, reason, and absolute source offset. Every public rejection precedes the header; internal guards after write remain without rollback, with owner fail-stop. |
 | 4. Limits | The copy repeats exactly SPAN steps, with SPAN≤16 MiB checked and equal to destination length. MT3 calls the validator with budget SPAN; that loop is bounded too. No recursion, waits, retries, or worker creation in the product. |
-| 5. Heap | New success path uses cursors, multiple values, and direct calls, without constructors, closures, ASTs, or u64 objects. Values are index/u32, bounded before use. NTH-VALUE, the UTF-8 keyword call, and arithmetic must still be measured with null baseline and positive sensor: zero heap is not certified by reading. |
+| 5. Heap | New success path uses cursors, multiple values, and direct calls, without constructors, closures, ASTs, or u64 objects. Values are index/u32, bounded before use. NTH-VALUE, the UTF-8 keyword call, and arithmetic must still be measured with a null baseline and a positive control: zero heap is not certified by reading. |
 | 6. Verified data | MT2 copies arbitrary bytes; MT3 verifies all UTF-8 before the first write, without recounting length in scalars. Header and copy receive already checked ranges and sizes. The wrapper checks UTF-8 count, header end, and final NEXT; it returns one value. |
 | 7. Compound decisions | The inventory includes all five AND forms and six chained relations; no OR forms. Internal guards remain in the coverage denominator even when the public contract cannot falsify them. Inventory witnesses are plans, without dynamic certification of condition independence or MC/DC. |
 | 8. Owner | Explicit OWNER/SHARED: caller destination, source bytes stable until return, local variables. Simple arrays do not share backing storage through displacement in the allowed domain: EQ identifies the intended alias. The same array is allowed only disjoint from the actual footprint; empty and touching boundaries are allowed. |
@@ -48,7 +48,7 @@ before header selection: the already validated budget bounds SPAN to
 16,777,216. The header is selected based on source bytes, with HIGH
 zero; the item check prevents payload and header from exceeding the
 budget. The maximum acceptable payload with the default is therefore
-16,777,211 bytes, followed by a five-byte header.
+16,777,211 bytes, plus a five-byte header.
 
 Capacity uses END−START, not physical buffer length. Only
 after the check is NEXT calculated: ITEM-SIZE≤END−START implies NEXT≤END,
@@ -105,8 +105,8 @@ rechecked and match those communicated to the coordinator.
 | `tests/codec/cbor-string-write.lisp` | `ed0f6a67c46498bdc9c721480cb76bc727fc5b4f` | `ea9cc94d8e810942da019aade862711cbdf33216161433fef6953f75472a2115` |
 | `tests/codec/cbor-string-write-threads.lisp` | `33c7e6a9a0d6bbd551d4171ece6681b66bf87657` | `d45b4dda658a96b9af9051b152df2b17859aecdbb9131505d1a2689b27ffb88a` |
 
-Expected header uses division/modulo and powers of 256, also compared
-with independent literal vectors. Expected payload derives from source
+The expected header is calculated using division/modulo and powers of 256, also compared
+with independent literal vectors. The expected payload derives from the source
 before the call; success compares the entire destination, a single
 NEXT fixnum, and preservation of the disjoint source. Errors
 compare both physical arrays, even for non-simple arguments.
@@ -140,9 +140,9 @@ with NUL and multibyte scalars; each worker owns a separate
 destination. Expected values and sink tokens are prepared before startup;
 every call checks arity, NEXT, and the entire destination. The sink sums
 NEXT, header bytes, and last payload byte actually observed.
-The parent checks intact source, sink, intervals, and joins; semaphores
-within 15 seconds, joins within 20 seconds, and cleanup with termination
-verification. Worker or item count is not a scaling
+The parent checks intact source, sink, intervals, and joins; semaphore waits are bounded
+to 15 seconds and joins to 20 seconds, with termination
+verification during cleanup. Worker or item count is not a scaling
 result; all outcomes remain to be observed.
 
 <a id="lettura-sintattica-e-verifiche-pendenti"></a>

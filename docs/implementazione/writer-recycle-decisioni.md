@@ -71,15 +71,15 @@ Base `673987ad819dd48741a7c0a4ff259137a1ed0bef`. Initial source read
 SHA-256 `51ddbf06d1639427317ac25d00140ec2020be14b315ed364fd1ae425ebed145c`;
 test read SHA-256
 `c1ec12ce11df80b7679f00eed72a2a6ae3b97999eef5b20f08627a949549fbae`.
-The first source line contained typo `publica`, which the change owner
-will correct. No functional defect found in the first reading; this is
+The first source line contained the typo `publica`, which the change owner
+will correct. No functional defect was found in the first reading; this is
 not a compilation, test, or coverage outcome. The complete twelve-point
 report is retained as UTF-8 data in `spikes/out/recycle-c1-initial.lisp`,
 without changing product sources.
 
 Requirements and ADRs are consistent with the three functions. Head type,
 guard/shape, FIFO exchange, and obligation retention have dedicated fixtures.
-Complete ftypes, safety 3, functions below 60 lines, owners, and per-segment
+Complete ftypes, safety 3, functions below 60 lines, owners, and per-slice
 access are declared. Conditions remain typed and cleanup does not hide
 failures. Allocation measurement, test execution, raw coverage, mutants,
 traceability, and `make check` are still pending.
@@ -131,10 +131,10 @@ subtracted. Process is `:ok/:stable`, exit 0.
 | `ready-recycle.lisp` | 81 / 86 | 8 / 8 |
 | Total | 929 / 1060 | 134 / 154 |
 
-Native data retains all paths. Indices are reversed: the last identifies
+Native data retain all paths. Indices are reversed: the last identifies
 the top-level form; reading right to left descends into subelements.
 Every root error listed below contains four raw forms: call, designator,
-`:reason` keyword, and reason. Following roots and definition/default forms
+`:reason` keyword, and reason. The following roots and definition/default forms
 map all 131 unmarked expressions.
 
 | File | All unmarked forms and mapping |
@@ -180,7 +180,7 @@ validated. Strict C4 runs `4000528528-command-77652-0` and
 `4000528528-command-77653-0` are `:ok/:stable`, exit 0: whole COMPILE-FILE
 and FASL self-tests. SIGKILL fixture
 `4000528529-recycle-signal-self-test-77690` reports exit 137, signal 9,
-one worker-error and zero detected; pending baseline concerns only fixture.
+one worker-error and zero detected; the pending baseline concerns only the fixture.
 
 Mutations `4000528603-command-78553-0`, data `recycle-mutations/report.lisp`:
 complete baseline with 66 start/ok and completion 66; 11/11 detected,

@@ -4,7 +4,7 @@
 
 Reading independent of the kernel author, performed by the coordinator of
 contract, ASDF, and campaigns. The second reading is assigned to the oracle
-author after freezing their tests. No open static finding
+author after freezing their tests. No open static finding was identified
 in the two new files; runtime outcomes are recorded separately.
 
 | C1 checklist point | Finding |

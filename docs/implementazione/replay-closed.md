@@ -121,7 +121,7 @@ per record.
 
 P-byte scratch, reader objects, and its tables are cold-path allocations,
 not an RSS estimate. Visitor work, EDIT lookup, boxing, GC, and latency
-are not measured here. No work added to the ordinary GET/PUT path and no
+are not measured here. No work is added to the ordinary GET/PUT path and no
 new shared write or wait between Serie. ACTIVE, key grouping, and the
 overall gate remain separate increments.
 

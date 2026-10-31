@@ -5,8 +5,8 @@
 ;;; REQ: REQ-IDX-010 REQ-AFF-004
 (declaim (ftype (function (motore (or null io:file-io) (or null io:file-io) boolean) null) chiudi-file-costruzione))
 (defun chiudi-file-costruzione (engine append input complete)
-  "Pre: soli FD locali, nessun borrower attivo. Post: entrambi tentati; primary/nonlocal exit preservati.
-Se il lavoro era completo, un guasto cleanup impedisce il successo con ERRORE-CLEANUP-MOTORE."
+  "Pre: local FDs only, no active borrower. Post: both attempted; primary condition/nonlocal exit preserved.
+If work was complete, a cleanup fault prevents success with ERRORE-CLEANUP-MOTORE."
   (let ((previous (motore-cleanup-failures engine)))
     (dolist (file (list input append))
       (when file (tenta-cleanup-motore engine (lambda () (io:chiudi file)))))
@@ -18,8 +18,8 @@ Se il lavoro era completo, un guasto cleanup impedisce il successo con ERRORE-CL
 ;;; REQ: REQ-IDX-010 REQ-AFF-008
 (declaim (ftype (function (motore piano-immagine-motore) null) verifica-fonte-costruzione))
 (defun verifica-fonte-costruzione (engine plan)
-  "Pre: owner BUSY, prima del footer e dopo verifica readonly. Post: salute, revisione e fonte intatte.
-INVARIANT-VIOLATION per mutazione/rientro fuori protocollo; nessun derivato adottato o ACK dei dati."
+  "Pre: BUSY owner, before footer and after readonly verification. Post: health, revision, and source intact.
+INVARIANT-VIOLATION for mutation/reentry outside protocol; no derivative adopted or data ACK."
   (p::esigi-indice-sano (motore-index engine))
   (unless (and (motore-busy engine)
                (= (piano-immagine-motore-revision plan) (p::indice-primario-revision (motore-index engine)))
@@ -31,9 +31,9 @@ INVARIANT-VIOLATION per mutazione/rientro fuori protocollo; nessun derivato adot
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (motore opzione-indice-paginato piano-immagine-motore index) null) esegui-costruzione-immagine))
 (defun esegui-costruzione-immagine (engine option plan max-pages)
-  "Pre: owner ammesso e piano completo; nome foglia libero. Post: immagine sigillata, fsync parent e verifica readonly.
-Preparazione derivata, nessun nuovo commit dati/rename/catalogo. File mai sovrascritto; incompleto conservato.
-FD locali chiusi anche su errori/nonlocal exit; il chiamante chiude admission al fallimento."
+  "Pre: admitted owner and complete plan; free leaf name. Post: sealed image, parent fsync, and readonly verification.
+Derived preparation, no new data commit/rename/catalog. File never overwritten; incomplete file retained.
+Local FDs closed even on errors/nonlocal exits; caller closes admission on failure."
   (let ((append nil) (input nil) (complete nil) (size (opzione-indice-paginato-size option)))
     (unwind-protect
          (progn

@@ -40,7 +40,7 @@ The Recovery Manager MUST be able to rebuild the system after a crash. It checks
 ## Crash-safety requirements
 
 - Compaction operations MUST be crash-safe.
-- A new segment MUST NOT become visible as definitive before its data are durable
+- A new segment MUST NOT become visible in its final state before its data are durable
   (INV-C7).
 - An incomplete atomic swap MUST be recognizable during recovery.
 - Segment metadata are derived data: recovery verifies them and, if necessary,
@@ -89,8 +89,8 @@ Referring to the [workflow](07-compaction.md#workflow) steps:
 > **Decided (QA-04 → [ADR-0018](adr/0018-control-log-manifest-swap.md), [ADR-0040](adr/0040-manifest-a-record-unico.md))** — Recognizing an incomplete swap requires an authoritative, atomic record of
 > the valid segment set for a Serie (a *manifest*, or dedicated records in the Serie WAL).
 > This decision makes the whole table above deterministic: the swap is **one EDIT record**.
-> Before EDIT, output is a `.tmp` and is deleted; afterward, recovery completes rename
-> and source deletion. There is no ‘partial swap’. A file with a definitive name unknown
+> Before EDIT, the output is a `.tmp` file and is deleted; afterward, recovery completes the rename
+> and source deletion. There is no ‘partial swap’. A file whose final name is unknown
 > to the manifest is not deleted: it is a reported anomaly (INV-A10).
 
 <a id="recovery-degli-indici-full-text"></a>

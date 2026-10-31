@@ -66,7 +66,7 @@ reconstructs the original 1113055-byte coverage state.
 
 `make check` passes: 460 build outcomes, four lint-selftest markers
 distinct from tests, lint, traceability, links, preservation, and ten spikes.
-The original record has zero exit and stable snapshot. Subsequent
+The original record has exit zero and a stable snapshot. Subsequent
 integration of `edb043b` imports Makefile, documentation, and tests,
 without modifying sources, tests, tools, or ASDF; final
 link and preservation checking uses the updated memory budget.
@@ -82,7 +82,7 @@ fixtures, including symlinks and over-budget files, remain in the local backup
 subset includes targets, runner, reports, and logs; it does not replace copies.
 
 The Common Lisp checker passes 24 fixtures and verifies closed inventory,
-sizes/SHAs, and four process metadata; limits and nonpreventive
+sizes/SHAs, and four process metadata fields; limits and nonpreventive
 enumeration are explicit in the [C4 reading](archivi-comandi-lettura.md).
 New CL checks of both preceding CBOR archives also pass,
 1313/87 files and eight/six processes, with their original indexes unchanged.
@@ -93,5 +93,5 @@ first HTML TR without explicit closure. Corrections concern readers;
 original campaigns are neither repeated nor rewritten. The manifest
 generator printed a count of one after NREVERSE while saving the complete
 list: original and diagnostic-only correction are preserved.
-Observations remain local/per file, without atomic snapshot,
+Observations remain local/per file, without an atomic snapshot,
 platform performance comparison, or gate promotion.

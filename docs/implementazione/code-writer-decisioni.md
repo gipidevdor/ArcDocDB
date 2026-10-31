@@ -4,8 +4,8 @@
 
 C1 inventory of sources `src/execution/queue.lisp` and `writer.lisp`,
 registered before campaigns. Tests use public interface and a list-based
-FIFO oracle; the only declared internal preparations are guard
-acquired through CAS, alias of private vector, and generation near maximum.
+FIFO oracle; the only declared internal preparations are a guard
+acquired through CAS, an alias of the private vector, and a generation near its maximum.
 
 | Point | Elementary conditions and outcomes | Planned test or limit |
 |---|---|---|
@@ -18,9 +18,9 @@ acquired through CAS, alias of private vector, and generation near maximum.
 | `%check-lease`: identity | Index type, positive, current-thread owner, exact generation. | Type/zero, current token, reentry, foreign thread, old token after new acquisition, double release. Thread/generation mutants. |
 | `%check-lease`: quota | Quantum 1..65536, extracted ≤ quantum. | Cumulative/exact/exhausted quota and quantum greater than capacity. Internal rejections not covered through arbitrary writes. |
 | `%libera-owner` | Expected owner and CAS old value equals thread. | Normal release and generation-exhaustion cleanup. Defensive rejections not induced by altering owner. |
-| `acquisisci-writer`: CAS | NIL or occupied writer. | Two contending threads, same-thread reentry; only one ownership assigned. |
+| `acquisisci-writer`: CAS | NIL or occupied writer. | Two contending threads, same-thread reentry; ownership assigned to only one thread. |
 | `acquisisci-writer`: invariants | Current owner and extracted zero. | Success after release; defensive rejections not all reached by API. |
-| `acquisisci-writer`: generation | Generation equals maximum fixnum or legal increment. | Private preparation at max−1, last acquisition, and two later rejections without wrap/retained ownership. |
+| `acquisisci-writer`: generation | Generation equals maximum fixnum or legal increment. | Private preparation at max−1, last acquisition, and two later rejections without wrap or retained ownership. |
 | `%check-target`: vector | SIMPLE-VECTOR and different from ring. | Invalid types, specialized/adjustable vector, declared alias; valid private vector. |
 | `%check-target`: span | start/end index, start < end, end ≤ length. | Type, negative, empty, reversed, past end; unaligned and exact spans with sentinels. |
 | `preleva-messaggi`: remaining | Zero: `0, :yield` before CAS; positive: ring access. | Quota across multiple calls and yield with already-occupied guard; mutant zeroing extracted. |
@@ -32,4 +32,4 @@ acquired through CAS, alias of private vector, and generation near maximum.
 This inventory does not declare full MC/DC. Raw coverage retains
 the entire denominator, including forms unmarked by instrumentation and defensive
 branches. Both C1 readings and targeted mutants do not replace an approved
-exception or qualification of engine, wakeups, and adaptive pool.
+exception or qualification of the engine, wakeups, and adaptive pool.

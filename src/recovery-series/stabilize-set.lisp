@@ -7,9 +7,9 @@
 (declaim (ftype (function (arcdocdb.io:file-io recovery-sources index) null)
                 verifica-nomi-fonti-stabilizzabili))
 (defun verifica-nomi-fonti-stabilizzabili (directory sources count)
-  "Pre: metadata di tutto il set verificati, namespace esclusivo/stabile. Post: ogni nome/FD ammesso.
-Nessuna rinomina o fsync anche se l'ultima fonte fallisce; il booleano non e' una prenotazione.
-Condizioni I/O originali propagate, nessun nuovo FD o contenitore per fonte."
+  "Pre: metadata for the entire set verified, exclusive/stable namespace. Post: every name/FD admitted.
+No rename or fsync even if the last source fails; the boolean is not a reservation.
+Original I/O conditions propagated, no new FD or container per source."
   (arcdocdb.io::esigi-aperto directory :directory)
   (dotimes (i count)
     (multiple-value-bind (id state form file size) (fonte-recovery sources i)
@@ -25,12 +25,12 @@ Condizioni I/O originali propagate, nessun nuovo FD o contenitore per fonte."
                           &key (:max-segmenti index)) (values index index &optional))
                 stabilizza-nomi-serie-recuperata))
 (defun stabilizza-nomi-serie-recuperata (directory sources active closed &key (max-segmenti 65536))
-  "Pre: gate Serie/Archivio completi, CONTROL autorevole, set/vettore/namespace esclusivi e stabili.
-Post: tutti i nomi definitivi e parent sincronizzato per fonte; due conteggi rinominati/gia' definitivi.
-Tutti i metadata e nomi verificati prima degli effetti, poi completamento per fonte in ordine ID u64.
-Decisioni gia' negli EDIT autorevoli; rinomine/fsync completano, nessun nuovo punto atomico del gruppo.
-Errori originali senza conteggi parziali o rollback; effetti gia' completati restano completati.
-Nessun retry/close/unlink, nuovo ACTIVE, checkpoint, indice, CSN o ammissione del traffico."
+  "Pre: complete Serie/Archivio gates, authoritative CONTROL, exclusive stable set/vector/namespace.
+Post: all names final and parent synchronized for each source; two counts: renamed/already final.
+All metadata and names verified before effects, then completion per source in u64 ID order.
+Decisions already in authoritative EDITs; rename/fsync complete them, no new group atomic point.
+Original errors without partial counts or rollback; effects already completed remain completed.
+No retry/close/unlink, new ACTIVE, checkpoint, index, CSN, or traffic admission."
   (multiple-value-bind (control count) (verifica-ampiezza-stabilizzazione sources active closed max-segmenti)
     (let ((position (verifica-token-stabilizzazione-serie control sources active closed count))
           (next 0) (renamed 0) (final 0))

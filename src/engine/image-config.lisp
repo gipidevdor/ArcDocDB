@@ -5,7 +5,7 @@
 
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (defstruct (opzione-indice-paginato (:constructor %make-opzione-indice-paginato (name size frames visits bytes)) (:copier nil))
-  "Pre: factory validante. Post: nome e budget privati readonly; nessun effetto I/O."
+  "Pre: validating factory. Post: private read-only name and budgets; no I/O effect."
   (name "" :type simple-base-string :read-only t)
   (size 4096 :type (member 4096 16384 65536) :read-only t)
   (frames 2 :type (integer 1 64) :read-only t)
@@ -17,9 +17,9 @@
                          opzione-indice-paginato) crea-opzione-indice-paginato))
 (defun crea-opzione-indice-paginato (name &key (page-size 4096) (frames 2) (max-visits 16777216)
                                              (max-bytes 268435456))
-  "Pre: nome foglia primary-<16 cifre hex minuscole>.idx.tmp e budget finiti.
-Post: copia della configurazione per APRI-MOTORE :INDEX-IMAGE; ogni errore precede apertura/allocazioni grandi.
-Il nome seleziona un candidato, non attesta un commit o una decisione di catalogo."
+  "Pre: leaf name primary-<16 lowercase hex digits>.idx.tmp and finite budgets.
+Post: configuration copy for APRI-MOTORE :INDEX-IMAGE; every error precedes opening/large allocations.
+The name selects a candidate; it does not attest to a commit or catalog decision."
   (unless (and (stringp name) (= (length name) 32) (string= name "primary-" :end1 8)
                (string= name ".idx.tmp" :start1 24)
                (every (lambda (char) (find char "0123456789abcdef")) (subseq name 8 24)))

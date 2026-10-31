@@ -166,7 +166,7 @@ the valid copy: misses and file rereads continue. A disabled tag
 preceding a valid copy causes the same shadowing.
 
 This is an accelerator defect affecting reachability of the repaired copy,
-not a trustcontroller requirement. It authorizes no corrupt bytes: the reader
+not a trust requirement placed on the controller. It authorizes no corrupt bytes: the reader
 returns a zero range and GET uses verified fallback. It nevertheless has concrete
 cost in repeated I/O and CRC and prevents the expected subsequent hit.
 
@@ -255,7 +255,9 @@ and discard any response after unwind.
 
 <a id="requisiti-trustcontroller-distinti-dai-bug"></a>
 
-## Trustcontroller requirements, distinct from bugs
+<a id="trustcontroller-requirements-distinct-from-bugs"></a>
+
+## Controller trust requirements, distinct from bugs
 
 | Guarantee entrusted to controller/driver | Reference | Why it is not a demonstrated GET bug |
 |---|---|---|
@@ -497,4 +499,4 @@ fallback on verify-failed, and unchanged schema/outcomes remain; no allocation a
 blob `231cb906b55b9c92905deefc112f7baebecbd4af`: removes the rejected prefilter
 and restores shadowing of the repaired copy in the named test.
 R2 remains closed as clarified scope: full oracle inside time/heap.
-Final static outcome favorable to patches; no run or dynamic result anticipated.
+The final static outcome is favorable to the patches; no run or dynamic result anticipated.

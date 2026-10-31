@@ -7,17 +7,25 @@ DOCS_DYNAMIC_SPACE_SIZE ?= 2048
 PYTHON ?= python3
 
 .PHONY: build test lint lint-selftest record-command-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
-.PHONY: docs docs-setup docs-build docs-check docs-serve
+.PHONY: docs docs-setup docs-build docs-check docs-runtime-check docs-examples docs-serve
 
 docs-setup:  ## install only the hash-locked documentation dependencies
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp --self-test
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp
 
-docs-build:  ## generate the complete manual with Common Lisp Codex
+docs-build:  ## generate the complete manual with CommonDoc Codex
 	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp
 
 docs-check:  ## build, test rendering and verify coverage, links and source hashes
 	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp --test
+	$(MAKE) docs-runtime-check
+	$(MAKE) docs-examples
+
+docs-runtime-check:  ## compare the generated reference with compiled package exports and docstrings
+	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/runtime-check.lisp
+
+docs-examples:  ## run the public Lisp example through a private temporary Unix socket
+	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script examples/local-roundtrip.lisp
 
 docs: docs-setup  ## prepare and verify the GitHub Pages artifact
 	$(MAKE) docs-check

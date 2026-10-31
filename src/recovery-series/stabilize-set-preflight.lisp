@@ -7,8 +7,8 @@
 (declaim (ftype (function (recovery-sources active-recuperato simple-vector index)
                          (values control-recuperato index &optional)) verifica-ampiezza-stabilizzazione))
 (defun verifica-ampiezza-stabilizzazione (sources active closed max-segments)
-  "Pre: risultati completi stabili, stesso CONTROL autorevole. Post: cardinalita' completa entro budget.
-RESOURCE-EXHAUSTED prima delle scansioni; INVALID-ARGUMENT per count, IO-FAULT per CONTROL non aperto."
+  "Pre: stable complete results, same authoritative CONTROL. Post: complete cardinality within budget.
+RESOURCE-EXHAUSTED before scans; INVALID-ARGUMENT for count, IO-FAULT for CONTROL not open."
   (let ((control (arcdocdb.recovery.active::active-recuperato-control active))
         (count (numero-fonti-recovery sources)))
     (when (> count max-segments) (error 'resource-exhausted :reason :series-stabilization-segment-budget))
@@ -23,8 +23,8 @@ RESOURCE-EXHAUSTED prima delle scansioni; INVALID-ARGUMENT per count, IO-FAULT p
 (declaim (ftype (function (simple-vector index) arcdocdb.recovery.closed:closed-recuperato)
                 token-closed-stabilizzabile))
 (defun token-closed-stabilizzabile (closed position)
-  "Pre: vettore prestato stabile e cursore privato. Post: token CLOSED tipizzato alla posizione esatta.
-INVALID-ARGUMENT per token assente/errato prima degli effetti; nessuna allocazione o ricerca."
+  "Pre: stable borrowed vector and private cursor. Post: typed CLOSED token at the exact position.
+INVALID-ARGUMENT for a missing/incorrect token before effects; no allocation or search."
   (unless (< position (length closed))
     (error 'invalid-argument :reason :series-stabilization-closed-position))
   (let ((token (svref closed position)))
@@ -36,9 +36,9 @@ INVALID-ARGUMENT per token assente/errato prima degli effetti; nessuna allocazio
 (declaim (ftype (function (control-recuperato recovery-sources active-recuperato simple-vector index) index)
                 verifica-token-stabilizzazione-serie))
 (defun verifica-token-stabilizzazione-serie (control sources active closed count)
-  "Pre: count completo ammesso, fonti e vettore stabili. Post: posizione dell'unico ACTIVE, anche zero.
-ID stretti e cardinalita' provano completezza; ogni token corrisponde a ID/FD/P/EOF e CONTROL per EQ.
-INVALID-ARGUMENT per ordine/insieme/autorita', condizioni dei controlli per fonte propagate senza I/O nomi."
+  "Pre: complete count admitted, stable sources and vector. Post: position of the unique ACTIVE, including zero.
+Strict IDs and cardinality prove completeness; each token matches ID/FD/P/EOF and CONTROL by EQ.
+INVALID-ARGUMENT for order/set/authority, per-source check conditions propagated without name I/O."
   (let ((position nil) (previous nil) (next 0))
     (dotimes (i count)
       (multiple-value-bind (id state form file size) (fonte-recovery sources i)

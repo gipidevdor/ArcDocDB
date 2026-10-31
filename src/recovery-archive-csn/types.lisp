@@ -6,18 +6,18 @@
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-TXM-005 REQ-AFF-008
 (defstruct (insieme-serie-recovery
              (:constructor %make-insieme-serie-recovery (archive views)) (:copier nil))
-  "Pre: elenco completo autorevole dal catalogo, UUID unici, stesso ambito, Registri inclusa.
-Post: vettore posseduto readonly, distinto da quello del chiamante; viste canoniche per EQ.
-Non verifica il catalogo su disco né deduce il ruolo Registri dal nome; nessun accessor pubblico."
+  "Pre: complete authoritative catalog list, unique UUIDs, same scope, Registri included.
+Post: owned read-only vector distinct from the caller's; canonical views by EQ.
+Does not verify the on-disk catalog or infer the Registri role from the name; no public accessor."
   (archive nil :type archivio-recovery :read-only t)
   (views #() :type simple-vector :read-only t))
 
 ;;; REQ: REQ-REC-001 REQ-MVC-006 REQ-TXM-005 REQ-AFF-008
 (defstruct (piano-csn-archivio
              (:constructor %make-piano-csn-archivio (archive series segments present maximum)) (:copier nil))
-  "Pre: tutte le Serie dell'insieme e stesso replay decisioni, fonti congelate e verificate.
-Post: riepilogo scalare readonly; nessun elenco, tabella decisioni, risultato Serie o FD trattenuto.
-Non certifica la salute futura né autorizza il traffico o la creazione di più allocatori."
+  "Pre: all Serie in the set and same decision replay, frozen and verified sources.
+Post: read-only scalar summary; no list, decision table, Serie result, or FD retained.
+Does not certify future health or authorize traffic or creation of multiple allocators."
   (archive nil :type archivio-recovery :read-only t)
   (series 0 :type index :read-only t)
   (segments 0 :type index :read-only t)

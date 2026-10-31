@@ -12,13 +12,13 @@ The [preregistered method](pool-worker-claim-metodo.md) bounds tests.
 
 ## API and ownership
 
-Function receives only `porta-worker-pool`: it uses the port's immutable
+The function receives only `porta-worker-pool`: it uses the port's immutable
 associated context, avoiding a foreign port/context pair. Call
 belongs to worker owner, is non-reentrant, and occurs between run-to-completion
 tasks, without read epoch or external resources still acquired.
 Context must be IDLE and completely free.
 
-Returns four values:
+It returns four values:
 
 | Value | Meaning |
 |---|---|
@@ -76,7 +76,7 @@ convergence under perpetual ring saturation is not promised.
 EMPTY/BUSY are local observations without global quiescence proof.
 
 Lifecycle-command acknowledgment remains valid if subsequent delegated
-acquisition fails. ACK is not rolled back, generations not cleared,
+acquisition fails. ACK is not rolled back, generations are not cleared,
 and active count still represents logical activations, not health.
 Coordinator must handle worker diagnosis and Archivio.
 
@@ -92,13 +92,13 @@ Inconsistent pool words/CAS propagate lifecycle rejection before
 acquisition. Delegated acquisition conditions remain execution's.
 No retries, cleanup, or error-hiding handlers.
 
-Gate is O(1) beyond bounded C1 verifiers. Only active branch adds
+The gate is O(1) beyond bounded C1 verifiers. Only the active branch adds
 existing O(K) ready scan, K maximum 64. It introduces no hash,
 intentional allocations, callbacks, threads, waits, or global counters.
 Shared acknowledgments occur per wave; ready uses its partitions.
 Step does not suspend a task, under ADR-0045.
 
-Component integrates logical acquisition, not complete server dispatcher.
+The component integrates logical acquisition, not the complete server dispatcher.
 Gradual startup, persistent park/wake, sensors, Archivio coordination,
-message admission, dead workers, and physical shutdown remain to implement.
+message admission, dead workers, and physical shutdown remain to be implemented.
 REQ-THR-001 and QA-12/19 remain open for complete engine.

@@ -49,7 +49,7 @@ results changes, requiring a system reload.
 | CLOSED EDIT outcomes | All CSNs, even without prepared records reachable in the prefix |
 | Compacted segment | Stamps of ordinary PUT/TOMBSTONE records only, plus any retained EDIT outcomes |
 | Complete DECISION table | All CSNs, even without prepared records in the open Serie |
-| Header, TXID, segment ID, frontiers, CONTROL/multiserie SEAL | No contribution |
+| Header, TXID, segment ID, frontiers, CONTROL/multiseries SEAL | No contribution |
 | Bytes beyond P, invalid ACTIVE tail, decision log tail | No contribution |
 
 The result is an **observed maximum**, not the visibility horizon H

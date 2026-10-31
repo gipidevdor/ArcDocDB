@@ -32,7 +32,7 @@ the target is not counted as valid detection. Reconstructible source
 copies and FASLs are excluded from publication; concrete variant,
 recipe, Git SHA, fingerprints, stdout, and stderr are preserved.
 
-Tests include full without partial adoption, stale/foreign, high CSN and
+Tests include a full-state rejection without partial adoption, stale/foreign, high CSN and
 carry, delayed H across Serie, busy after CAS without republication, async with
 separate cursors, write/flush faults, quiescence before cancellation, retirement
 of never-accepted dispatch, preflight invariants, and uncertain nonlocal exit.
@@ -61,7 +61,7 @@ fault remains terminal. Delegated WAL decisions retain their own
 | Series, 44 tests | 1,155 / 1,383 = 83.51% | 141 / 186 = 75.81% | [Series HTML](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-coverage-02/cover-index.html) |
 | WAL, WAL + Series suites | 1,136 / 1,286 = 88.34% | 162 / 190 = 85.26% | [Combined WAL HTML](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-wal-coverage-03/cover-index.html) |
 
-These sum raw counts, including generated forms and packages; tests are
+These are summed raw counts, including generated forms and packages; tests are
 excluded from the denominator. HTML and SB-COVER state retain original paths.
 Percentages do not certify all interruption paths, general MC/DC,
 safety, or engine qualification. The six direct decisions have explicit
@@ -109,7 +109,7 @@ of the validated SBCL sensor, not absolute proof of nonallocation.
 
 The backend performs no physical I/O: no NVMe performance, real durability,
 client latency, or database throughput can be inferred from these figures.
-External load uncontrolled, no acceptance throughput threshold.
+External load is uncontrolled; there is no acceptance threshold for throughput.
 Serial measurements completed before creating workers; no other parent
 check or development agent ran during the campaign.
 

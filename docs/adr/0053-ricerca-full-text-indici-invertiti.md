@@ -154,7 +154,7 @@ criteria without declaring code, correctness evidence, or performance available.
 - Positions and deltas add memory, disk space, and write/rebuild cost:
   simple-query targets do not transfer to full-text search.
 - Search availability depends on verified index coverage; losing a derivative
-  does not change the documentary source of truth.
+  does not change the documents that serve as the source of truth.
 
 <a id="alternative-considerate"></a>
 
@@ -182,4 +182,4 @@ The reference pattern is the positional inverted index, described in
 References for Unicode analysis are
 [UAX #29](https://www.unicode.org/reports/tr29/) and
 [UAX #15](https://www.unicode.org/reports/tr15/); the specific version must be
-fixed in the profile, not inferred from these updateable links.
+fixed in the profile, not inferred from these updatable links.

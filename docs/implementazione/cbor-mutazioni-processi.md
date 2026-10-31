@@ -3,181 +3,183 @@
 # Process outcomes in CBOR mutations
 
 CBOR header/structure runners must distinguish mutant rejection
-from errors in process running tests. Review of
-2026-10-09 found two false detections: nonzero exit after exact
-build-completion line counted as detected mutant; result
-transport lost operating-system signal.
+from errors in the process running the tests. The review on
+2026-10-09 found two false detections: a nonzero exit after the exact
+build-completion line was counted as a detected mutant, and result
+transport lost the operating-system signal.
 
-Catalog remains 9 header mutants, 10 structure mutants.
-Correction concerns verification tools, no codec changes.
-Previous campaigns retain original bytes/states.
+The catalog still contains 9 header mutants and 10 structure mutants.
+The correction concerns verification tools; no codec changes are made.
+Previous campaigns retain their original bytes and states.
 
 Classification follows this order:
 
-1. Operating-system signal produces `:worker-error`.
-2. Nonzero exit after exact completion produces `:worker-error`.
-3. Compilation error or incomplete run without valid smoke
+1. An operating-system signal produces `:worker-error`.
+2. A nonzero exit after exact completion produces `:worker-error`.
+3. A compilation error or incomplete run without a valid smoke marker
    remains invalid verification.
-4. Zero exit requires exact smoke/completion to establish
+4. A zero exit requires exact smoke/completion markers to establish
    mutant survival.
-5. Normal runtime error after smoke/before completion establishes
+5. A normal runtime error after smoke and before completion establishes
    mutant detection.
 
-Baseline must finish without signal, code zero, both exact
-markers. Baseline/mutants separately retain exit code/signal.
+The baseline must finish without a signal, with exit code zero and both exact
+markers. Baseline and mutants separately retain exit code and signal.
 Startup/transport errors are worker errors.
-Counters/campaign outcome do not turn these errors into
- detections. Applicable rules COD-60/COD-61 of
+Counters and the campaign outcome do not turn these errors into
+detections. The applicable rules are COD-60/COD-61 of the
 [coding standard](../affidabilita/standard-di-codifica.md).
 
 <a id="metodo-registrato-prima-delle-esecuzioni"></a>
 
 ## Method registered before executions
 
-Each runner has two real fixtures using same transport
-as campaign: child writes smoke, flushes output, sends SIGKILL
-to own PID; another writes smoke/completion then exits code 7.
+Each runner has two real fixtures using the same transport
+as the campaign: one child writes smoke, flushes output, and sends SIGKILL
+to its own PID; another writes smoke/completion and then exits with code 7.
 Both must be `:worker-error`, without detection. Self-tests
-also check precedence, baselines, LF/CRLF markers, rejecting
-quotations/extra text on same line.
+also check precedence, baselines, and LF/CRLF markers, rejecting
+quotations or extra text on the same line.
 
-After both files reviewed, sources/Git index
-frozen during every recorded execution. Run both `--self-test`,
+After both files are reviewed, sources and the Git index remain
+frozen during every recorded execution. Run both `--self-test` commands,
 then both full campaigns and `make check-core`. Campaigns may
 run in parallel in independent directories/copies; each catalog
 runs serially. Preserve command records, reports,
-generated runners/original logs, including fixtures repeated by `--run`.
-Evidence catalog checks data presence/size/integrity.
+and generated runners/original logs, including fixtures repeated by `--run`.
+The evidence catalog checks data presence, size, and integrity.
 Two `--invalid` invocations also check COD-61: each process
-must fail nonzero with file/rule diagnostic.
+must fail with a nonzero exit code and a file/rule diagnostic.
 Negative-check records retain `:failed` status.
 
-Tests verify runner reliability. Do not repeat codec benchmarks/
-coverage or approve new C1 conditions, MC/DC, engine
+These tests verify runner reliability. They do not repeat codec benchmarks or
+coverage measurements, or approve new C1 conditions, MC/DC, or engine
 qualifications.
 
 <a id="risultati-osservati"></a>
 
 ## Observed results
 
-Both self-tests/full campaigns succeeded with stable source
-hashes. Baselines complete 377 tests plus smoke without signals/
-warnings; campaigns detect all 9 header/10 structure
-mutants, zero worker errors. `make check-core` additionally completes
-lint, traceability, links, evidence checks, ten spikes.
+Both self-tests and full campaigns succeeded with stable source
+hashes. Baselines complete 377 tests plus smoke without signals or
+warnings; campaigns detect all 9 header and 10 structure
+mutants, with zero worker errors. `make check-core` additionally completes
+lint, traceability, links, evidence checks, and ten spikes.
 
 Four fixture executions, including campaign repetitions,
-retain SIGKILL as exit 137 / signal 9, postcompletion failure
+retain SIGKILL as exit 137 / signal 9 and postcompletion failure
 as exit 7 / signal nil: always `:worker-error`, never `:detected`.
 Structure fixtures also preserve injected baseline copy/transport
-rejections with unobserved code/signal, logs, counters.
-Both CLIs reject `--invalid` exit 1, file/COD-61
-diagnostic; both records `:failed` as method requires.
+rejections with unobserved code/signal, logs, and counters.
+Both CLIs reject `--invalid` with exit 1 and a file/COD-61
+diagnostic; both records are `:failed`, as the method requires.
 
-[Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals/catalogo.lisp)
-preserves commands, C4 readings, reports, original log/runner bytes.
-No automatic campaign-process timeout imposed.
+The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals/catalogo.lisp)
+preserves commands, C4 readings, reports, and original log/runner bytes.
+No automatic campaign-process timeout is imposed.
 
 <a id="metodo-della-nuova-integrazione-con-cbor-minimo"></a>
 
 ## New minimal-CBOR integration method
 
-Main `e07d772` adds minimal CBOR profile/15 tests. Its
-mutation runner has same two defects as other tools:
-new C4 correction affects runner only. Codec, formats,
-product tests introduced by main unchanged. Header/structure
-runners retain previous revision hashes.
+Main `e07d772` adds the minimal CBOR profile and 15 tests. Its
+mutation runner has the same two defects as the other tools:
+the new C4 correction affects the runner only. The codec, formats, and
+product tests introduced by main remain unchanged. Header/structure
+runners retain their previous revision hashes.
 
-[New integration method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-integration/metodo.lisp)
-registered before new execution. After freeze/C4 reading,
-plan `--self-test`/`--invalid` on minimal runner, three full campaigns
-in new independent directories, `make check-core`, final
+The [new integration method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-integration/metodo.lisp)
+is registered before the new execution. After freeze and C4 reading,
+the plan calls for `--self-test`/`--invalid` on the minimal runner, three full campaigns
+in new independent directories, `make check-core`, and a final
 `make evidence trace links` after evidence preservation.
-Expected counts 8 minimal mutants, 9 headers, 10
-structure, 392 tests plus smoke: forecasts, not observed outcomes.
+Expected counts are 8 minimal mutants, 9 headers, 10
+structure mutants, and 392 tests plus smoke: forecasts, not observed outcomes.
 
-Every `--run` repeats self-test with two real child processes.
-Preserve exit/signal/counters/reports/logs/runners for fixtures/
-campaigns. Negative CLI check must stay `:failed` with
-file/COD-61 diagnostic. Every command recorded with
-actual arguments/environment/output/hashes; no source/Git index
+Every `--run` repeats the self-test with two real child processes.
+Preserve exit/signal/counters/reports/logs/runners for fixtures and
+campaigns. The negative CLI check must stay `:failed` with a
+file/COD-61 diagnostic. Every command is recorded with its
+actual arguments/environment/output/hashes; no source file or Git index
 may change during execution.
 
-New catalog will use artifact names only at dated-folder
-level, preserving native-record bytes/gzip payload names.
-Previous observed 377-test snapshot remains original. No
-repeat coverage/benchmarks or approval of C1, MC/DC, full recovery,
-engine qualification. Workers remain without automatic timeout.
+The new catalog will use artifact names only at the dated-folder
+level, preserving native-record bytes and gzip payload names.
+The previously observed 377-test snapshot remains unchanged. This step does not
+repeat coverage measurements or benchmarks, or approve C1, MC/DC, full recovery, or
+engine qualification. Workers still have no automatic timeout.
 
 <a id="risultati-osservati-della-nuova-integrazione"></a>
 
 ## Observed new-integration results
 
-Minimal runner self-test succeeded; `--invalid` successful negative
-check retaining original `:failed`, exit 1, file/COD-61
- diagnostic. Three full campaigns detect 9 header,
-10 structure, 8 minimal mutants, zero worker errors. Baselines
-complete 392 tests plus smoke, zero exit, no signal, exact
+The minimal runner self-test succeeded; `--invalid` is a successful negative
+check retaining the original `:failed` status, exit 1, and file/COD-61
+diagnostic. Three full campaigns detect 9 header,
+10 structure, and 8 minimal mutants, with zero worker errors. Baselines
+complete 392 tests plus smoke, with exit zero, no signal, and exact
 completion. Six commands retain stable source hashes.
 
-New `make check-core` completes 392 tests plus smoke/ten spikes.
-SPK-07 original status stays `:pass`; other nine retain `:ok`,
-global report `:complete`. Four fixture executions,
+The new `make check-core` completes 392 tests plus smoke and ten spikes.
+SPK-07 retains its original `:pass` status; the other nine retain `:ok`,
+and the global report is `:complete`. Four fixture executions,
 including self-tests repeated by three `--run` calls, retain eight child
 processes: SIGKILL exit 137 / signal 9 or exit 7 / signal nil after
 completion, always `:worker-error`, never `:detected`. Injected
 baseline rejections retain original reports/logs/counters.
 
-[Integrated catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-integration/catalogo.lisp)
+The [integrated catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-integration/catalogo.lisp)
 preserves native records/gzip payloads with unchanged bytes, reports/logs,
 runners from three campaigns/four fixtures, two minimal-profile C4
-readings, independent result audits. Final evidence,
-traceability/link check recorded after publication.
-Previous 377-test snapshot stays in original catalog;
-no coverage measurement, benchmark, engine qualification added.
+readings, and independent result audits. The final evidence,
+traceability, and link check is recorded after publication.
+The previous 377-test snapshot stays in the original catalog;
+no coverage measurement, benchmark, or engine qualification is added.
 
 <a id="metodo-dellintegrazione-con-controller-series-e-wal"></a>
 
-## Integration method with Series controller and WAL
+<a id="integration-method-with-series-controller-and-wal"></a>
 
-Main `1cb968d` integrated after publication `bffbdd0`.
-[Preregistered method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/metodo.lisp)
-plans only new `make check-core`, final
-`make evidence trace links` after evidence preservation, CI
-on exact published commit. Independent comparison must confirm
-three CBOR runners/target codecs unchanged.
+## Integration method with the Serie controller and WAL
 
-Expected outcomes zero exit/stable source hashes; new
- test count derived from actual output. Expectations to
-verify, not already observed outcomes. Sources/docs/index
+Main `1cb968d` is integrated after publication `bffbdd0`.
+The [preregistered method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/metodo.lisp)
+plans only a new `make check-core`, a final
+`make evidence trace links` after evidence preservation, and CI
+on the exact published commit. Independent comparison must confirm that the
+three CBOR runners and target codecs are unchanged.
+
+Expected outcomes are exit zero and stable source hashes; the new
+test count is derived from actual output. These are expectations to
+verify, not already observed outcomes. Sources, documents, and the index remain
 frozen during each recorded command.
 
-New catalog keeps only LEAF names in dated folder:
+The new catalog keeps only LEAF names in the dated folder:
 core/final-check records and preservation, ten spikes,
-global report with original payloads, method, summary, impact
-comparison, native-byte audit. Earlier 377/
+the global report with original payloads, method, summary, impact
+comparison, and native-byte audit. Earlier 377/
 392-test snapshots, including 27 CBOR mutations observed on main `e07d772`,
-remain original. Step does not repeat mutation campaigns,
-fixtures, coverage, benchmarks or add engine qualifications.
+remain unchanged. This step does not repeat mutation campaigns,
+fixtures, coverage, or benchmarks, or add engine qualifications.
 
 <a id="integrazione-delle-serie-e-memoria-del-checker"></a>
 
 ## Serie integration and checker memory
 
 Base `1cb968d` adds Serie controller/WAL changes.
-Recorded full verification passes 436 tests plus smoke/ten spikes.
-Anchors, tests, three CBOR runners unchanged; copier includes
-all new components. 27 mutations remain evidence of
-`e07d772` snapshot in previous catalog.
+Recorded full verification passes 436 tests plus smoke and ten spikes.
+Anchors, tests, and the three CBOR runners remain unchanged; the copier includes
+all new components. The 27 mutations remain evidence of the
+`e07d772` snapshot in the previous catalog.
 
-Linux CI of commit `bffbdd0` also completes 436 tests then exhausts
-heap reading historical archive in evidence checker. Record
-retains `:failed`. [Additional method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/heap-method.lisp)
-records correction before verification: only `evidence` recipe
-uses 2048 MiB configurable through `EVIDENCE_DYNAMIC_SPACE_SIZE`. Product,
-parser, file limits unchanged. Recorded verification/CI
-on new commit must confirm configuration result.
+Linux CI of commit `bffbdd0` also completes 436 tests, then exhausts
+heap while reading the historical archive in the evidence checker. The record
+retains `:failed`. The [additional method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/heap-method.lisp)
+records the correction before verification: only the `evidence` recipe
+uses 2048 MiB, configurable through `EVIDENCE_DYNAMIC_SPACE_SIZE`. The product,
+parser, and file limits remain unchanged. Recorded verification and CI
+on the new commit must confirm the configuration result.
 
-[Integrated-evidence catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/catalogo.lisp)
-preserves original records, including Linux failure, byte
-comparison. No benchmarks, coverage, CBOR campaigns repeated.
+The [integrated-evidence catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-mutation-signals-series-integration/catalogo.lisp)
+preserves original records, including the Linux failure and byte
+comparison. No benchmarks, coverage measurements, or CBOR campaigns are repeated.

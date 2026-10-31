@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-009
 (defstruct (identita-pagina (:constructor %make-identita-pagina (serie image page generation))
                            (:copier nil))
-  "Pre: identita' canonica verificata. Post: UUID copiato e identita' caller immutabile per contratto.
-Solo cache/reader modificano i propri cursori privati non pubblicati; mai identita' caller.
-Nessun file aperto; la dimensione/allineamento e' verificata dal codec."
+  "Pre: verified canonical identity. Post: UUID copied and caller identity immutable by contract.
+Only cache/readers modify their own private unpublished cursors; never caller identity.
+No file opened; size/alignment verified by the codec."
   (serie #() :type octets :read-only t)
   (image 1 :type page-number)
   (page 1 :type page-number)
@@ -17,8 +17,8 @@ Nessun file aperto; la dimensione/allineamento e' verificata dal codec."
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (octets t t t) identita-pagina) crea-identita-pagina))
 (defun crea-identita-pagina (serie image page generation)
-  "Pre: controller fuori dal lookup; UUID di 16 byte, numeri in 1..2^60-1.
-Post: identita' con copia privata UUID. INVALID-ARGUMENT prima dell'allocazione."
+  "Pre: controller outside lookup; 16-byte UUID, numbers in 1..2^60-1.
+Post: identity with private UUID copy. INVALID-ARGUMENT before allocation."
   (unless (= (length serie) +page-identity-bytes+)
     (error 'invalid-argument :reason :index-page-series))
   (dolist (value (list image page generation))
@@ -29,8 +29,8 @@ Post: identita' con copia privata UUID. INVALID-ARGUMENT prima dell'allocazione.
 ;;; REQ: REQ-IDX-009
 (defstruct (descrittore-pagina (:constructor %make-descrittore-pagina
                                (identity kind count parameter next next-generation)) (:copier nil))
-  "Pre: descrittore privato verificato. Post: metadati immutabili senza array di entry.
-Il codec verifica la geometria dipendente dalla taglia, nessuna pubblicazione."
+  "Pre: verified private descriptor. Post: immutable metadata without entry arrays.
+The codec verifies size-dependent geometry, no publication."
   (identity nil :type identita-pagina :read-only t)
   (kind :bucket :type page-kind :read-only t)
   (count 0 :type (integer 0 65535) :read-only t)
@@ -42,8 +42,8 @@ Il codec verifica la geometria dipendente dalla taglia, nessuna pubblicazione."
 (declaim (ftype (function (identita-pagina t t t &key (:next t) (:next-generation t))
                          descrittore-pagina) crea-descrittore-pagina))
 (defun crea-descrittore-pagina (identity kind count parameter &key (next 0) (next-generation 0))
-  "Pre: controller, identita' canonica. Post: metadati locali immutabili, nessun I/O.
-INVALID-ARGUMENT per domini; geometria e body vengono verificati prima di scrivere."
+  "Pre: controller, canonical identity. Post: immutable local metadata, no I/O.
+INVALID-ARGUMENT for domains; geometry and body verified before writing."
   (unless (member kind '(:bucket :directory :chiave))
     (error 'invalid-argument :reason :index-page-kind))
   (unless (and (typep count '(integer 0 65535)) (typep parameter 'u32)

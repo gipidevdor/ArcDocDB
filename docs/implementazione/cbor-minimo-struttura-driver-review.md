@@ -17,7 +17,7 @@ scaling, or absolute proof of nonallocation is planned.
 
 The first reading found that MULTIPLE-VALUE-BIND alone did not check
 exact arity. The correction adds a cold MULTIPLE-VALUE-LIST before
-warmup. Bytewise original `d0e85c152006e7949f9bdc80cbfebc1d15484650`
+warmup. The byte-for-byte original `d0e85c152006e7949f9bdc80cbfebc1d15484650`
 and finding/fix datum are preserved in the collection; no measurement precedes
 the correction.
 
@@ -26,10 +26,10 @@ Private copies, complete baseline, and unique fragments prevent ambiguous
 substitutions. The catalog and dispatcher extend the existing runner;
 integration preserves upstream classifications for OS signals and
 failures after completion. These failures are WORKER-ERROR and
-compilation errors INVALID, never mutant detections. Self-tests
+compilation errors are INVALID, never mutant detections. Self-tests
 also exercise real children and four valid/twelve invalid syntaxes.
 Actual compilability and detection remain to be acquired in reports.
 
 Coverage has a [separate reading](cbor-minimo-struttura-strumenti-review.md).
-No open static finding in the final benchmark or catalog; runtime
+No open static finding was found in the final benchmark or catalog; runtime
 results and preservation must be verified against original data.

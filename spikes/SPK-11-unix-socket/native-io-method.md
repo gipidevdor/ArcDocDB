@@ -11,7 +11,7 @@ REQ-IPC-002, REQ-VAL-001.
 ## Question and criterion
 
 Can one `recv`/`send` call transfer a span of a preallocated byte vector without
-slices or temporary alien buffers in adapter, with explicit offset, immediate
+slices or temporary alien buffers in the adapter, with explicit offset, immediate
 result/errno, and replaceable backend? Success: bytes identical to fixtures,
 external guards intact, advancement only for confirmed bytes, at most one syscall
 per step, no call after completion, EOF, error, or expiration.
@@ -20,8 +20,8 @@ per step, no call after completion, EOF, error, or expiration.
 
 ## Ownership and oracles
 
-- Owner retains FD and simple specialized vector for whole synchronous operation.
-  Pin/pointer live only inside syscall; no asynchronous borrowing, concurrent close,
+- The owner retains the FD and simple specialized vector for the whole synchronous operation.
+  The pin/pointer is live only inside the syscall; no asynchronous borrowing, concurrent close,
   or recycling modeled.
 - Nonempty in-vector span, FD, direction, chunk, and clock checked before backend.
   Trusted callbacks receive FD/vector/offset/count and return byte count/errno
@@ -48,7 +48,7 @@ Record `sb-ext:get-bytes-consed` before/after successful native steps and recv
 EAGAIN; counter must detect known allocation. Subtract no baseline.
 Retain disassembly of two FFI wrappers and step. Result measures neither transient
 libc/runtime malloc, kernel memory, RSS, socket open, FD wait, nor codec/session.
-Source must show absence of `make-alien`, slices, and temporary copies in adapter
+Source must show absence of `make-alien`, slices, and temporary copies in the adapter
 only; this observation does not qualify native allocator.
 
 Known mutations check content/guard, progress, call-count, and deadline oracles.
@@ -67,6 +67,6 @@ recorded environment. FFI uses
 [SBCL pointers](https://www.sbcl.org/manual/index.html#Foreign-Function-Interface).
 
 Real pools/scheduler, engine gate, global credits, maximum document/envelope,
-commit, EBR, lost response after commit, distinct users, and Linux not tested.
-No benchmark. IPC requirements still designed; ADR-0056 acceptance and engine
+commit, EBR, lost response after commit, distinct users, and Linux are not tested.
+No benchmark. IPC requirements are still designed; ADR-0056 acceptance and engine
 integration remain before service.

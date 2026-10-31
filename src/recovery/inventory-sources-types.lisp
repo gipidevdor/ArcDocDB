@@ -10,13 +10,13 @@
             :type (or null arcdocdb.conditions:arcdocdb-error))
    (cleanup :initarg :cleanup :reader recovery-sources-cleanup :type arcdocdb.conditions:io-fault)
    (count :initarg :count :reader recovery-sources-cleanup-count :type (integer 1 *)))
-  (:documentation "Cleanup completato con guasti: causa originale, primo IO-FAULT e numero totale."))
+  (:documentation "Cleanup completed with failures: original cause, first IO-FAULT, and total count."))
 
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-008
 (defstruct (recovery-source (:constructor %make-recovery-source (id state form name))
                             (:conc-name %rs-) (:copier nil))
-  "Pre: riga viva verificata del piano. Post: nome e fatti privati, capacità assegnata una volta.
-FILE/SIZE sono scritti soltanto dall'acquisitore prima della pubblicazione; safety3 attiva."
+  "Pre: verified live plan row. Post: private name and facts, capability assigned once.
+FILE/SIZE written only by acquirer before publication; safety3 active."
   (id 0 :type u64 :read-only t)
   (state :active :type (member :active :closed) :read-only t)
   (form :final :type (member :final :temporary) :read-only t)
@@ -27,7 +27,7 @@ FILE/SIZE sono scritti soltanto dall'acquisitore prima della pubblicazione; safe
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-008
 (defstruct (recovery-sources (:constructor %make-recovery-sources (entries))
                              (:conc-name %rss-) (:copier nil))
-  "Pre: entry possedute e nessun lettore durante acquisizione/close. Post: insieme a proprietario unico.
-CLOSED passa a T prima del primo close e non torna NIL; nessun parent o manifest trattenuto."
+  "Pre: owned entries and no reader during acquisition/close. Post: single-owner set.
+CLOSED becomes T before first close and never returns to NIL; no parent or manifest retained."
   (entries #() :type simple-vector :read-only t)
   (closed nil :type boolean))

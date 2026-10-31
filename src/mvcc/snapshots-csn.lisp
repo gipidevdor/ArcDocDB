@@ -6,9 +6,9 @@
 ;;; REQ: REQ-MVC-005 REQ-MVC-007 REQ-CON-004 REQ-AFF-004
 (declaim (ftype (function (registro-snapshot) (values u64 u64 &optional)) frontiere-snapshot))
 (defun frontiere-snapshot (registry)
-  "Pre: mutex snapshot posseduto, registro sano dell'Archivio. Post: H e ultimo CSN coerenti.
-RESOURCE-EXHAUSTED :CSN-BUSY senza attesa. Guasto CSN invalida gli snapshot e rilancia la condizione.
-Conversione u32/u64 solo nel coordinamento; non legge slot o mutex privati del componente CSN."
+  "Pre: snapshot mutex owned, healthy Archivio registry. Post: consistent H and last CSN.
+RESOURCE-EXHAUSTED :CSN-BUSY without waiting. A CSN fault invalidates snapshots and reraises the condition.
+u32/u64 conversion only in coordination; does not read private CSN-component slots or mutex."
   (esigi-snapshot-sano registry)
   (handler-case
       (multiple-value-bind (last-high last-low horizon-high horizon-low)
@@ -28,9 +28,9 @@ Conversione u32/u64 solo nel coordinamento; non legge slot o mutex privati del c
 (declaim (ftype (function (registro-snapshot) (values boolean u64 u64 &optional))
                 tenta-cattura-snapshot))
 (defun tenta-cattura-snapshot (registry)
-  "Pre: soglia già annunciata dal chiamante. Post: T,H,CSN se acquisito; NIL,0,0 solo per CSN-BUSY.
-Nessun retry, pin o modifica. Il chiamante deve ripristinare la sola soglia provvisoria su NIL.
-Ogni altra condizione resta propagata, senza trasformarla in normale contesa."
+  "Pre: threshold already announced by the caller. Post: T,H,CSN if acquired; NIL,0,0 only for CSN-BUSY.
+No retry, pin, or modification. The caller must restore only the provisional threshold on NIL.
+Every other condition continues to propagate without conversion to ordinary contention."
   (handler-case
       (multiple-value-bind (horizon csn) (frontiere-snapshot registry)
         (values t horizon csn))
@@ -41,8 +41,8 @@ Ogni altra condizione resta propagata, senza trasformarla in normale contesa."
 ;;; REQ: REQ-MVC-005 REQ-CON-004
 (declaim (ftype (function (registro-snapshot u64) boolean) orizzonte-snapshot-raggiunto-p))
 (defun orizzonte-snapshot-raggiunto-p (registry csn)
-  "Pre: CSN dello snapshot registrato, mutex snapshot posseduto.
-Post: H>=CSN da frontiere coerenti; INVALID-ARGUMENT per CSN futuro, CSN-BUSY senza attesa."
+  "Pre: registered snapshot CSN, snapshot mutex owned.
+Post: H>=CSN from consistent frontiers; INVALID-ARGUMENT for a future CSN, CSN-BUSY without waiting."
   (multiple-value-bind (horizon last) (frontiere-snapshot registry)
     (when (> csn last) (error 'invalid-argument :reason :csn-snapshot-in-future))
     (>= horizon csn)))

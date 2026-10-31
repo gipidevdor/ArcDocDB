@@ -67,7 +67,7 @@ run the missing spike, and decide afterward.
 - **A persistent format does not change.** Every on-disk format has a version and magic number;
   a format change is a new format with migration, never an in-place modification.
 - **One source of truth for each fact.** Every derivative (metadata, indexes, caches) is
-  rebuildable and declares from what.
+  rebuildable and declares its source.
 
 <a id="che-cosa-resta-fuori"></a>
 

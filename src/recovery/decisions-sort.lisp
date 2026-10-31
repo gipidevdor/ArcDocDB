@@ -6,8 +6,8 @@
 (declaim (ftype (function (octets index octets index) (values (member -1 0 1) &optional))
                 compare-id16))
 (defun compare-id16 (left left-start right right-start)
-  "Pre: due ID16 nei rispettivi buffer stabili. Post: ordine lessicografico esatto.
-INVALID-ARGUMENT per range non disponibile; nessuna copia o modifica."
+  "Pre: two ID16 values in their respective stable buffers. Post: exact lexicographic order.
+INVALID-ARGUMENT for an unavailable range; no copy or modification."
   (check-range left left-start (+ left-start +participant-id-bytes+))
   (check-range right right-start (+ right-start +participant-id-bytes+))
   (dotimes (i +participant-id-bytes+ 0)
@@ -17,8 +17,8 @@ INVALID-ARGUMENT per range non disponibile; nessuna copia o modifica."
 ;;; REQ: REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (octets index octets index) null) copy-id16))
 (defun copy-id16 (target target-index source source-index)
-  "Pre: vettori privati distinti; indici espressi in ID16. Post: un ID copiato esattamente.
-INVALID-ARGUMENT per range invalido, prima della modifica; nessun I/O."
+  "Pre: distinct private vectors; indices expressed in ID16 units. Post: one ID copied exactly.
+INVALID-ARGUMENT for an invalid range, before modification; no I/O."
   (let ((to (* target-index +participant-id-bytes+)) (from (* source-index +participant-id-bytes+)))
     (check-range target to (+ to +participant-id-bytes+))
     (check-range source from (+ from +participant-id-bytes+))
@@ -29,9 +29,9 @@ INVALID-ARGUMENT per range invalido, prima della modifica; nessun I/O."
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (octets octets index index index) null) merge-id-runs))
 (defun merge-id-runs (source target left middle right)
-  "Pre: vettori privati distinti della stessa misura; due run ID16 ordinati.
-Post: run unito completo in TARGET; sorgente invariata, cicli limitati a RIGHT-LEFT.
-Segnala INVARIANT-VIOLATION per range o consumo interno incoerente."
+  "Pre: distinct private vectors of the same size; two sorted ID16 runs.
+Post: complete merged run in TARGET; source unchanged, loops bounded by RIGHT-LEFT.
+Signals INVARIANT-VIOLATION for an inconsistent internal range or consumption."
   (unless (and (/= (length source) 0) (= (length source) (length target))
                (not (eq source target)) (zerop (mod (length source) +participant-id-bytes+)))
     (error 'invariant-violation :reason :decision-sort-arrays))
@@ -52,9 +52,9 @@ Segnala INVARIANT-VIOLATION per range o consumo interno incoerente."
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (octets u16 u64) null) check-participant-order))
 (defun check-participant-order (participants count source-offset)
-  "Pre: vettore privato contenente COUNT ID16. Post: ordine crescente, nessun duplicato.
-CORRUPTION-DETECTED per partecipante ripetuto, offset assoluto del record;
-INVARIANT-VIOLATION per misura o ordinamento interno errato."
+  "Pre: private vector containing COUNT ID16 values. Post: increasing order, no duplicates.
+CORRUPTION-DETECTED for a repeated participant, absolute record offset;
+INVARIANT-VIOLATION for an incorrect internal size or ordering."
   (unless (= (length participants) (* count +participant-id-bytes+))
     (error 'invariant-violation :reason :decision-participant-size))
   (loop for i from 1 below count
@@ -69,9 +69,9 @@ INVARIANT-VIOLATION per misura o ordinamento interno errato."
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (octets u16 u64) (values octets &optional)) sort-participants))
 (defun sort-participants (participants count source-offset)
-  "Pre: copia privata di COUNT ID16. Post: copia posseduta ordinata, tutti ID distinti.
-Propaga duplicati tipizzati; INVARIANT-VIOLATION per misura interna incoerente.
-Merge limitato a integer-length(COUNT-1) passate; allocazioni solo in apertura."
+  "Pre: private copy of COUNT ID16 values. Post: sorted owned copy, all IDs distinct.
+Propagates typed duplicate errors; INVARIANT-VIOLATION for inconsistent internal size.
+Merge bounded by integer-length(COUNT-1) passes; allocations only during opening."
   (unless (= (length participants) (* count +participant-id-bytes+))
     (error 'invariant-violation :reason :decision-participant-size))
   (let ((source participants)
@@ -89,9 +89,9 @@ Merge limitato a integer-length(COUNT-1) passate; allocazioni solo in apertura."
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (simple-vector simple-vector index index index) null) merge-entry-runs))
 (defun merge-entry-runs (source target left middle right)
-  "Pre: vettori privati distinti, stessa misura, due run ordinati per TXID.
-Post: unione stabile completa; a TXID uguale conserva l'ordine fisico dei record.
-INVARIANT-VIOLATION per range o consumo; ciclo limitato a RIGHT-LEFT."
+  "Pre: distinct private vectors, same size, two runs sorted by TXID.
+Post: complete stable merge; equal TXID values retain the physical record order.
+INVARIANT-VIOLATION for range or consumption; loop bounded by RIGHT-LEFT."
   (unless (and (= (length source) (length target)) (not (eq source target)))
     (error 'invariant-violation :reason :decision-sort-arrays))
   (unless (<= 0 left middle right (length source))
@@ -112,9 +112,9 @@ INVARIANT-VIOLATION per range o consumo; ciclo limitato a RIGHT-LEFT."
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (simple-vector) (values simple-vector &optional)) sort-entries))
 (defun sort-entries (entries)
-  "Pre: vettore privato di entry possedute. Post: ordine TXID non decrescente e stabile.
-INVARIANT-VIOLATION per entry malformata o ordinamento interno errato; nessun I/O.
-Merge limitato a integer-length(N-1) passate, ciascuna limitata a N entry."
+  "Pre: private vector of owned entries. Post: stable nondecreasing TXID order.
+INVARIANT-VIOLATION for a malformed entry or incorrect internal ordering; no I/O.
+Merge bounded by integer-length(N-1) passes, each bounded by N entries."
   (let* ((count (length entries)) (source entries)
          (target (make-array count :element-type t)))
     (dotimes (i count) (check-entry-shape (the decision-entry (aref entries i))))

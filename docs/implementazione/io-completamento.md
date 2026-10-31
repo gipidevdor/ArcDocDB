@@ -2,7 +2,7 @@
 
 # Completion of I/O operations
 
-The CONTROL preparation and publication path uses the same transfers and flushes as the writer. Each capability has one owner throughout the call; injected callbacks are trusted and honor this ownership. Intentional invalidation probes check boundary behavior even when a callback closes the capability. They are not evidence against concurrent close/dup2 consistent with the contract.
+The CONTROL preparation and publication path uses the same transfers and flushes as the writer. Each capability has one owner throughout the call; injected callbacks are trusted and honor this ownership. Intentional invalidation probes check boundary behavior even when a callback closes the capability. Concurrent close or descriptor reuse by another thread is outside the ownership contract; these probes do not qualify those races.
 
 <a id="append-e-lettura"></a>
 

@@ -21,7 +21,7 @@
 | **Practical** | every mechanism is implementable with existing SBCL primitives, at bounded cost, without steps requiring unavailable memory or time | a step requires an absent primitive, hot-path allocation, unbounded pause, or unbounded transient memory |
 | **Elegant** | few general laws from which special cases follow; the same form recurs at every level | a special case has its own rule not derived from a law |
 
-A fifth criterion cuts across the other four and comes first in the system's structure: **parallelism**. A robust, lean, elegant solution introducing a serialization point between Serie is not admitted without an ADR declaring it ([Parallelism](#parallelismo)).
+A fifth criterion cuts across the other four and comes first in the system's structure: **parallelism**. A robust, lean, elegant solution introducing a serialization point between Serie is not allowed without an ADR declaring it ([Parallelism](#parallelismo)).
 
 <a id="esito"></a>
 
@@ -44,7 +44,7 @@ by ten decisions that collectively *remove* more than they add.
 | [AP-07](#ap-07) | undefined | snapshot-registry protocol (creation/overwrite race) | [ADR-0038](adr/0038-orizzonte-di-visibilita.md) |
 | [AP-08](#ap-08) | undefined | truncated control-log tail; read-time prepared-record verification; CSN ‘after’ decision but ‘inside’ record | [ADR-0037](adr/0037-lotto-sigillato.md), [ADR-0039](adr/0039-cornice-unica-dei-record.md), [ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md) |
 | [AP-09](#ap-09) | undefined | cache concurrency; relabeling couples it to compaction | [ADR-0044](adr/0044-cache-acceleratore-puro.md) |
-| [AP-10](#ap-10) | undefined | read transfer from compute pool to I/O pool; what blocks whom | [ADR-0045](adr/0045-modello-di-esecuzione.md) |
+| [AP-10](#ap-10) | undefined | read transfer from the compute pool to the I/O pool; what blocks whom | [ADR-0045](adr/0045-modello-di-esecuzione.md) |
 | [AP-11](#ap-11) | undefined | key Bloom filter has no function | [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md), [ADR-0039](adr/0039-cornice-unica-dei-record.md) |
 | [AP-12](#ap-12) | feasibility | doubling index table needs triple memory and stalls writer for seconds; key arena grows without bound | [ADR-0043](adr/0043-primary-index-a-frammenti.md) |
 | [AP-13](#ap-13) | feasibility | whole-record CRC computed inside writer; Archivio TXID per operation | [ADR-0039](adr/0039-cornice-unica-dei-record.md) |
@@ -61,8 +61,8 @@ at a particular level. They are normative ([ADR-0036](adr/0036-leggi-di-progetto
 verifiable invariants are shown in parentheses.
 
 1. **Parallelism is foundational.** State is divided into units proceeding without waiting
-   for each other: Archivio instances, an Archivio's Serie, readers with each other and
-   relative to writer, segments in compaction, recovery, and queries. What remains shared
+   for each other: Archivio instances, an Archivio's Serie, readers relative to each other and
+   to the writer, segments in compaction, recovery, and queries. What remains shared
    is a closed list, with bounded cost never paid per individual operation. This is not
    an optimization: it is the system's shape, and each mechanism is judged first by what
    it serializes (INV-P1…P4, INV-P6, INV-W1).
@@ -77,8 +77,8 @@ verifiable invariants are shown in parentheses.
 5. **Prepare, decide, complete.** Prepared objects have `.tmp` names; the decision is a
    record in the source of truth; the filesystem follows afterward, and recovery repeats
    that alignment (INV-A7, INV-A11).
-6. **Nothing is destroyed due to absence.** Delete only `.tmp` objects or those whose
-   removal a source of truth records. An unknown object is a reported anomaly, not garbage
+6. **Nothing is destroyed due to absence.** Delete only `.tmp` objects or objects whose
+   removal is recorded by a source of truth. An unknown object is a reported anomaly, not garbage
    (INV-A10).
 7. **A version starts pending, becomes durable, then published; only then is it
    acknowledged.** The same lifecycle applies to a Serie batch and a multiseries
@@ -109,7 +109,7 @@ Serie’) and requires a hierarchy. Level by level:
 |---|---|---|---|
 | Server | Archivio | each Archivio has its own CSN, horizon, coordinator, and logs | nothing between Archivio instances |
 | Archivio | Serie | writes, reads, flushes, compaction, and recovery of different Serie | the [closed list](architettura.md#archivio-coordinamento-minimo), paid per batch, multiseries transaction, or snapshot |
-| Serie | reader, writer | readers with each other and relative to writer, without locks | mutations: one writer |
+| Serie | reader, writer | readers with each other and relative to the writer, without locks | mutations: one writer |
 | Write | request | parsing, validation, encoding, and body CRC, on workers | version checking, copy, and seal, in writer |
 | Log | batch | flushes of different logs; writer forms batches during flush | one I/O task per log |
 | Compaction | segment | CLEAN and MERGE on different segments and Serie; readers do not stop | EDIT and relocations, proposed to writer |
@@ -128,7 +128,7 @@ What this analysis's decisions contribute to parallelism:
 - index reconstruction is **independent of segment order** (AP-04): recovery is
   parallel even within a Serie;
 - index growth **does not stop** writer or readers (AP-12); closed-segment hints and
-  indexes are built outside writer (AP-14); writer does not write cache (AP-09);
+  indexes are built outside the writer (AP-14); the writer does not write to the cache (AP-09);
 - no compute worker blocks, and no read passes through a common queue (AP-10).
 
 What the design cannot make parallel, and declares: the device, workers, and SBCL's
@@ -159,7 +159,7 @@ precedes, complete what follows* — hence idempotence without its own logic.
 ### AP-01
 
 **A snapshot saw in-flight batches appear.** [ADR-0020](adr/0020-csn-snapshot-isolamento.md)
-assigned batch CSN *before* flush (CSN is in the record) and
+assigned the batch CSN *before* flush (the CSN is in the record) and
 [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md) published the batch *after* flush.
 Snapshot creation took `s ← current CSN` and waited only for multiseries transactions
 ‘being applied’.
@@ -176,13 +176,13 @@ as a separate concept.
 
 ### AP-02
 
-**Taking CSN at batch start could invert causality.** The writer opens a batch and takes
+**Taking the CSN at batch start could invert causality.** The writer opens a batch and takes
 CSN 20; then applies the outcome of multiseries transaction T with CSN 21 on X; then,
 in the same batch, accepts an update of X depending on it. The later version carries 20,
 the preceding one 21: a snapshot at 20 sees the effect without the cause, and does not
 see T on other Serie.
 
-*Solution.* Batch CSN is taken **at closure**, when SEAL is written.
+*Solution.* The batch CSN is taken **at closure**, when SEAL is written.
 Because an intent blocks other writes to the same document until outcome, INV-M5
 follows: for each document, CSN order = version order.
 
@@ -218,7 +218,7 @@ MERGE of small segments 3 and 7 (5 is not small) produces a segment with
 `lineage-min = 3`: the tombstone now ‘has’ lineage 3. On the next CLEAN, no segment has
 lineage below 3, so the tombstone is discarded. Segment 5 still contains `PUT k`:
 on restart, the index is rebuilt and **k reappears**. The safe variant of the rule
-(maximum lineage) would almost never discard.
+(maximum lineage) would almost never discard a tombstone.
 
 *Solution.* Three mutually supporting changes: (1) the in-memory index contains
 **only live documents** (deletion removes the entry: no memory for deleted documents);
@@ -270,15 +270,15 @@ outside the horizon until application.
 
 **The cache participated in coherence.** Relabeling entries on relocation made the
 writer write a structure into which many readers insert, without a defined protocol.
-*Solution:* cache is a **pure function** `location → byte`: no invalidation, relabeling,
+*Solution:* the cache is a **pure function** `location → byte`: no invalidation, relabeling,
 or clearing. Readers access it with the same seqlock as the index; on contention,
 fallback is a *miss*. The system is correct with cache disabled (INV-A12).
 
 ### AP-10
 
-**Who blocks, and where.** The read path moved from compute pool to I/O pool without
+**Who blocks, and where.** The read path moved from the compute pool to the I/O pool without
 saying how and held an epoch across the transfer. *Solution:* **run-to-completion
-tasks**. A task never suspends midway; a read needing disk *migrates* to I/O pool
+tasks**. A task never suspends midway; a read needing disk *migrates* to the I/O pool
 **restarting from the beginning** (no state crosses the transfer); a wait parks on a
 bounded list. This property makes a deterministic Common Lisp simulator possible
 without continuations.
@@ -287,31 +287,31 @@ without continuations.
 
 **A file without a function.** The `.bloom` file contained the segment's `_id` keys,
 but no read searches for a key per segment: the primary index is in memory and complete.
-The specification asks for Bloom on secondary-index *values*. *Solution:* key filter
-becomes a hint section and finds its purpose in tombstone disposal (AP-04); value filters
+The specification asks for Bloom on secondary-index *values*. *Solution:* the key filter
+becomes a hint section and finds its purpose in tombstone discarding (AP-04); value filters
 become an index-file section. One fewer file per segment.
 
 ### AP-12
 
-**The index could not grow.** A single doubling table requires old and new together
-during copy: three times the old size. A Serie with 300 million documents would need
+**The index could not grow.** Doubling a single table requires retaining both the old and new tables
+during copying: three times the old size. A Serie with 300 million documents would need
 ~80 GB transient memory, and the writer would remain stopped for the entire copy
 (seconds). ‘56 bytes per entry’ applied only just before doubling. The append-only
 key arena also never reclaimed deleted-key space (contrary to INV-A8).
 
 *Solution.* **Fragment directory** (extendible hashing): fixed-size fragments, each
 a small Swiss table with its own keys; a full fragment splits in two.
-Growth costs one fragment copy (fractions of a millisecond), transient memory is one
+Growth costs one fragment copy (fractions of a millisecond), the transient memory cost is one
 fragment, and deleted key/slot space is reclaimed on split. Slots shrink from six to
-**four words** (version is CSN, hash is unnecessary in slot, keys are local).
+**four words** (version is CSN, hash is unnecessary in the slot, keys are local).
 
 ### AP-13
 
 **Per-byte work inside writer.** Version and CSN were in the header covered by the only
 CRC: whole-record CRC had to be computed after their assignment, hence by the writer —
 microseconds per document exactly where time is scarce. *Solution:* **two CRCs**.
-Body CRC (key and document) is computed by the request worker; writer computes only
-header CRC, 20 bytes, also covering body CRC.
+The body CRC (key and document) is computed by the request worker; the writer computes only
+the header CRC, covering 20 bytes, including the body CRC.
 Every operation also received a TXID from an Archivio counter, a shared write per
 operation: the batch is now atomic by position (everything preceding SEAL), and TXID
 exists only for multiseries transactions.
@@ -329,9 +329,9 @@ Deleting ‘unmentioned’ files is replaced by law 6.
 ### AP-15
 
 **Two numbers for one fact.** Every version carried a per-document counter *and* CSN.
-The counter restarted after definitive document deletion, exposing optimistic checking
+The counter restarted after permanent document deletion, exposing optimistic checking
 to false success (same number, different incarnation). *Solution:* **version is CSN**.
-Unique, increasing, never restarts. One fewer field in record, hint, and slot.
+It is unique, increasing, and never restarts. One fewer field in record, hint, and slot.
 
 ### AP-16
 
@@ -378,7 +378,7 @@ not performance; performance remains for spikes.
 | Atomic swaps (references, words) | `sb-ext:compare-and-swap` on `svref`, structure slots, word arrays | present |
 | No-wait acquisition | `sb-thread:with-mutex (… :wait-p nil)` | present |
 | Durable flush, rename, lock | `sb-posix`: `fdatasync`, `fsync`, `rename`, `fcntl`, `lockf` | present |
-| Positional reads and writes | `pread`, `pwrite` through `sb-alien` | **not** in `sb-posix`: alien definition to libc ([ADR-0017](adr/0017-piattaforma-e-io.md)); SPK-05 |
+| Positional reads and writes | `pread`, `pwrite` through `sb-alien` | **not** in `sb-posix`: an alien binding to libc ([ADR-0017](adr/0017-piattaforma-e-io.md)); SPK-05 |
 | Fragments not copied by collector | specialized arrays beyond large-object threshold (256 KiB on this platform) | fragment capacity chosen accordingly; pauses to measure (SPK-02) |
 | Deterministic simulation | run-to-completion tasks on injected scheduler | requires neither continuations nor threads ([ADR-0045](adr/0045-modello-di-esecuzione.md)) |
 | CRC32C | table-based in typed Common Lisp | cost to measure (SPK-09) |
@@ -391,7 +391,7 @@ to stop at every collection), and fragment-split cost under load.
 
 ## What does not change
 
-The specification, except version numbering (AP-15). Logical model, append-only storage,
+The specification remains unchanged except for version numbering (AP-15). Logical model, append-only storage,
 CLEAN and MERGE with their conditions, durability levels, 2PC with nonblocking writer,
 per-segment secondary indexes, dynamic scheduler, fail-stop, verification strategy.
 The ten decisions refine mechanisms; none moves an architectural boundary.
@@ -403,7 +403,7 @@ The ten decisions refine mechanisms; none moves an architectural boundary.
 - **Secondary-index query cost.** Grows with a Serie's segment count (~4,000 per TB):
   the price of per-segment indexes, the author's decision
   ([ADR-0026](adr/0026-indici-secondari-segmentati.md)). Value-existence filters reduce
-  it for equality, not ranges. Remains in [limiti.md](limiti.md) as a declared limit
+  it for equality, not ranges. This remains in [limiti.md](limiti.md) as a declared limit
   and first measurement candidate.
 - **The horizon couples Serie only at snapshot creation**: a Serie with slow flush
   delays Archivio snapshots, never other Serie's reads or writes. Waiting is bounded

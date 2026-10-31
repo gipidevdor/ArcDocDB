@@ -8,8 +8,8 @@
 (declaim (ftype (function (contesto-lettura (or null contesto-snapshot) u64) null)
                 verifica-identita-lettura))
 (defun verifica-identita-lettura (context snapshot generation)
-  "Pre: input della richiesta; contesto inattivo. Post: identità associata all'Archivio corretto.
-INVALID-ARGUMENT prima di annunciare EBR per generazione zero, estranea o inattesa."
+  "Pre: request input; inactive context. Post: identity associated with the correct Archivio.
+INVALID-ARGUMENT before announcing EBR for a zero, unrelated, or unexpected generation."
   (if snapshot
       (unless (and (plusp generation)
                    (snapshot-del-registro-p snapshot (contesto-lettura-snapshots context)))
@@ -22,9 +22,9 @@ INVALID-ARGUMENT prima di annunciare EBR per generazione zero, estranea o inatte
 (declaim (ftype (function (contesto-lettura (or null contesto-snapshot) u64 u64) boolean)
                 avvia-lettura))
 (defun avvia-lettura (context snapshot generation now)
-  "Pre: worker esclusivo, nessun indice/location già letto; NOW fresco e monotono.
-Post: T ammette il lookup; NIL richiede riaccodare senza location. Un tentativo EBR soltanto.
-Snapshot verificato dopo ingresso; UNWIND-PROTECT esterno già installato prima della chiamata."
+  "Pre: exclusive worker, no index/location already read; fresh monotonic NOW.
+Post: T admits lookup; NIL requires requeueing without a location. One EBR attempt only.
+Snapshot verified after entry; outer UNWIND-PROTECT already installed before the call."
   (esigi-lettura-inattiva context)
   (verifica-identita-lettura context snapshot generation)
   (let ((words (contesto-lettura-words context)) (ready nil))
@@ -44,9 +44,9 @@ Snapshot verificato dopo ingresso; UNWIND-PROTECT esterno già installato prima 
 ;;; REQ: REQ-MVC-005 REQ-AFF-008
 (declaim (ftype (function (contesto-lettura read-words integer) boolean) copia-limite-lettura))
 (defun copia-limite-lettura (context destination index)
-  "Pre: lookup nel compito ammesso; DESTINATION privato del worker, indice valido.
-Post: T copia il CSN snapshot senza ritorno u64; NIL indica GET corrente e non scrive.
-INVALID-ARGUMENT per range/stato; nessuna scelta della versione senza controllare il booleano."
+  "Pre: lookup in the admitted task; worker's private DESTINATION, valid index.
+Post: T copies the snapshot CSN without a u64 return; NIL indicates current GET and does not write.
+INVALID-ARGUMENT for range/state; no version selection without checking the boolean."
   (esigi-lettura-attiva context)
   (unless (<= 0 index (1- (length destination)))
     (error 'invalid-argument :reason :read-result-range))
@@ -59,9 +59,9 @@ INVALID-ARGUMENT per range/stato; nessuna scelta della versione senza controllar
 ;;; REQ: REQ-CON-004 REQ-MVC-004 REQ-MVC-005 REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (contesto-lettura u64) null) concludi-lettura))
 (defun concludi-lettura (context now)
-  "Pre: lookup finito, anche su miss; bytes eventualmente copiati in risposta privata, NOW fresco.
-Post: controllo snapshot finale riuscito ed epoca libera. Solo allora consegnare il risultato.
-Su scadenza/fine/errore nessun risultato ammesso; cleanup anche se la verifica fallisce."
+  "Pre: lookup finished, including a miss; bytes copied to a private response if applicable, fresh NOW.
+Post: final snapshot check succeeded and epoch free. Deliver the result only then.
+On expiration/end/error no result is admitted; cleanup even if verification fails."
   (unless (eq (contesto-lettura-state context) :active)
     (error 'invalid-argument :reason :read-context-not-active))
   (unwind-protect
@@ -80,9 +80,9 @@ Su scadenza/fine/errore nessun risultato ammesso; cleanup anche se la verifica f
 ;;; REQ: REQ-CON-004 REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (contesto-lettura) null) abbandona-lettura))
 (defun abbandona-lettura (context)
-  "Pre: stesso worker, ultimo accesso concluso; chiamare nel cleanup di UNWIND-PROTECT.
-Post: nessun pin; nessun risultato autorizzato. Inattivo idempotente; FAULTED resta tale.
-Prima della migrazione abbandonare, scartare location e accodare solo la richiesta originale."
+  "Pre: same worker, last access finished; call during UNWIND-PROTECT cleanup.
+Post: no pin; no result authorized. Inactive is idempotent; FAULTED remains so.
+Before migration, abandon, discard the location, and queue only the original request."
   (case (contesto-lettura-state context)
     (:idle (esigi-lettura-inattiva context))
     ((:entering :active :faulted) (libera-contesto-lettura context))

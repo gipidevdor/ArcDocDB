@@ -18,7 +18,7 @@
 ## Context
 
 The author requested the criteria typical of critical software: perfect code,
-perfect functionality, traceability; the ultimate aim is total, extreme reliability;
+perfect functionality, and traceability. The ultimate aim is total, extreme reliability, with
 “very reasonable” performance constraints. The project had been set up with performance
 as its main motivation (the specification names “high speed” as the main objective).
 
@@ -51,9 +51,9 @@ that higher priorities are unaffected.
 It does not mean the absence of faults, which no software can guarantee. It means the
 following four properties, each verifiable:
 
-- (a) **no committed data is lost or corrupted without the system detecting and
+- (a) **no committed data are lost or corrupted without the system detecting and
   reporting it**;
-- (b) **no incorrect answer is silently returned**: unverified data is never
+- (b) **no incorrect answer is silently returned**: unverified data are never
   returned;
 - (c) **every fault in the [fault model](../affidabilita/analisi-dei-guasti.md) has a
   defined, verified response** (detection, containment, recovery);
@@ -98,7 +98,7 @@ change data.
 | Mutation testing | yes | — | — | — |
 | Soak test with repeated crashes | yes | — | — | — |
 
-Full strategy in [ADR-0035](0035-strategia-di-verifica-e-tracciabilita.md) and the
+The full strategy is in [ADR-0035](0035-strategia-di-verifica-e-tracciabilita.md) and the
 [verification plan](../affidabilita/piano-di-verifica.md).
 
 <a id="5-prestazioni"></a>

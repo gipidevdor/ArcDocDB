@@ -7,9 +7,9 @@
 (declaim (ftype (function (octets index index (member 1 2))
                          (values index u8 u8 index &optional)) cornice-active-verificata))
 (defun cornice-active-verificata (buffer pos end version)
-  "Pre: prefisso già verificato per intero, buffer esclusivo stabile. Post: header e progresso ricontrollati.
-Salta il body già coperto dal CRC del primo passaggio; ritorna inizio valore, non prova di commit.
-Errori di header/range propagano; INVARIANT-VIOLATION per consumo incoerente, nessuna modifica."
+  "Pre: prefix already verified in full, stable exclusive buffer. Post: header and progress rechecked.
+Skips the body already covered by CRC in the first pass; returns value start, not proof of commit.
+Header/range errors propagate; INVARIANT-VIOLATION for inconsistent consumption, no modification."
   (check-range buffer pos end)
   (multiple-value-bind (next kind flags key-bytes value-bytes)
       (arcdocdb.record::checked-header buffer pos end version +max-document-bytes+)
@@ -21,9 +21,9 @@ Errori di header/range propagano; INVARIANT-VIOLATION per consumo incoerente, ne
 ;;; REQ: REQ-TXM-007 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (workspace-active u64 index index u32) null) registra-prepared-active))
 (defun registra-prepared-active (workspace txid batch pos limit)
-  "Pre: PUT/TOMBSTONE prepared in prefisso valido. Post: un solo lotto per TXID e budget di TXID distinti.
-CORRUPTION-DETECTED se attraversa lotti o segue un OUTCOME già presente; RESOURCE-EXHAUSTED prima dell'inserimento.
-TXID zero e u64 completo sono ammessi; nessun significato dedotto dalla grandezza."
+  "Pre: prepared PUT/TOMBSTONE in a valid prefix. Post: exactly one batch per TXID and distinct-TXID budget.
+CORRUPTION-DETECTED if it spans batches or follows an existing OUTCOME; RESOURCE-EXHAUSTED before insertion.
+Zero TXID and full u64 allowed; no meaning inferred from magnitude."
   (multiple-value-bind (csn outcome-present) (gethash txid (workspace-active-outcomes workspace))
     (when outcome-present
       (unless (typep csn 'u64) (error 'invariant-violation :reason :active-recovery-outcome-value))
@@ -40,9 +40,9 @@ TXID zero e u64 completo sono ammessi; nessun significato dedotto dalla grandezz
 ;;; REQ: REQ-TXM-007 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (workspace-active u64 u64 index u32) null) registra-outcome-active))
 (defun registra-outcome-active (workspace txid csn pos limit)
-  "Pre: OUTCOME con body già integro e forma verificata. Post: esito unico oppure duplicato identico.
-Budget conta occorrenze fisiche prima dell'inserimento; conflitto segnala CORRUPTION-DETECTED.
-Un OUTCOME senza prepared nel segmento non produce da solo un esito di chiusura."
+  "Pre: OUTCOME with body already intact and shape verified. Post: unique outcome or identical duplicate.
+Budget counts physical occurrences before insertion; conflict signals CORRUPTION-DETECTED.
+An OUTCOME without prepared data in the segment does not by itself produce a closing outcome."
   (when (>= (workspace-active-outcome-records workspace) limit)
     (error 'resource-exhausted :reason :active-recovery-outcome-budget :offset pos))
   (multiple-value-bind (previous present) (gethash txid (workspace-active-outcomes workspace))
@@ -57,9 +57,9 @@ Un OUTCOME senza prepared nel segmento non produce da solo un esito di chiusura.
 (declaim (ftype (function (octets index (member 1 2) index index u32 u32) workspace-active)
                 attraversa-active))
 (defun attraversa-active (buffer prefix version batches records max-prepared max-outcomes)
-  "Pre: intero prefisso sigillato e conteggi autorevoli. Post: workspace semantico completo privato.
-Rilegge solo header, non CRC dei documenti; ciclo esatto di BATCHES+RECORDS cornici.
-Errori tipizzati per prepared/esiti; INVARIANT-VIOLATION se consumo o conteggi divergono."
+  "Pre: entire sealed prefix and authoritative counts. Post: complete private semantic workspace.
+Rereads only headers, not document CRCs; exact loop of BATCHES+RECORDS frames.
+Typed errors for prepared data/outcomes; INVARIANT-VIOLATION if consumption or counts diverge."
   (check-range buffer +segment-header-bytes+ prefix)
   (unless (<= (+ batches records) (floor (- prefix +segment-header-bytes+) +header-bytes+))
     (error 'invariant-violation :reason :active-recovery-frame-count))

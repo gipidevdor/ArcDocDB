@@ -3,7 +3,7 @@
 # Physical file association
 
 `arcdocdb.io` associates read-only and append capabilities with the **same open
-regular file**, through device and inode returned by `fstat`. This is local
+regular file**, using the device and inode returned by `fstat`. This is local
 identity evidence for the [ACTIVE resolver](get-active.md), distinct from headers,
 CRCs, WAL frontier, commit, and durability. Architectural decisions remain
 those of [ADR-0017](../adr/0017-piattaforma-e-io.md) and the
@@ -21,14 +21,14 @@ those of [ADR-0017](../adr/0017-piattaforma-e-io.md) and the
 | `make-backend … :identity callback` | trusted stable callback, same domain as other callbacks | optional extension; six previous positions remain compatible |
 | `crea-sorgente-get-attiva … :associazione-file prova` | proof obtained in I/O pool | read-only verification of source and controller log's actual append capability before source construction |
 
-The `identity` callback receives private FD and returns two integer values:
+The `identity` callback receives the private FD and returns two integer values:
 `st_dev` and `st_ino` of a regular file. It must signal `syscall-error` for errno,
 never use a sentinel number as identity. A backend without callback can
 continue other operations; association is rejected before
 any call. No simulated FD is passed to the operating system.
 
-Domain is the **exact** backend instance: `nil` for both selects POSIX;
-two distinct instances are rejected even if containing the same functions.
+The domain is the **exact** backend instance: `nil` for both selects POSIX;
+two distinct instances are rejected even if they contain the same functions.
 Identity is compared as two complete integers, without hashing, truncation,
 fixnum conversion, or sign normalization. Signed and unsigned
 64-bit values are representable; SB-POSIX handles `stat` ABI.
@@ -54,7 +54,7 @@ name now pointing to another file provides no proof.
 Association retains only two immutable references. After close,
 old capability stays closed: reusing the FD number does not reactivate proof.
 A new capability, even for the same inode, requires a new association.
-Controller prevents concurrent closes, FD replacement through `dup2`,
+The controller prevents concurrent closes, FD replacement through `dup2`,
 and external namespace/file modifications. This API introduces no synchronization
 or renewal of those preconditions through fstat on every read.
 
@@ -75,14 +75,14 @@ or renewal of those preconditions through fstat on every read.
 | proof used with another capability | `invalid-argument / :io-association-capability` | no syscall |
 
 Rejections and faults do not mutate state/frontiers, close files, or adopt
-batches. Controller retains cleanup and quarantine responsibility.
+batches. The controller retains responsibility for cleanup and quarantine.
 Typed callback errors propagate; no generic handler
 absorbs them. Both states are rechecked after callbacks.
 
 For compatibility, omitting `:associazione-file` retains the ACTIVE
 constructor's original precondition: caller must prove physical identity.
-The new explicit path verifies it in product. Concrete server
-opening/rotation registration still needs to adopt it; constructor does not
+The new explicit path verifies it in product code. Concrete server
+opening/rotation registration still needs to adopt it; the constructor does not
 open files automatically or make a path ignoring this proof safe.
 
 The [new writer-segment preparer](inizializzazione-active.md) requires
@@ -101,7 +101,7 @@ alongside flush, header reread, and parent fsync.
 | FID-D04 | read-only and append identical to proof references | both exact; each capability replaced |
 
 Functional cases, fault injection, FD reuse and concurrency tests,
-condition coverage, and independent C1 review remain to be run. Author's
+condition coverage, and independent C1 review remain to be completed. The author's
 static readings do not close these activities. Requirements REQ-AFF-001/004/008
 and REQ-FOR-001 do not change status through this implementation alone.
 

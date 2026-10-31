@@ -5,7 +5,7 @@
 Inventory of file `src/codec/cbor-write.lisp`, blob
 `61f0d6e2783e4790ed7e19a45bba6407d6e5b3de`, before the campaigns.
 Lines refer to this frozen file. Four compound forms,
-including the nested OR; none removed from the coverage denominator.
+including the nested OR; none are removed from the coverage denominator.
 
 | Form | Conditions | Evidence and limit |
 |---|---|---|

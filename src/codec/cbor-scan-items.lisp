@@ -7,9 +7,9 @@
                           (member :argument :indefinite :break) index)
                          (values null &optional)) check-contesto-cbor))
 (defun check-contesto-cbor (space major form lead)
-  "Pre: header completo, cursore sul lead. Post: chunk non-break definito dello stesso MT.
-INVARIANT-VIOLATION per lead/form; CORRUPTION-DETECTED :cbor-chunk-type sul lead,
-prima del budget nodi. Break viene verificato separatamente senza caricare nodi."
+  "Pre: complete header, cursor at lead. Post: definite non-break chunk of the same MT.
+INVARIANT-VIOLATION for lead/form; CORRUPTION-DETECTED :cbor-chunk-type at lead,
+before node budget. Break checked separately without charging nodes."
   (unless (= lead (spazio-cbor-cursor space))
     (error 'invariant-violation :reason :cbor-context-cursor))
   (when (and (eq form :break) (/= major 7))
@@ -23,9 +23,9 @@ prima del budget nodi. Break viene verificato separatamente senza caricare nodi.
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor index) (values null &optional)) chiudi-break-cbor))
 (defun chiudi-break-cbor (space lead)
-  "Pre: header break completo. Post: un solo frame indefinito chiuso, nessun nodo.
-CORRUPTION-DETECTED nell'ordine tag-break, break, map-value sul lead;
-INVARIANT-VIOLATION per cursore interno incoerente."
+  "Pre: complete break header. Post: one indefinite frame closed, no node.
+CORRUPTION-DETECTED in order tag-break, break, map-value at lead;
+INVARIANT-VIOLATION for inconsistent internal cursor."
   (unless (= lead (spazio-cbor-cursor space))
     (error 'invariant-violation :reason :cbor-break-cursor))
   (when (spazio-cbor-pending-tag space)
@@ -43,8 +43,8 @@ INVARIANT-VIOLATION per cursore interno incoerente."
 (declaim (ftype (function (spazio-cbor (integer 1 16777216) index)
                          (values null &optional)) conta-nodo-cbor))
 (defun conta-nodo-cbor (space max-nodes lead)
-  "Pre: header e contesto validi, non-break. Post: un nodo aggiunto entro MAX-NODES.
-RESOURCE-EXHAUSTED :cbor-node-budget sul lead; INVARIANT-VIOLATION su cursore/conteggio."
+  "Pre: valid header and context, non-break. Post: one node added within MAX-NODES.
+RESOURCE-EXHAUSTED :cbor-node-budget at lead; INVARIANT-VIOLATION for cursor/count."
   (unless (= lead (spazio-cbor-cursor space))
     (error 'invariant-violation :reason :cbor-node-cursor))
   (unless (<= (spazio-cbor-nodes space) max-nodes)
@@ -59,9 +59,9 @@ RESOURCE-EXHAUSTED :cbor-node-budget sul lead; INVARIANT-VIOLATION su cursore/co
                           (member :argument :indefinite) (integer 0 100) index)
                          (values null &optional)) apri-contenitore-cbor))
 (defun apri-contenitore-cbor (space major high low next end form max-depth lead)
-  "Pre: MT4/5 e header completo. Post: frame e profondita aggiunti, anche se vuoto.
-Depth-budget sul lead precede count-fit; arita mappa verificata prima di 2*N.
-CORRUPTION-DETECTED :cbor-truncated a END; INVARIANT-VIOLATION per range/cursore."
+  "Pre: MT4/5 and complete header. Post: frame and depth added, even if empty.
+Depth-budget at lead precedes count-fit; map arity checked before 2*N.
+CORRUPTION-DETECTED :cbor-truncated at END; INVARIANT-VIOLATION for range/cursor."
   (unless (<= next end)
     (error 'invariant-violation :reason :cbor-container-range))
   (unless (= lead (spazio-cbor-cursor space))
@@ -86,9 +86,9 @@ CORRUPTION-DETECTED :cbor-truncated a END; INVARIANT-VIOLATION per range/cursore
                           (member :argument :indefinite))
                          (values null &optional)) verifica-stringa-cbor))
 (defun verifica-stringa-cbor (buffer space major high low next end form)
-  "Pre: header MT2/3 e contesto ammesso. Post: payload entro span o frame indefinito.
-CORRUPTION-DETECTED :cbor-truncated a END prima del payload; propaga motivi UTF8
-con offset assoluti, verificando ogni chunk separatamente; invarianti su range/progresso."
+  "Pre: MT2/3 header and admitted context. Post: payload within span or indefinite frame.
+CORRUPTION-DETECTED :cbor-truncated at END before payload; propagates UTF8 reasons
+with absolute offsets, checking each chunk separately; range/progress invariants."
   (unless (<= next end (length buffer))
     (error 'invariant-violation :reason :cbor-string-range))
   (unless (< (spazio-cbor-cursor space) next)
@@ -113,9 +113,9 @@ con offset assoluti, verificando ogni chunk separatamente; invarianti su range/p
                           (member :argument :indefinite) (integer 0 100) index)
                          (values null &optional)) tratta-item-cbor))
 (defun tratta-item-cbor (buffer space major high low next end form max-depth lead)
-  "Pre: nodo caricato, header/contesto validi. Post: cursore avanza e figlio consumato
-soltanto per il terminale non-tag; tag mantengono pending senza frame.
-Propaga rifiuti di payload/depth/UTF8; INVARIANT-VIOLATION per range/lead/major."
+  "Pre: node charged, valid header/context. Post: cursor advances and child consumed
+only for non-tag terminal; tags retain pending without a frame.
+Propagates payload/depth/UTF8 rejections; INVARIANT-VIOLATION for range/lead/major."
   (unless (<= next end (length buffer))
     (error 'invariant-violation :reason :cbor-item-range))
   (unless (= lead (spazio-cbor-cursor space))

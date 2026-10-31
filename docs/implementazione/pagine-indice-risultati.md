@@ -32,21 +32,21 @@ keys with exact arena, external keys, and 65535-byte fragmentation across
 One test individually alters all 4096 page bytes without updating
 CRCs and requires rejection. Separate cases recalculate correct CRCs for inconsistent
 fields, PageRefs, controls, packing, padding, and geometries. Thus checksum
-verification and local structural validation distinguished.
+verification and local structural validation are distinguished.
 
 Representation of a split directory verifies only pages and
-references: implements neither writer split nor publication. In review
+references: it implements neither writer split nor publication. In review
 following targeted runs, both synthetic digests were also placed
 in corresponding child prefixes 0/1; updated version passed
 build/test phase of first global check. Still not an
 engine-split differential test. Diagnostics and global-check
 repetition remain separately recorded from first targeted archive.
 
-Two readings by same author: contract/layout and error flow with
+Two readings by the same author: contract/layout and error flow with
 no effects before preflight. Independent review, complete MC/DC,
 file container, graph tests, cache, snapshots, commit,
 recovery, and automatic runtime changes remain open. No lock-free property or
-zero allocation attributed to codec from these executions.
+zero allocation is attributed to codec from these executions.
 
 <a id="chiusura-della-verifica-integrata--2026-10-23"></a>
 
@@ -61,6 +61,6 @@ full suite: 48 cases and 756 checks for that tool.
 The [verified final archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-index-pages-final/catalogo.lisp)
 preserves successful command, both failed global runs, diagnostic
 repetition, affected fixtures, and document versions before
-updates. No historical outcome promoted or overwritten.
-This annotation follows global run: code unchanged, only final
+updates. No historical outcome is promoted or overwritten.
+This annotation follows the global run: code is unchanged, only final
 metadata separately subjected to link and trace checks.

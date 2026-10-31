@@ -4,8 +4,8 @@
 
 `arcdocdb.recovery.series` connects [owned read-only sources](fonti-recovery.md)
 to [ACTIVE](active-recuperato.md) and [CLOSED](closed-recuperato.md) readers.
-Uses authoritative CONTROL and same complete Archivio decision replay.
-Adds no formats, logs, or durable atomicity points.
+It uses authoritative CONTROL and the same complete Archivio decision replay.
+It adds no formats, logs, or durable atomicity points.
 
 ## API
 
@@ -15,15 +15,15 @@ Adds no formats, logs, or durable atomicity points.
    control sources decisions scratch limits))
 ```
 
-Two values on success: `active-recuperato` and new simple-vector of
-`closed-recuperato`, complete and ordered by u64 ID. Caller owns
-vector and keeps it stable when passing to subsequent gates. Tokens
-immutable and bound to same CONTROL; ACTIVE retains marker
-of replay actually used. No internal table or buffer exposed.
+Two values on success: `active-recuperato` and a new simple-vector of
+`closed-recuperato`, complete and ordered by u64 ID. The caller owns the
+vector and keeps it stable when passing to subsequent gates. Tokens are
+immutable and bound to the same CONTROL; ACTIVE retains the marker
+of the replay actually used. No internal table or buffer is exposed.
 
-Set owner keeps capabilities open throughout call
+The set owner keeps capabilities open throughout the call
 and every result use. Sources, CONTROL, decisions, namespace, and
-scratch must remain stable under exclusive recovery in I/O pool.
+scratch must remain stable under exclusive recovery in the I/O pool.
 Catalog authority and decision-log completeness remain those of
 existing readers; name acquisition alone does not demonstrate them.
 
@@ -31,27 +31,27 @@ existing readers; name acquisition alone does not demonstrate them.
 
 ## Preflight before data
 
-Before first header, checks:
+Before the first header, the module checks:
 
 1. set count equals manifest CLOSED count plus one ACTIVE;
 2. overall segment limit and new-vector budget;
 3. exact CONTROL/decision scope, no UUID aliases, open decision FD;
-4. strictly increasing IDs and each source state equal manifest;
+4. strictly increasing IDs and each source state equals the manifest state;
 5. unique ACTIVE equal CONTROL's;
 6. canonical preflight of every reader: read-only FD, backend, scratch, and limits;
 7. each CLOSED P no greater than attested EOF of its FD;
 8. ACTIVE EOF + CLOSED P sum within cumulative read budget.
 
 Membership, strict order, and cardinality prove completeness without
-allocating another duplicate table. Zero ID valid previous value:
-NIL indicates no previous value. ACTIVE position zero also
-valid. CLOSED retains reader's u64 IDs; ACTIVE retains
-existing GET constructor's positive-ID limit. No truncation.
+allocating another duplicate table. Zero ID is a valid previous value:
+NIL indicates no previous value. ACTIVE position zero is also
+valid. CLOSED retains the reader's u64 IDs; ACTIVE retains
+the existing GET constructor's positive-ID limit. No truncation.
 
-Name final/temporary form remains planner fact. API
-applies no rename or deletion. Set may be acquired with
-another manifest: count, ID, or state disagreements
-rejected; headers and prefixes then verified against supplied CONTROL.
+The final/temporary form of a name remains a planner fact. The API
+applies no rename or deletion. The set may be acquired with
+another manifest: count, ID, or state disagreements are
+rejected; headers and prefixes are then verified against the supplied CONTROL.
 Physical provenance and namespace stability remain coordinator
 obligations, without inference from equal UUIDs or similar names.
 
@@ -59,27 +59,27 @@ obligations, without inference from equal UUIDs or similar names.
 
 ## Execution and failures
 
-ACTIVE read first, with complete EOF and canonical multiseries
-decisions. Then all CLOSED sequentially, with same
-scratch and manifest P. No bytes beyond P read for CLOSED;
+ACTIVE is read first, with complete EOF and canonical multiseries
+decisions. Then all CLOSED segments are read sequentially, with the same
+scratch and manifest P. No bytes beyond P are read for CLOSED;
 any ACTIVE tail follows canonical scanner through attested EOF.
 Readers retain no scratch and may use it serially.
 
-Before return, checks consumed count, canonical CLOSED
+Before return, the module checks the consumed count, canonical CLOSED
 set, ACTIVE capability, and still-open decision log. Two values
-emerge together only after checks. Error in any
+emerge together only after these checks. An error in any
 segment delivers no partial result. Scratch may have been
 modified; no rollback promise for private buffers.
 
-Set borrowed, not transferred. Not closed on success or
-failure, and no child closed individually. Original conditions
-propagate without retry or masking: owner then performs
-set cleanup after all borrowers. No new generic
-error handler or concurrent-cleanup protocol introduced.
+The set is borrowed, not transferred. It is not closed on success or
+failure, and no child is closed individually. Original conditions
+propagate without retry or masking: the owner then performs
+set cleanup after all borrowers finish. No new generic
+error handler or concurrent-cleanup protocol is introduced.
 
-Result lets coordinator feed existing gates:
+The result lets the coordinator feed existing gates:
 Serie maximum CSN, complete Archivio CSN plan, and old
-ACTIVE checkpoint. Does not rebuild primary/secondary indexes, publish
+ACTIVE checkpoint. It does not rebuild primary/secondary indexes, publish
 sources or roots, complete physical reconciliation or traffic
 gate. General C1 invariant-stop boundary remains open.
 
@@ -87,9 +87,9 @@ gate. General C1 invariant-stop boundary remains open.
 
 ## Limits and costs
 
-Read-only configuration created before reads. Incorrect scalar
+The read-only configuration is created before reads. Incorrect scalar
 types/ranges signal TYPE-ERROR; invalid geometry INVALID-ARGUMENT.
-CLOSED-reader decisions reused in factory without I/O.
+CLOSED-reader decisions are reused in factory without I/O.
 
 | Option | Default | Scope |
 |---|---:|---|
@@ -104,18 +104,18 @@ CLOSED-reader decisions reused in factory without I/O.
 | `max-batch-bytes` | 67108864 | Per batch; at least SEAL frame |
 | `max-prepared`, `max-outcomes`, `max-esiti-chiusura` | 65536 each | Per segment, u32; zero allowed |
 
-Borrowed scratch must hold maximum of ACTIVE EOF and CLOSED P;
+Borrowed scratch must hold the maximum of ACTIVE EOF and CLOSED P;
 chunking bounds transfer, not total memory required by current
-readers. Cumulative limit checks logical source bytes,
-not IOPS, latency, or in-memory rereads. Reference budget excludes
+readers. The cumulative limit checks logical source bytes,
+not IOPS, latency, or in-memory rereads. The reference budget excludes
 scratch, tokens, reader workspace, final-gate hash, headers, and GC:
-not RSS. No additional per-document objects introduced.
+not RSS. No additional per-document objects are introduced.
 
 Source verification uses scans bounded by segment count and
-manifest queries; does not reenumerate directory or reopen files. Final
+manifest queries; it does not reenumerate the directory or reopen files. The final
 gate retains its private bounded table. No allocation or
-verification added to existing request path. Actual
-memory, GC, and recovery performance remain to measure.
+verification is added to the existing request path. Actual
+memory, GC, and recovery performance remain to be measured.
 
 <a id="decisioni-e-metodo-prima-delle-esecuzioni"></a>
 
@@ -136,10 +136,10 @@ memory, GC, and recovery performance remain to measure.
 | SRS-D11 | Final set, FDs and decisions open; reusable scratch and independent new vector |
 
 Warning-free product-only compilation, style,
-traceability, links, disassembly reading, and C4 archive checking
-planned. Two static author rereadings separate from independent
+traceability, links, disassembly reading, and C4 archive checking are
+planned. Two static author rereadings are separate from independent
 review. No new functional test, FI, coverage, model, or
-benchmark added or run in increment. SRS-D01…D11,
+benchmark was added or run in this increment. SRS-D01…D11,
 MC/DC, C1 qualification, general stop, and complete integration remain open;
 general CI does not replace missing dedicated tests.
 

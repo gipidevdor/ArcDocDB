@@ -6,9 +6,9 @@
 ;;; REQ: REQ-WAL-006 REQ-CON-002 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t t t) null) riusa-commit-serie))
 (defun riusa-commit-serie (controller lease event generation)
-  "Pre: FIFO ritiro, CSN risolto, FINE I/O ricevuta e gruppo già riusato/ritirato.
-Post: lotto aperto, slot/ref liberati, epoch conservata. Rifiuti prima di mutare;
-nessun reclaim di root/index/snapshot o riuso di un buffer faulted."
+  "Pre: retirement FIFO, resolved CSN, I/O COMPLETION received, group already reused/retired.
+Post: open batch, slot/references freed, epoch retained. Rejections before mutation;
+no root/index/snapshot reclamation or faulted-buffer reuse."
   (%check-owner controller lease) (%live-event controller event generation)
   (%require-healthy controller)
   (unless (eq event (svref (controllore-serie-slots controller) (controllore-serie-head controller)))
@@ -38,9 +38,9 @@ nessun reclaim di root/index/snapshot o riuso di un buffer faulted."
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (controllore-serie t &optional t) null) fault-controllore-serie))
 (defun fault-controllore-serie (controller lease &optional (scope :serie))
-  "Pre: owner segnala guasto noto oppure stato incerto. Post: FAULTED terminale.
-Scope non ridotto; INVALID-ARGUMENT per scope/lease. Non modifica file/token.
-Ambito :archive è obbligo al coordinatore di fermare TUTTO l'Archivio."
+  "Pre: owner reports a known fault or uncertain state. Post: terminal FAULTED.
+Scope not reduced; INVALID-ARGUMENT for scope/lease. Does not modify files/token.
+Scope :archive obligates the coordinator to stop the ENTIRE Archivio."
   (%check-owner controller lease)
   (unless (member scope '(:serie :archive)) (error 'invalid-argument :reason :serie-fault-scope))
   (%mark-fault controller scope)
@@ -51,9 +51,9 @@ Ambito :archive è obbligo al coordinatore di fermare TUTTO l'Archivio."
 (declaim (ftype (function (controllore-serie t t t)
                          (values (member :annullato :pendente) u32 u32 &optional)) annulla-commit-serie))
 (defun annulla-commit-serie (controller lease event generation)
-  "Pre: FAULTED Serie, TUTTO I/O quiescente, evento corrente/FIFO non risolto.
-Post: log terminale e token annullato, oppure pendente su busy; nessun buffer riaperto.
-Ambito Archivio rifiuta cleanup automatico di esiti incerti; non elimina dati."
+  "Pre: FAULTED Serie, ALL I/O quiescent, current/FIFO unresolved event.
+Post: terminal log and canceled token, or pending on busy; no buffer reopened.
+Archivio scope rejects automatic cleanup of uncertain outcomes; deletes no data."
   (%check-owner controller lease) (%live-event controller event generation)
   (unless (eq (ambito-fault-serie controller) :serie)
     (error 'invalid-argument :reason :serie-fault-scope))

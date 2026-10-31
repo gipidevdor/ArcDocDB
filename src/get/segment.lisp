@@ -6,9 +6,9 @@
 ;;; REQ: REQ-FOR-004 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (contesto-get u32 u8 (or null u32)) boolean) verifica-prova-target-get))
 (defun verifica-prova-target-get (context valid-bytes flags outcome-offset)
-  "Pre: target valido, offset della prova dalla tabella autorevole del medesimo segmento.
-Post: booleano PREPARED; prova obbligatoria, dentro prefisso e disgiunta dal PUT.
-INVALID-ARGUMENT per offset mancante/inatteso; location prova incoerente rende FAULTED."
+  "Pre: valid target, proof offset from the authoritative table of the same segment.
+Post: boolean PREPARED; mandatory proof, within the prefix and disjoint from PUT.
+INVALID-ARGUMENT for a missing/unexpected offset; inconsistent proof location makes it FAULTED."
   (let ((prepared (not (zerop (logand flags +prepared+)))))
     (if prepared
         (progn
@@ -26,9 +26,9 @@ INVALID-ARGUMENT per offset mancante/inatteso; location prova incoerente rende F
 ;;; REQ: REQ-FOR-004 REQ-AFF-002
 (declaim (ftype (function (contesto-get segmento-get u32) null) leggi-prova-get))
 (defun leggi-prova-get (context segment offset)
-  "Pre: pool I/O, prova entro prefisso committed, capacità dello stesso segmento del PUT.
-Post: prova privata, CRC/tipo/CSN verificati prima di consultare la cache.
-IO-FAULT/CORRUPTION-DETECTED propagano come guasto della sorgente; TXID sarà confrontato col PUT."
+  "Pre: I/O pool, proof within the committed prefix, capability for the same segment as PUT.
+Post: private proof, CRC/type/CSN verified before querying the cache.
+IO-FAULT/CORRUPTION-DETECTED propagate as source faults; TXID will be compared with PUT."
   (let ((proof (contesto-get-proof context)) (content (contesto-get-content context)))
     (unless (= (leggi-esatto (segmento-get-file segment) proof 0 +get-proof-bytes+ offset)
                +get-proof-bytes+)
@@ -45,9 +45,9 @@ IO-FAULT/CORRUPTION-DETECTED propagano come guasto della sorgente; TXID sarà co
 ;;; REQ: REQ-CCH-002 REQ-FOR-004 REQ-AFF-002
 (declaim (ftype (function (contesto-get segmento-get u8 boolean) null) leggi-put-get))
 (defun leggi-put-get (context segment flags prepared)
-  "Pre: pool I/O, target/buffer/prova pronti, dati committed protetti da EBR.
-Post: PUT letto esattamente e VERIFIED dopo CRC/chiave/flag/CSN o TXID+prova.
-Propaga ogni guasto della sorgente; nessun byte parziale o non verificato è consegnabile."
+  "Pre: I/O pool, target/buffer/proof ready, committed data protected by EBR.
+Post: PUT read exactly and VERIFIED after CRC/key/flags/CSN or TXID+proof.
+Propagates every source fault; no partial or unverified bytes may be delivered."
   (let* ((content (contesto-get-content context)) (bytes (contesto-get-bytes context))
          (size (ldb (byte 32 0) (aref content 3))))
     (unless (= (leggi-esatto (segmento-get-file segment) bytes 0 size
@@ -67,9 +67,9 @@ Propaga ogni guasto della sorgente; nessun byte parziale o non verificato è con
                          (values (member :inserted :present :busy :unavailable :bypassed :not-attempted)
                                  boolean boolean &optional)) inserisci-cache-get))
 (defun inserisci-cache-get (context segment flags prepared)
-  "Pre: PUT verificato nel buffer privato; medesima prova autorevole per i prepared.
-Post: inserimento opportunistico, enum e metriche espulsione/scan; contesa non attende.
-Il verificatore della cache ricontrolla l'input; le sue condizioni propagano al confine del compito."
+  "Pre: verified PUT in the private buffer; same authoritative proof for prepared records.
+Post: opportunistic insertion, enum and eviction/scan metrics; contention does not wait.
+The cache verifier rechecks input; its conditions propagate to the task boundary."
   (let ((cache (vista-get-serie-cache (segmento-get-owner segment)))
         (content (contesto-get-content context)))
     (unless cache (return-from inserisci-cache-get (values :not-attempted nil nil)))
@@ -93,10 +93,10 @@ Il verificatore della cache ricontrolla l'input; le sue condizioni propagano al 
                                  (member :inserted :present :busy :unavailable :bypassed :not-attempted)
                                  boolean boolean &optional)) leggi-record-get))
 (defun leggi-record-get (context segment valid-bytes flags &key outcome-offset)
-  "Pre: CANDIDATE dopo nuovo AVVIA-GET nel pool I/O; resolver rieseguito sotto la nuova epoca.
-Post: VERIFIED da cache/segmento; cinque valori: fonte, cache, inserimento, espulsione, scan.
-BUFFER-REQUIRED non esegue I/O e lascia CANDIDATE. Prepared legge OUTCOME dallo stesso FD prima
-della cache. Errori/uscite non locali liberano EBR; ogni esito richiede conclusione o abbandono."
+  "Pre: CANDIDATE after new AVVIA-GET in the I/O pool; resolver rerun under the new epoch.
+Post: VERIFIED from cache/segment; five values: source, cache, insertion, eviction, scan.
+BUFFER-REQUIRED performs no I/O and leaves CANDIDATE. Prepared reads OUTCOME from the same FD before
+the cache. Errors/nonlocal exits release EBR; every outcome requires completion or abandonment."
   (esigi-stato-get context :candidate)
   (let ((completed nil))
     (unwind-protect

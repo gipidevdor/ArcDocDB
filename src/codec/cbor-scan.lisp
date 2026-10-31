@@ -8,10 +8,10 @@
 (declaim (ftype (function (octets spazio-cbor index (integer 1 16777216)
                           (integer 0 100) boolean) (values null &optional)) passo-struttura-cbor))
 (defun passo-struttura-cbor (buffer space end max-nodes max-depth minimal)
-  "Pre: frame da completare, cursore entro END, MINIMAL booleano interno.
-Post: almeno un byte consumato; lettore minimo se T, generico se NIL.
-Header e minimalita prima di contesto/budget; break generico escluso dai nodi.
-INVARIANT-VIOLATION per range, forma o progresso interno; nessuna allocazione prevista."
+  "Pre: frame to complete, cursor within END, internal boolean MINIMAL.
+Post: at least one byte consumed; minimal reader if T, generic if NIL.
+Header and minimality before context/budget; generic break excluded from nodes.
+INVARIANT-VIOLATION for internal range, shape, or progress; no intended allocation."
   (let ((lead (spazio-cbor-cursor space)))
     (declare (type index lead))
     (unless (<= lead end (length buffer))
@@ -34,8 +34,8 @@ INVARIANT-VIOLATION per range, forma o progresso interno; nessuna allocazione pr
 (declaim (ftype (function (spazio-cbor index (integer 1 16777216) (integer 0 100))
                          (values index (integer 0 100) index &optional)) risultato-struttura-cbor))
 (defun risultato-struttura-cbor (space end max-nodes max-depth)
-  "Pre: root completata. Post: nodi/picco/END solo dopo verifica integrale.
-INVARIANT-VIOLATION per fine, conteggi o stato attivo residuo; nessun dato decodificato."
+  "Pre: root complete. Post: nodes/peak/END only after complete verification.
+INVARIANT-VIOLATION for end, counts, or residual active state; no decoded data."
   (unless (= (spazio-cbor-cursor space) end)
     (error 'invariant-violation :reason :cbor-result-range))
   (unless (and (<= 1 (spazio-cbor-nodes space) max-nodes)
@@ -51,13 +51,13 @@ INVARIANT-VIOLATION per fine, conteggi o stato attivo residuo; nessun dato decod
                          (values index (integer 0 100) index &optional))
                 verifica-struttura-cbor-interna))
 (defun verifica-struttura-cbor-interna (buffer start end space max-bytes max-nodes max-depth minimal)
-  "Pre: input freddo, scratch esclusivo, MINIMAL booleano interno dei wrapper.
-Post: NODES, picco soli array/map, END per un item esatto; nessuna mutazione del buffer.
-Preflight rifiutato non modifica lo spazio; errore runtime puo lasciarlo sporco,
-riusabile al prossimo reset. Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
-CORRUPTION-DETECTED (inclusi motivi UTF8 assoluti), INVARIANT-VIOLATION.
-T richiede header minimi; NIL conserva forme generiche. Nessuna semantica tag,
-ordine/deduplica mappe o decodifica. Al piu SPAN passi e drain102; nessuna attesa/I/O."
+  "Pre: cold input, exclusive scratch, wrappers' internal boolean MINIMAL.
+Post: NODES, array/map-only peak, END for exactly one item; no buffer mutation.
+Rejected preflight does not modify the workspace; a runtime error may leave it dirty,
+reusable at the next reset. Propagates INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
+CORRUPTION-DETECTED (including absolute UTF8 reasons), INVARIANT-VIOLATION.
+T requires minimal headers; NIL preserves generic forms. No tag semantics,
+map ordering/deduplication, or decoding. At most SPAN steps and drain102; no waiting/I/O."
   (let ((span (check-input-struttura-cbor buffer start end space max-bytes max-nodes max-depth)))
     (declare (type index span))
     (unless (<= span +cbor-scan-max-bytes+)
@@ -84,10 +84,10 @@ ordine/deduplica mappe o decodifica. Al piu SPAN passi e drain102; nessuna attes
                                &key (max-bytes +cbor-scan-max-bytes+)
                                  (max-nodes +cbor-scan-max-bytes+)
                                  (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8 immutabile, span half-open, scratch esclusivo e budget verificati.
-Post: NODES, picco soli array/map, END per un item esatto; buffer immutabile.
-Preflight senza mutare lo spazio; reset prima della scansione, riuso dopo errore.
-Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED, CORRUPTION-DETECTED e INVARIANT-VIOLATION.
-Accetta header nonminimi/indefiniti e float raw; nessuna semantica tag o canonicalita.
-Wrapper generico del singolo attraversamento bounded; nessuna attesa/I/O."
+  "Pre: immutable simple u8, half-open span, exclusive scratch, and verified budgets.
+Post: NODES, array/map-only peak, END for exactly one item; immutable buffer.
+Preflight without workspace mutation; reset before scanning, reuse after error.
+Propagates INVALID-ARGUMENT, RESOURCE-EXHAUSTED, CORRUPTION-DETECTED, and INVARIANT-VIOLATION.
+Accepts nonminimal/indefinite headers and raw floats; no tag semantics or canonicality.
+Generic wrapper for the single bounded traversal; no waiting/I/O."
   (verifica-struttura-cbor-interna buffer start end space max-bytes max-nodes max-depth nil))

@@ -41,7 +41,7 @@ It writes after seqlock and root recheck; misses, retry-limit, and synchronous e
 preserve output. Direct and callback paths derive from the same local macro, with
 `safety 3`. The destination is not atomic publication to concurrent readers.
 
-Launcher CHECK includes the [independent history](metodo-check-lettura-buffer.md),
+The launcher CHECK includes the [independent history](metodo-check-lettura-buffer.md),
 core comparisons, u64 boundaries, collisions, split/rebuild, root/seqlock witnesses,
 and mutants. The [paired matrix](metodo-bench-lettura-buffer.md) runs explicitly;
 the original benchmark remains available as `baseline`:
@@ -56,7 +56,7 @@ Neither engine core nor requirements are changed. All tests are retained in the
 [read catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp).
 The [final campaign](../../docs/valutazione/risultati-SPK-01-lettura-2026-10-08.md)
 completes 80 samples and observes zero bytes consed in the buffer's 40, including
-maximum u64 values. Generic-validator residual is measured separately and removed
+maximum u64 values. The generic-validator residual is measured separately and removed
 from the buffer using literal type `(integer 1 8)`, retaining rejections.
 Local v1 measurements, without qualifying engine targets.
 
@@ -73,27 +73,27 @@ Local v1 measurements, without qualifying engine targets.
 - One writer per index. Each maintenance pass reads at most C slots from one fragment;
   splits create two fragments, rebuilds one. Directory copying separately costs
   O(2^G), including rebuilds and splits without doubling: every publication copies
-  the entire immutable vector. Report counts copied references and distinguishes
+  the entire immutable vector. The report counts copied references and distinguishes
   directory time, fragment copying, and total maintenance. `payload-indice` is O(1),
   using writer counters; `indice-statistiche` scans the directory outside measured
   phases. Total maintenance cost is not bounded by C. Depth is configured and checked;
   saturation and extreme collisions cause errors.
-- Fixed local C×16-byte arena in this prototype: append-only to limit, then rebuild
+- Fixed local C×16-byte arena in this prototype: append-only to the limit, then rebuild
   only live keys. ADR-0043's separate arena growth is not implemented. Control:
   empty → occupied → deleted → occupied; no return to empty in the same fragment.
   No fragment merging.
 - Reader: at most eight attempts, barriers, and seqlock. `leggi` returns `:retry-limit`
   without blocking. Only the harness uses a mutex to serialize writer and fallback;
-  no mutex in reader fast path. Does not simulate the production logical-writer queue.
-  Retry counters local to each reader.
+  no mutex in the reader fast path. Does not simulate the production logical-writer queue.
+  Retry counters are local to each reader.
 - Deterministic keys and golden hashes, explicit 64-bit masks. Multiplicative mixing
   compiles inline with u64 intermediates; standalone function and u64 result transport
   between functions may need boxing. No zero-allocation promise. Measurements separate
   process allocation from structural index payload.
 - Verification: golden hash/output, collisions, split, deletion/reinsertion, reclaim,
   limits, seeded sequences against `hash-table`, root recheck with injected interleaving,
-  update during seqlock, and concurrent readers with writer. Worker errors returned and
-  reraised by coordinator after join; thread cleanup also on error.
+  update during seqlock, and concurrent readers with writer. Worker errors are returned and
+  reraised by the coordinator after join; thread cleanup also on error.
 
 > **Decided (2026-10-08 → ADR-0050)** — A retired fragment's frozen state alone does not
 > justify the linearization point claimed at reference-read time. The prototype rereads
@@ -111,7 +111,7 @@ Local v1 measurements, without qualifying engine targets.
 1. Writer: key K present with CSN 1; reader: acquires root R and fragment F.
 2. Writer: updates K to CSN 2 in the same still-active F.
 3. Writer: splits F, copies CSN 2 into children, CAS-publishes R′. F is retired.
-4. Writer: updates K to CSN 3 in current child.
+4. Writer: updates K to CSN 3 in the current child.
 5. Reader: probes retired F and reads a consistent hit with CSN 2. Without recheck
    it would return 2; R/generation check discards the attempt, rereads R′, and returns
    3 with one retry. The fixture also reads F directly and verifies that the
@@ -122,7 +122,7 @@ This witness falsifies that linearization point; it does not demonstrate a gener
 linearizability error, since 2 existed during the operation.
 Output explicitly states `:general-linearizability-counterexample nil`.
 A second sequence verifies that a miss on retired F is also discarded after swap
-and insertion into current fragment. Linearization point and O(2^G) cost are qualified
+and insertion into the current fragment. Linearization point and O(2^G) cost are qualified
 in [ADR-0050](../../docs/adr/0050-pubblicazione-e-costi-della-directory.md), REQ-IDX-007;
 swap/reader modeling in SPK-07 remains pending. Frozen-fragment consistency alone
 does not fix ADR-0043's previously declared point.
@@ -133,7 +133,7 @@ does not fix ADR-0043's previously declared point.
 
 From any directory, `run.lisp` resolves `core.lisp` relative to `*load-truename*`,
 compiles to `out/core.fasl`, and promotes warnings and style-warnings to errors.
-Prints one s-expression plist; failure has nonzero exit status.
+It prints one s-expression plist; failure has nonzero exit status.
 
 ```sh
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --check
@@ -142,7 +142,7 @@ sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-inde
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --bench --words 5
 ```
 
-Default uses 100,000 documents, capacity 8,192, four words, two readers, and a
+The default uses 100,000 documents, capacity 8,192, four words, two readers, and a
 12-second budget for measured phases: approximately 15 seconds total as a goal,
 not a timing guarantee. Time is checked in blocks; actual counts, incomplete phase,
 and actual duration are always reported. Structural budget 512 MiB (default);
@@ -168,7 +168,7 @@ seed, units, and actual counts. `byte/doc` is exact live-array payload plus dire
 references, excluding headers, Lisp structures, runtime heap, or retired fragments.
 Allocation comes from `sb-ext:get-bytes-consed`, cumulative for the process,
 including bignums and harness; it is not RSS. Throughput includes hashing and key
-generation in reused buffer. Split duration includes directory copy and allocation;
+generation in a reused buffer. Split duration includes directory copy and allocation;
 rebuild duration is separate. Insufficient timing resolution produces `nil` for
 ratios that cannot be calculated.
 
@@ -195,7 +195,7 @@ golden output, 3,000 seeded operations per width 4/5, collisions with explicit
 limit rejection, reclaim, root witness, seqlock and forced fallback, limits,
 worker-error propagation, and cleanup; two readers × 1,200 operations with
 writer × 600 iterations, for both widths. Warning/style-warning-free compilation
-through launcher. Stress retry counts vary with scheduler, while assertions
+through the launcher. Stress retry counts vary with scheduler, while assertions
 and witness are deterministic.
 
 Short diagnostic, run from cwd `/tmp` on 2026-10-08:
@@ -255,22 +255,22 @@ gets completed, `out/inline-hash-100k.sexp`; no warning/style-warning.
 Observed allocation decreases; throughputs describe this sample only.
 Maximum split duration increased in the sample: the cause is unprofiled and
 remains evidence to retain in replications.
-Baseline ran with 4,096 MiB heap, while diagnostic uses runtime default and a
+The baseline ran with 4,096 MiB heap, while the diagnostic uses the runtime default and a
 different time budget; this limits GC and latency comparison. No improvement
 in maximum cost is concluded.
 Live payload before and after churn: 6,422,656 bytes, 64.22656 bytes/doc excluding
 headers; 15 splits, 16 rebuilds, 426 directory references copied overall.
 
-Golden hashes fixed by preoptimization FASL for IDs 0, 1, 424,242, and 2^64−1;
-same values after INLINE. `check` also verifies CSN, location, and end CSN of
+Golden hashes are fixed by the preoptimization FASL for IDs 0, 1, 424,242, and 2^64−1;
+the same values remain after INLINE. `check` also verifies CSN, location, and end CSN of
 2^64−1, length 2^24−1, and the five-word variant.
 
 Local disassembly: `out/hash-kernel-disassembly.txt`, generated by
 `out/disassemble-kernel.lisp` and `out/kernel-probe.lisp`. With `safety 3`, wrappers
-read/write u64 arrays and return NIL, excluding Lisp-return boxing from kernel.
+read/write u64 arrays and return NIL, excluding Lisp-return boxing from the kernel.
 In both observed functions: 64-bit `LDR`/`STR`, `ADD`, `MUL`, `LSR`, `EOR`;
 no generic-arithmetic call or allocation on the shown code's normal path,
-array bounds checks present. Inspection is limited to SBCL 2.6.9 ARM64;
+array bounds checks are present. Inspection is limited to SBCL 2.6.9 ARM64;
 it proves neither zero GET allocation nor whole-protocol atomicity.
 Reproducible wrappers, to compile after loading `out/core.fasl`:
 
@@ -331,9 +331,9 @@ be measured in replications.
 ### Replications with 4 GiB heap
 
 > **Proposed (subsequent profiling)** — isolate key generation, hash returning
-> into u64 array, and `leggi` API on fixed key. After warmup, one million calls
+> into a u64 array, and `leggi` API on a fixed key. After warmup, one million calls
 > per case, dedicated process: process clock and allocated bytes.
-> Compare `speed 2` and `speed 3` in reader, retaining `safety 3`; no format or
+> Compare `speed 2` and `speed 3` in the reader, retaining `safety 3`; no format or
 > check changes. This diagnostic attributes residual cost; it does not measure
 > the database.
 

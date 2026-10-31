@@ -15,7 +15,7 @@
 ## Context
 
 The specification describes correct behavior and recovery after a crash; it does not describe
-how the system responds to faults that **are not** a clean shutdown: I/O errors, bit rot,
+how the system responds to faults such as I/O errors, bit rot,
 partial writes, resource exhaustion, internal defects. A critical system must have a
 defined response for each (ADR-0031).
 
@@ -82,7 +82,7 @@ correct CRC) with a CSN higher than the last known one:
 
 The scan's possible error is in the safe direction: a false positive (a "valid" record
 found by chance, probability ≈ 2⁻³² per position) causes refusal to open, never
-silent loss. An invalid record in a **CLOSED** segment or in `control.log`,
+silent loss. An invalid record in a **CLOSED** segment, `control.log`, or
 `multiserie.log` is always corruption (there is no tail to truncate): segment quarantine
 (`DEGRADED`) or `FAULTED` for control logs.
 
@@ -108,7 +108,8 @@ read needs it.
 
 A Common Lisp tool that opens an Archivio **read-only** and verifies everything that can be
 verified offline: formats and CRCs, consistency of control log, segments, hints, indexes,
-`multiserie.log`, catalog, and directories. It exits with a nonzero code and a detailed report.
+`multiserie.log`, catalog, and directories. It reports detected failures in detail and exits
+with a nonzero status when verification fails.
 It serves the operator, backup, and tests (an oracle after every simulated crash).
 
 <a id="8-condizioni-ed-errori-inv-a4"></a>

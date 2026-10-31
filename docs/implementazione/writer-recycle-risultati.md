@@ -5,7 +5,7 @@
 Local campaigns of 2026-10-09, base `673987a`, macOS ARM64/Apple M4,
 SBCL 2.6.9, safety3. Sources/tests/tools frozen in copy
 `arcdocdb-recycle-verify-7meus4m5`; each process retains argv, environment,
-full outputs, before/after snapshots. External load uncontrolled.
+full outputs, before/after snapshots. External load is uncontrolled.
 [Preregistered method](writer-recycle-metodo.md) and
 [contract](writer-recycle.md) fix verification scope.
 
@@ -25,11 +25,11 @@ Regression starts consumers A/B with backlog, empties ring,
 fills it with C/D while A/B running, finishes both with `:schedule`.
 Simple publication rejects both without mutation; two recyclings
 transfer C/D to callers, retain A/B FIFO in ring without intervening
-pop. Every payload processed once, writers return idle.
+pop. Every payload is processed once, writers return idle.
 
 Three real threads, two contending consumers and live producer,
-reused for eight waves and 48 identity/CRC payloads. Busy retry
-coordinated/bounded by harness. Further test retains first-shard
+reused for eight waves and 48 identity/CRC payloads. Busy retry is
+coordinated/bounded by the harness. Further test retains first-shard
 guard while another thread recycles/completes second.
 Tests check input before guard, busy without effects, inconsistent
 shape/payload, helper without guard/with foreign guard, busy start after
@@ -53,7 +53,7 @@ transfer, new wave without late cleanup.
 Native data and HTML index agree with two separate recalculations. Five
 unmarked forms in new file top-level: package, declaim optimize,
 three ftypes. [Inventory](writer-recycle-decisioni.md) retains all previous
-gaps/decisions; no forms subtracted from denominator,
+gaps/decisions; no forms are subtracted from the denominator,
 no approved exclusion or full MC/DC qualification.
 
 Full baseline with 66 execution tests; eleven mutants compile and
@@ -82,15 +82,15 @@ failure as test-detected defect.
 Each composite handoff/ready/recycling cycle uses C+1 distinct writers per
 shard, rotates roles, publishes C references, exchanges full ring,
 consumes returned reference plus remaining references. Identity, count,
-status, cursor, payload, generation checked. Warmup 128 and GC
+status, cursor, payload, and generation are checked. Warmup 128 and GC
 precede window; no loop I/O. Independent tokens and
 12/24/45/93 API calls per cycle derived in method.
 
 Positive control measures 16,777,472 bytes on deliberately allocated
 16 × 1 MiB; counter baseline zero. Wrong sink rejected, zero clock
 reported below-resolution, existing destination intact,
-partial report verified. Startup/error conditions outside
-window. Twenty serial samples prove neither universal zero heap, speedup,
+partial report verified. Startup/error conditions are outside
+the window. Twenty serial samples prove neither universal zero heap, speedup,
 pool throughput, P99, fairness, nor engine qualification.
 
 <a id="check-e-conservazione"></a>
@@ -109,7 +109,7 @@ FASL self-tests in separate private processes/caches.
 preserves processes, native/HTML, logs, measurements, two C1 readings, negative
 checks, adapter sources. Editorial closure/publication then receive
 link/evidence checks. Pool, wakeups, admission, controller,
-shutdown remain to integrate; engine gates open.
+shutdown remain to be integrated; engine gates are open.
 
 <a id="riproduzione"></a>
 

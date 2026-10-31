@@ -14,7 +14,7 @@ durability, or completed engine recovery.
 ## Cases and oracle
 
 Compare all combinations of absent, temporary,
-final, and both presence for ACTIVE, CLOSED, REMOVED, and unknown. The model
+final, and dual-form presence for ACTIVE, CLOSED, REMOVED, and unknown. The model
 includes missing CLOSED segments, excludes absent REMOVED segments, and gives
 FAULTED priority for missing or conflicting ACTIVE. Vector permutations
 must give the same entries sorted by unsigned u64 ID. Check
@@ -41,7 +41,7 @@ preserving loop bounds without automatic process timeout.
 The self-test checks classification, ASDF copying, errors, and parallelism.
 
 `tools/foundation-coverage.lisp` records the raw recovery
-denominator, original `sb-cover` state, and HTML. Summary separates three
+denominator, original `sb-cover` state, and HTML. The summary separates three
 inventory files without subtracting defensive guards. Two C1 readings
 check invariants, errors, loops, ownership, and decision table;
 unobserved forms become neither approved exceptions nor demonstrated MC/DC.

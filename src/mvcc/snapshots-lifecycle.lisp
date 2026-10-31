@@ -6,8 +6,8 @@
 ;;; REQ: REQ-MVC-004 REQ-MVC-005 REQ-MVC-007 REQ-CON-004
 (declaim (ftype (function (contesto-snapshot u64 u64) boolean) attiva-snapshot))
 (defun attiva-snapshot (context expected-generation now)
-  "Pre: evento con generazione originale e NOW fresco. Post: T solo quando H>=CSN e non scaduto.
-NIL se ancora in attesa; RESOURCE-EXHAUSTED per busy/timeout, SNAPSHOT-TOO-OLD dopo la fine."
+  "Pre: event with original generation and fresh NOW. Post: T only when H>=CSN and not expired.
+NIL if still waiting; RESOURCE-EXHAUSTED for busy/timeout, SNAPSHOT-TOO-OLD after the end."
   (let ((registry (contesto-snapshot-registry context)) (acquired nil))
     (esigi-ingresso-snapshot registry)
     (multiple-value-prog1
@@ -44,9 +44,9 @@ NIL se ancora in attesa; RESOURCE-EXHAUSTED per busy/timeout, SNAPSHOT-TOO-OLD d
 ;;; REQ: REQ-MVC-003 REQ-MVC-004 REQ-MVC-007 REQ-CMP-007 REQ-CON-004
 (declaim (ftype (function (contesto-snapshot u64) null) termina-snapshot))
 (defun termina-snapshot (context expected-generation)
-  "Pre: evento originale; stop a nuove letture, reader già ammessi protetti da EBR.
-Post: pin rimosso; idempotente per la stessa identità già terminata/scaduta.
-SNAPSHOT-TOO-OLD su riuso; SNAPSHOT-BUSY conserva il pin e l'obbligo di terminazione."
+  "Pre: original event; stop new reads, readers already admitted protected by EBR.
+Post: pin removed; idempotent for the same identity already ended/expired.
+SNAPSHOT-TOO-OLD on reuse; SNAPSHOT-BUSY retains the pin and termination obligation."
   (let ((registry (contesto-snapshot-registry context)) (acquired nil))
     (esigi-ingresso-snapshot registry)
     (multiple-value-prog1
@@ -64,8 +64,8 @@ SNAPSHOT-TOO-OLD su riuso; SNAPSHOT-BUSY conserva il pin e l'obbligo di terminaz
 ;;; REQ: REQ-MVC-004 REQ-MVC-003 REQ-AFF-008
 (declaim (ftype (function (registro-snapshot csn-slot u64) boolean) scadi-slot-snapshot))
 (defun scadi-slot-snapshot (registry slot now)
-  "Pre: mutex posseduto e mutazione protetta dal chiamante. Post: scadenza di un solo slot.
-Aggiorna il conteggio, non la soglia; T se un pin è stato rimosso. Nessun reader fisico liberato."
+  "Pre: mutex owned and mutation protected by the caller. Post: expiration of exactly one slot.
+Updates the count, not the threshold; T if a pin was removed. No physical reader freed."
   (let ((state (aref (registro-snapshot-states registry) slot)))
     (unless (<= state +snapshot-age-expired+)
       (guasto-snapshot registry :snapshot-slot-state))
@@ -85,8 +85,8 @@ Aggiorna il conteggio, non la soglia; T se un pin è stato rimosso. Nessun reade
 (declaim (ftype (function (registro-snapshot u64 integer)
                          (values (integer 1 65536) (integer 0 65536) &optional)) scadi-snapshot))
 (defun scadi-snapshot (registry now max-slots)
-  "Pre: NOW fresco, budget 1..K. Post: visite, pin scaduti; cursore circolare per equità.
-Una sola scansione K per ricalcolare la soglia; SNAPSHOT-BUSY senza attesa, interruzione fail-stop."
+  "Pre: fresh NOW, budget 1..K. Post: visits, expired pins; circular cursor for fairness.
+One K scan only to recompute the threshold; SNAPSHOT-BUSY without waiting, fail-stop on interruption."
   (esigi-ingresso-snapshot registry)
   (let ((acquired nil))
     (multiple-value-prog1

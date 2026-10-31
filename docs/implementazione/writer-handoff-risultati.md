@@ -50,7 +50,7 @@ Independent recalculation of the raw vectors matches the HTML index.
 The mutation baseline compiles and passes all 34 execution tests.
 Sixteen mutants compile and are detected: eight in the handoff protocol,
 eight in delegated primitives and the refactor. Zero survivors, zero
-compilation-failure, zero failures before tests. The score concerns
+compilation failures, zero failures before tests. The score concerns
 the preregistered set, not all possible defects.
 
 <a id="allocazioni-osservate"></a>
@@ -66,7 +66,7 @@ Warmup of 128 cycles and GC outside the counter. Fixtures, parsing, compilation,
 and reports are excluded; API checks and responses are included.
 The positive control detects 16,777,472 bytes from 16 MiB deliberately
 allocated. No measurement of speedup, throughput, P99, or universal guarantee
-of no allocations; errors and scheduler integration not measured.
+of no allocations; errors and scheduler integration are not measured.
 
 <a id="riproduzione-ed-evidenze"></a>
 

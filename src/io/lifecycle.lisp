@@ -8,8 +8,8 @@
 (declaim (ftype (function ((or string pathname) (member :input :append :directory)) string)
                 nome-file))
 (defun nome-file (path mode)
-  "Pre: percorso del controller. Post: nome nativo non vuoto/NUL-free; append solo .tmp.
-INVALID-ARGUMENT prima dell'apertura; non risolve symlink degli antenati."
+  "Pre: controller path. Post: nonempty/NUL-free native name; append only for .tmp.
+INVALID-ARGUMENT before opening; does not resolve ancestor symlinks."
   (let ((name (sb-ext:native-namestring (pathname path))))
     (when (or (zerop (length name)) (find #\Null name))
       (error 'invalid-argument :reason :io-path))
@@ -25,8 +25,8 @@ INVALID-ARGUMENT prima dell'apertura; non risolve symlink degli antenati."
 (declaim (ftype (function ((or string pathname) (member :input :append :directory)
                           (or null backend) index file-offset) file-io) apri))
 (defun apri (path mode backend max-transfer max-file-bytes)
-  "Pre: controller possiede il namespace. Post: capacità nuova, configurazione limitata.
-Prepara il .tmp; nessun punto di commit o pubblicazione. IO-FAULT/INVALID-ARGUMENT al rifiuto."
+  "Pre: controller owns the namespace. Post: new capability, bounded configuration.
+Prepares the .tmp; no commit or publication point. IO-FAULT/INVALID-ARGUMENT on rejection."
   (unless (and (<= 1 max-transfer +max-transfer+) (plusp max-file-bytes))
     (error 'invalid-argument :reason :io-budget))
   (let* ((name (nome-file path mode)) (file (%make-file mode backend max-transfer max-file-bytes)))
@@ -43,13 +43,13 @@ Prepara il .tmp; nessun punto di commit o pubblicazione. IO-FAULT/INVALID-ARGUME
 (declaim (ftype (function ((or string pathname) &key (:backend (or null backend))
                           (:max-transfer index)) file-io) apri-lettura apri-directory))
 (defun apri-lettura (path &key backend (max-transfer +max-transfer+))
-  "Pre: controller possiede il riferimento. Post: file readonly; nessuna mutazione del file.
-Errori tipizzati all'apertura; directory/FIFO non sono segmenti validi."
+  "Pre: controller owns the reference. Post: readonly file; no file mutation.
+Typed errors on opening; directories/FIFOs are not valid segments."
   (apri path :input backend max-transfer +default-file-limit+))
 ;;; REQ: REQ-STO-003 REQ-AFF-008
 (defun apri-directory (path &key backend (max-transfer +max-transfer+))
-  "Pre: directory posseduta. Post: FD per metadati relativi, sincronizzazione e chiusura.
-Errori di apertura tipizzati; nessuna creazione o rinomina."
+  "Pre: owned directory. Post: FD for relative metadata, synchronization, and close.
+Typed open errors; no creation or rename."
   (apri path :directory backend max-transfer +default-file-limit+))
 
 ;;; REQ: REQ-STO-003 REQ-AFF-001 REQ-AFF-008
@@ -58,15 +58,15 @@ Errori di apertura tipizzati; nessuna creazione o rinomina."
                 crea-temporaneo))
 (defun crea-temporaneo (path &key backend (max-transfer +max-transfer+)
                                 (max-file-bytes +default-file-limit+))
-  "Pre: nome .tmp nuovo, namespace posseduto. Post: file esclusivo append-only.
-INVALID-ARGUMENT o IO-FAULT al rifiuto; nessuna sovrascrittura né punto di commit."
+  "Pre: new .tmp name, owned namespace. Post: exclusive append-only file.
+INVALID-ARGUMENT or IO-FAULT on rejection; no overwrite or commit point."
   (apri path :append backend max-transfer max-file-bytes))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (file-io) null) chiudi))
 (defun chiudi (file)
-  "Pre: nessun altro utente del FD. Post: capacità chiusa prima di una sola close.
-IO-FAULT per guasto, anche EINTR; close ripetuta è no-op, mai usa un FD riutilizzato."
+  "Pre: no other FD user. Post: capability closed before exactly one close.
+IO-FAULT for failure, including EINTR; repeated close is a no-op, never uses a reused FD."
   (unless (eq (file-state file) :closed)
     (setf (file-state file) :closed)
     (handler-case

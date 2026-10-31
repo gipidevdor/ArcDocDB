@@ -15,7 +15,7 @@ Frozen product and corpus were not modified by this reading.
 | src/codec/cbor-tag-input.lisp | 6dfad07035ac8040b2aec0a455c175ea15dfd9ad |
 | src/codec/cbor-tag-write.lisp | 16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b |
 
-No functional defect or open static finding identified in either blob.
+No functional defect or open static finding was identified in either blob.
 Strict compilation, lint, corpus results, heap, parallel intervals,
 coverage, and mutations remain pending. This reading does not close a C1 gate,
 establish MC/DC, or qualify the engine. The updated requirements catalog
@@ -28,16 +28,16 @@ before `trace`.
 
 | Point | Static finding and limit |
 |---|---|
-| 1. Requirements and ADRs | REQ-CBR-007, LIM-001/002, AFF-004/008, INV-A5/A8/P6, and ADR-0014/0024/0033/0035/0048 are consistent with a local minimal structural MT6 primitive. All two-word u64 wire numbers allowed; application tags, document sentinels, and semantic determinism remain with the higher profile. |
+| 1. Requirements and ADRs | REQ-CBR-007, LIM-001/002, AFF-004/008, INV-A5/A8/P6, and ADR-0014/0024/0033/0035/0048 are consistent with a local minimal structural MT6 primitive. All two-word u64 wire numbers are allowed; application tags, document sentinels, and semantic determinism remain with the higher profile. |
 | 2. Invariants | Preflight protects types, ranges, nonempty contents, words, scratch/aliases, limits, complete size, capacity, overlap, and minimum two nodes. Full scan before header; active guards compare actual sizes, nodes, peak, and progress. |
 | 3. Errors | The method's ten phases retain order. Preflight IA/RE have offset NIL; scanner propagates typed errors and absolute SOURCE offsets. Every public error precedes writing and preserves full arrays. Preflight preserves scratch; parser can dirty it, then it is reusable. Internal invariants fail-stop without rollback. |
-| 4. Bounds | No new loops, recursion, waits, or retries. SPAN<=16MiB before addition; scanner receives SPAN, MAX-NODES−1, and unchanged MAX-DEPTH. Existing stack/reset/drain102; tags without frames, copy<=SPAN, and header<=9bytes. |
-| 5. Heap | Local variables and multiple values, without AST, closures, or temporary arrays in the new success path. SBCL64 limits keep sums fixnum; no reconstructed u64. Keyword calls and dependencies require benchmark with zero baseline and positive control; zero heap not established statically. |
+| 4. Bounds | No new loops, recursion, waits, or retries. SPAN<=16MiB before addition; scanner receives SPAN, MAX-NODES−1, and unchanged MAX-DEPTH. Existing stack/reset/drain bounded to 102 steps; tags without frames, copy<=SPAN, and header<=9 bytes. |
+| 5. Heap | Local variables and multiple values, without AST, closures, or temporary arrays in the new success path. 64-bit SBCL limits keep sums fixnum; no reconstructed u64. Keyword calls and dependencies require benchmark with zero baseline and positive control; zero heap not established statically. |
 | 6. Verified data | MT6 and original HIGH/LOW words, existing minimal selection, and bytes of one complete minimal item. Only [START,NEXT) changes. Header progress, payload span, and final NEXT checked; final result is a variable, one value. |
-| 7. Compound decisions | Five AND/OR forms with11 operands, two chained numeric comparisons with4 relations and23 guards/error forms. Full inventory and pairs below and in the [table](cbor-tag-decisioni.md). No site excluded, including internal sites or declarations; dynamic independence not established. |
+| 7. Compound decisions | Five AND/OR forms with 11 operands, two chained numeric comparisons with 4 relations and 23 guards/error forms. Full inventory and pairs below and in the [table](cbor-tag-decisioni.md). No site excluded, including internal sites or declarations; dynamic independence not established. |
 | 8. Owner | OWNER/SHARED declare exclusive BUFFER/SPACE and stable SOURCE shareable read-only. Simple u8 excludes displaced/shared backing. BUFFER/SOURCE EQ KINDS rejected; REMAINING is simple u32 and cannot be a valid simple u8 argument. BUFFER=SOURCE allowed only if disjoint from complete footprint, including header. |
 | 9. Integration | Export cbor-package:12; product ASDF:35 after scanner/header/copy, three corpus files:164–165 after existing support, RUN:234. Dedicated coverage selects exactly two sources and tag RUN; aggregate codec:295 includes tag RUN. Self-test contains two positives and four scope negatives. REQ-CBR-007 catalog without :cov; matrix to regenerate. No make check run by this reading. |
-| 10. Standard | Safety3, complete FTYPEs with exact arity, REQ, Pre/Post/error docstrings, specialized types, and at least two meaningful checks per function. Six functions of9–33 lines and4–8 paths under the stated convention: within60/10. No deviation proposed; warnings/style-warnings/lint still to be observed. |
+| 10. Standard | Safety 3, complete FTYPEs with exact arity, REQ, Pre/Post/error docstrings, specialized types, and at least two meaningful checks per function. Six functions of 9–33 lines and 4–8 paths under the stated convention: within 60/10. No deviation proposed; warnings/style-warnings/lint still to be observed. |
 | 11. Parallelism | No new waits, threads, locks, or shared writes in product. Corpus with two reused workers, read-only SOURCE, private buffers/scratch, two waves, sinks, timeouts, and cleanup. Durations and overlap must be observed; no inference of scaling or simultaneous execution on cores. |
 | 12. Durability | Caller memory only, no I/O or durable/atomic publication. Codec does not change Serie: FAULTED for internal invariants remains the owner boundary's responsibility. |
 
@@ -55,12 +55,12 @@ Omitted offset is NIL through the condition's existing constructor.
 
 `dimensioni-tag-cbor` checks SPAN>0 and SPAN<=MAX-BYTES<=16MiB before
 MT6 selection and addition. `seleziona-header-cbor` uses separate HIGH/LOW:
-1/2/3/5bytes if HIGH0,9bytes if HIGH nonzero. Maximum ITEM-SIZE
-before byte checking is16MiB+9, within fixnum/index on SBCL64.
+1/2/3/5 bytes if HIGH is 0, and 9 bytes if HIGH is nonzero. Maximum ITEM-SIZE
+before byte checking is 16 MiB+9, within fixnum/index on 64-bit SBCL.
 Capacity is compared with END−START before NEXT=START+ITEM-SIZE:
 NEXT<=END makes addition safe in the index domain even with high START.
 Corpus checks declared capacity against physical length with
-sentinels and complete16MiB budget for both1/9byte headers.
+sentinels and a complete 16 MiB budget for both 1/9-byte headers.
 
 SPACE slot access follows its type check. Aliases
 BUFFER/SOURCE EQ KINDS are rejected before limits or reset.
@@ -69,10 +69,10 @@ are already excluded by the range validator. Nonempty SOURCE is checked
 before aliases, as the method's precedence requires.
 
 Overlap compares SOURCE with [START,NEXT), not all [START,END).
-Strict inequalities allow both touching boundaries. With a9byte MT6,
-SOURCE=[16,17), START8/NEXT18 intersects only the header: it must be
+Strict inequalities allow both touching boundaries. With a 9-byte MT6 header,
+SOURCE=[16,17), START 8/NEXT 18 intersects only the header: it must be
 rejected even though payload copy [17,18) would be disjoint. Corpus
-contains this case, and accepted START6/NEXT16 and START17/NEXT27. On
+contains this case, and accepted cases with START 6/NEXT 16 and START 17/NEXT 27. On
 success BUFFER=SOURCE preserves the disjoint source span and modifies
 only the footprint; public errors preserve the entire physical array.
 
@@ -80,38 +80,38 @@ only the footprint; public errors preserve the entire physical array.
 
 ## Scanning, remaining nodes, and statistics
 
-MAX-NODES must be at least2 before entering scanner: one root tag
+MAX-NODES must be at least 2 before entering the scanner: one root tag
 node plus at least one content node. Exact remainder is MAX-NODES−1;
 there are no aggregates or multi-item loops. MAX-DEPTH passes unchanged,
 because MT6 is not an array/map container. Scanning requires one exact
 minimal item; trailing data, tags without content, UTF8, and nonminimal
 representations retain parser reasons and absolute offsets.
 
-Tag on scalar or tag chain allowed at depth0. Fixture1024 source
-tags plus scalar has1025 nodes and peak0; minimum complete budget is1026.
-With1025, scanning fails at scalar SOURCE-START+1024. No frame
-is consumed for each tag. Contents with100 nested arrays pass
-MAX-DEPTH100 and102 total nodes; with101 they fail at SOURCE-START+100.
+A tag on a scalar or a tag chain is allowed at depth 0. The fixture with 1024 source
+tags plus a scalar has 1025 nodes and peak 0; the minimum complete budget is 1026.
+With 1025, scanning fails at the scalar at SOURCE-START+1024. No frame
+is consumed for each tag. Contents with 100 nested arrays pass
+MAX-DEPTH 100 and 102 total nodes; with 101 they fail at SOURCE-START+100.
 
 NEXT=END,1<=NODES<=MAX-NODES−1, and PEAK<=MAX-DEPTH are checked before
-writing. Scratch remains scanner scratch: counts contents,
-not emitted tag, and on success cursor=SOURCE-END, top/depth0,
-pending-tag NIL. Failed parsing may have modified it; every new
+writing. Scratch remains scanner scratch: it counts the contents,
+not the emitted tag, and on success cursor=SOURCE-END, top/depth is 0,
+and pending-tag is NIL. Failed parsing may have modified it; every new
 scan resets it. Preflight rejections do not reset it.
 
-First write is inside `scrivi-header-cbor-minimo`, after all
-scanning. Then guards on header progress and payload span,
-existing copy with already proven preconditions, and final NEXT.
+The first write is inside `scrivi-header-cbor-minimo`, after all
+scanning. This is followed by guards on header progress and payload span,
+the existing copy with already proven preconditions, and the final NEXT check.
 Guards after first write signal internal invariants without
 rollback; they are not new public rejections allowed by the contract.
-Bounded work O(SPAN*102); no AST or tag interpretation.
+Work is bounded by O(SPAN*102); there is no AST or tag interpretation.
 
 <a id="righe-percorsi-e-inventario"></a>
 
 ## Lines, paths, and inventory
 
 DEFUN count from first through final parenthesis inclusive, including
-docstrings/declarations. Paths: base1 plus WHEN/UNLESS and each
+docstrings/declarations. Paths: base 1 plus WHEN/UNLESS and each
 AND/OR operand after the first. No new LOOP/IF/COND/CASE.
 Chained relations have a distinct inventory and are not
 added to syntactic path counts. This is neither MC/DC nor the count
@@ -137,9 +137,9 @@ in the denominator; static pairs do not claim their execution.
 
 C4 reader `review/read-product-decisions.lisp`, preserved in the increment's
 ignored support, reads forms as DATA with READ-EVAL NIL and EOF,
-without product LOAD/EVAL/COMPILE. Confirms6 functions,23guards/ERRORs,
-5AND/OR11operands,2chains/4relations,0loops and paths4/6/8/5/8/4;
-stdout preserved, stderr empty. Line sizes are manual counts.
+without product LOAD/EVAL/COMPILE. It confirms 6 functions, 23 guards/ERRORs,
+5 AND/OR forms with 11 operands, 2 chains/4 relations, 0 loops and paths 4/6/8/5/8/4;
+stdout is preserved, and stderr is empty. Line sizes are manual counts.
 
 <a id="corpus-congelato-e-integrazione"></a>
 
@@ -152,18 +152,18 @@ stdout preserved, stderr empty. Line sizes are manual counts.
 | tests/codec/cbor-tag-write-threads.lisp |def870295400af2c84ca00e7a9b5cd5b747ec315|
 
 Pins unchanged. Cold plan blob `71f0cbd4f4b9e2c180c2fe4dde208fa8d88a6787`:
-20 nominal tests,442 non-fuzz calls (144 accepted/298 rejected), fuzz1024
-(512/512), two reused workers8192. Total9658 calls to new API,
-8848 expected successes/810 rejections, plus116 secondary scanner calls with distinct
-scratch. Seed54414737, finalF8004B37 separately recalculated; these are
+20 named tests, 442 non-fuzz calls (144 accepted/298 rejected), fuzz 1024
+(512/512), 8192 calls by two reused workers. There are a total of 9658 calls to the new API,
+8848 expected successes/810 rejections, plus 116 secondary scanner calls with distinct
+scratch. Seed 54414737 and final state F8004B37 were separately recalculated; these are
 not PASS results. Word/header boundaries, precedence, types, empty source,
 aliases, capacity/complete budget, overlap, parser, nodes, depth,
 stats, arity, sentinels, and reuse are consistent with the contract read.
 
 Parallel: two waves x2048 calls for each of two real workers,
-common read-only SOURCE and private scratch/destinations. NEXT13/17,
-tokens32601/47515, sinks66766848/97310720 per worker/wave, full physical-byte
-checks and content statistics6/2. Wait15s, join20s, bounded cleanup
+common read-only SOURCE and private scratch/destinations. NEXT 13/17,
+tokens 32601/47515, sinks 66766848/97310720 per worker/wave, full physical-byte
+checks and content statistics 6/2. Wait 15 s, join 20 s, bounded cleanup
 with verified termination. Expected positive overlap is measured;
 no scaling conclusion. Individual timestamps not printed.
 

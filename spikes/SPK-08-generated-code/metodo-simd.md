@@ -9,14 +9,14 @@
 
 ## Question and contract
 
-Does SIMD comparison of 16 control bytes, followed by reduction to u16 mask,
-preserve every exact position and reduce cost against scalar loop?
+Does SIMD comparison of 16 control bytes, followed by reduction to a u16 mask,
+preserve every exact position and reduce cost against a scalar loop?
 Queries 0..127; control bytes 0..255 including empty/deleted. Kernel checks full
 range before load and reads only a simple u8 array.
 
 NEON: u8.16 load, query broadcast, equality comparison, u64.2 reinterpretation,
 high-bit compression. SSE2: same comparison with movemask. Bit order must match
-16 bytes, including unaligned loads. SSE2 branch unmeasured on local ARM64 machine.
+16 bytes, including unaligned loads. The SSE2 branch is unmeasured on local ARM64 machine.
 
 APIs from [SBCL 2.6.9 manual, §17.11](https://www.sbcl.org/manual/#sb_002dsimd)
 and installed contrib sources, consulted before execution. SIMD intermediates
@@ -27,7 +27,7 @@ alone does not attest correctness.
 
 ## Correctness
 
-Scalar oracle independent of reduction. Exhaust all 65,536 masks on fixed query
+The scalar oracle is independent of reduction. Exhaust all 65,536 masks on fixed query
 and 128 × 256 × 16 query/control/position combinations. Offsets 8..23 exercise
 all alignments modulo 16. Check unchanged input, short buffers, negative/out-of-range
 offsets, disallowed queries. Ceiling: 600,000 comparison cases; exhaustion or
@@ -38,13 +38,13 @@ unsupported status is not interpreted as successful hardware test.
 ## Measurements
 
 Three preallocated 16,384-group datasets: deterministic mixed bytes, all matching,
-and only special controls without hits. Each method reads same bytes with query 42:
+and only special controls without hits. Each method reads the same bytes with query 42:
 256 traversals, 4,194,304 groups per sample. Five replications alternating order,
-separate warmup, GC before each sample. Result feeds verified u32 accumulator.
+separate warmup, GC before each sample. The result feeds a verified u32 accumulator.
 
 Record raw samples, monotonic duration, operations, ns/group, and `get-bytes-consed`
-delta for loop only. Preparation, verification, report collection excluded.
-Positive counter control allocates array and makes it observable. No promised
+delta for loop only. Preparation, verification, report collection are excluded.
+The positive counter control allocates an array and makes it observable. No promised
 timing threshold; serial benchmarks, uncontrolled external load. Not database GETs;
 measure neither seqlock, cache, weak memory, concurrency, nor beyond-RAM data.
 
@@ -60,7 +60,7 @@ sbcl --script tools/run-spikes.lisp --bench SPK-08
 For module only, use `run.lisp --simd-check` or `--simd-bench` through
 `tools/record-command.lisp`. Recorder retains argv, environment, revision,
 before/after hashes, result, original output, including failures.
-Absent contrib/backend recorded as `:unsupported`.
+An absent contrib/backend is recorded as `:unsupported`.
 
 <a id="primo-controllo-osservato"></a>
 

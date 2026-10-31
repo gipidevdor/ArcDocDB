@@ -7,9 +7,9 @@
 (declaim (inline epoca-attiva-p))
 (declaim (ftype (function (lettore-epoca) boolean) epoca-attiva-p))
 (defun epoca-attiva-p (reader)
-  "Pre: solo worker proprietario o controller dopo join; nessuna lettura della risorsa.
-Post: T se lo slot proprio è annunciato, anche dopo FAULTED. Serve al cleanup del compito.
-Non autorizza dereference, ingresso di altri worker o cancellazione di un reader vivo."
+  "Pre: owning worker only, or controller after join; no resource read.
+Post: T if its own slot is announced, even after FAULTED. Used for task cleanup.
+Does not authorize dereference, entry by other workers, or cancellation of a live reader."
   (not (zerop (aref (registro-epoche-announcements (lettore-epoca-registry reader))
                    (lettore-epoca-offset reader)))))
 
@@ -17,9 +17,9 @@ Non autorizza dereference, ingresso di altri worker o cancellazione di un reader
 (declaim (inline entra-epoca esci-epoca))
 (declaim (ftype (function (lettore-epoca) boolean) entra-epoca))
 (defun entra-epoca (reader)
-  "Pre: worker proprietario esclusivo, nessuna location/root letta prima; slot inattivo.
-Post: T consente una sezione, NIL se E cambia durante l'annuncio: riaccodare il compito.
-Un solo tentativo. Uscita non locale prima dell'ammissione libera lo slot; niente retry interno."
+  "Pre: exclusive owning worker, no location/root read beforehand; inactive slot.
+Post: T permits one section, NIL if E changes during announcement: requeue the task.
+One attempt only. Nonlocal exit before admission frees the slot; no internal retry."
   (let* ((registry (lettore-epoca-registry reader)) (offset (lettore-epoca-offset reader))
          (announcements (registro-epoche-announcements registry)) (words (registro-epoche-words registry)))
     (esigi-epoche-sane registry)
@@ -46,9 +46,9 @@ Un solo tentativo. Uscita non locale prima dell'ammissione libera lo slot; nient
 ;;; REQ: REQ-CMP-005 REQ-CMP-007
 (declaim (ftype (function (lettore-epoca) null) esci-epoca))
 (defun esci-epoca (reader)
-  "Pre: stesso worker/compito ammesso, ultimo accesso terminato. Post: slot inattivo.
-Cleanup consentito anche dopo FAULTED; INVALID-ARGUMENT per slot già inattivo.
-Il chiamante usa UNWIND-PROTECT solo dopo T da ENTRA-EPOCA; niente sezioni annidate."
+  "Pre: same admitted worker/task, final access complete. Post: inactive slot.
+Cleanup allowed even after FAULTED; INVALID-ARGUMENT for an already inactive slot.
+The caller uses UNWIND-PROTECT only after T from ENTRA-EPOCA; no nested sections."
   (let ((announcements (registro-epoche-announcements (lettore-epoca-registry reader)))
         (offset (lettore-epoca-offset reader)))
     (when (zerop (aref announcements offset))

@@ -20,11 +20,11 @@ for 0..23 and two for 32..255.
 BUFFER must be an exclusively owned simple u8 array; START/END
 delimit a half-open span, including an empty one. Preflight checks range,
 code, and capacity in that order. An invalid argument reports
-invalid-argument; an insufficient span resource-exhausted. NIL offset
-and entire array intact on every public error. Physical space after
+invalid-argument; an insufficient span reports resource-exhausted. On every public error,
+the offset is NIL and the entire array remains intact. Physical space after
 END is unavailable for writing.
 
-After success NEXT=START+size, and only bytes
+After success, NEXT=START+size, and only bytes
 `[START,NEXT)` change. Prefix, remaining span, and physical tail remain
 intact. Internal guards report invariant-violation without rollback;
 the owner applies fail-stop. The primitive neither publishes data nor makes

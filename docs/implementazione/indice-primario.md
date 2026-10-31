@@ -33,19 +33,19 @@ On success, the reader writes only scratch/output; on fault it may
 publish terminal health.
 
 The API receives an **already calculated digest**, in two u32 words: high half
-for directory, low half for group/fingerprint. Trusted caller uses
-same Serie function/seed for lookup, mutations, rebuilding;
-digest does not come from client. [XXH64 kernel](hash-chiavi.md) now calculates
-key digest with immutable seed configured in index;
-controller still must integrate seed generation/lifecycle.
+for directory, low half for group/fingerprint. The trusted caller uses
+the same Serie function/seed for lookup, mutations, rebuilding;
+the digest does not come from the client. [XXH64 kernel](hash-chiavi.md) now calculates
+key digest with immutable seed configured in the index;
+the controller still must integrate seed generation/lifecycle.
 The v1 kernel limited to 16-byte `_id` does not
 qualify v2. Inconsistent digest violates contract and may cause
-duplicates/misses. Final comparison always bytewise.
+duplicates/misses. The final comparison is always bytewise.
 
 Canonical domain fragments: BUILDING outside directory, current
 PUBLISHED, terminal RETIRED. Retired bank freezes before CAS.
-Arrays internal; bank primitives must not bypass revision/
-checks. Roots/fragments reclaimed by GC; EBR governs external
+Arrays are internal; bank primitives must not bypass revision/
+checks. Roots/fragments are reclaimed by GC; EBR governs external
 resources without heap-release timing promise.
 
 Compound fault => index FAULTED, no rollback/reset/reopening.
@@ -73,23 +73,23 @@ consumes another. Final confirmation, successful or failed, is not a new
 probe: at zero credit failed confirmation ends `:retry-limit`,
 without restart/output. Successful confirmation consumes no credit. No nested retries,
 waits, or lookup growth. At limit, discard location/scratch, forward original
-request to writer. Queue connection external.
+request to writer. The queue connection is external.
 
 Each attempt visits at most C/16 groups; miss decided after all
 candidates of group containing EMPTY, or C slots without EMPTY.
-DELETED does not stop search. Comparison bounded to 65,535 bytes per
+DELETED does not stop search. Comparison is bounded to 65,535 bytes per
 candidate; hostile collisions may cause writer fallback.
 Worst case not O(1); allocation/hash distribution/P99 to measure.
 
-Occupied fingerprint with empty payload possible transient reader state
+An occupied fingerprint with an empty payload is a possible transient reader state
 during removal; fault under exclusive writer.
-Consistent payload/key comparison also govern reuse.
+Consistent payload/key comparison also governs reuse.
 Reserved controls or stable key range outside arena are faults.
 On error/nonlocal exit, do not deliver private output, even already
-copied. Cleanup releases context. Reentry rejected before
+copied. Cleanup releases context. Reentry is rejected before
 cleanup without releasing active call's context.
 
-Not a complete GET: [read context](compiti-lettura.md) needed
+Not a complete GET: [read context](compiti-lettura.md) is needed
 for EBR/final snapshot checks, plus storage/cache and delivery after
 cleanup. Snapshots earlier than current CSN need retained versions,
 not yet searchable in this block.
@@ -121,7 +121,7 @@ delete does not clear them. Absence consumes no sequence/revision.
 Controls: EMPTY → occupied → DELETED → occupied, never EMPTY again.
 
 Expected-version, retention, tombstones, WAL, committed decision,
-durability, **reservations for all pending batches** are upper
+durability, **reservations for all pending batches** are the upper-level
 writer's preconditions. These checks before in-memory mutation
 are not engine transactional preflight. Return does not
 authorize client acknowledgment. No postcommit auto-split.
@@ -131,8 +131,8 @@ CSN/location/length/end, arena offset reconstructed by lookup.
 Message predating rebuild carries no slot/local offset
 into new bank. Only location may change; mismatch/absence does not mutate,
 already identical location is no-op without credit. Durable identical copy,
-manifest/reclaim external; no newer version overwritten.
-Retained versions/relocation remain to connect.
+manifest/reclaim external; no newer version is overwritten.
+Retained versions/relocation remain to be connected.
 
 <a id="directory-memoria-e-costi"></a>
 
@@ -140,20 +140,20 @@ Retained versions/relocation remain to connect.
 
 Rebuild: candidate with current source's depth/prefix.
 Split: two ordered children, d+1 and 2p/2p+1. Directory doubles if d=G,
-otherwise G unchanged. Always new array, immutable root, generation +1.
+otherwise G unchanged. There is always a new array, an immutable root, and generation +1.
 Generation/revision stay below 2^60 without wrapping.
 
-Upper builder must copy/verify all live keys and
+The upper-level builder must copy/verify all live keys and
 payloads with same hash. API checks domain, geometry, total
 live count: **count does not prove faithful copying**.
-Automatic rebuild/split construction/verification to implement.
+Automatic rebuild/split construction/verification remains to be implemented.
 Every mutation after preparation, including candidates, makes
-plan stale via revision. Consumed plans not reused.
+plan stale via revision. Consumed plans are not reused.
 
 Publication freezes source only, marks candidates published,
 barrier/CAS. Shared fragments remain writable. Interruption
 from phase start => index/plan faulted even after successful CAS.
-Plan retains previous root until plan released.
+The plan retains the previous root until the plan is released.
 
 Preliminary configuration, tunable before qualification:
 
@@ -170,12 +170,12 @@ No C × 65,535 preallocation. Before fragment allocation: 41*C +
 arena. Before directory: 8*2^G and transient current root
 (including distinct fragments), candidates, new directory. Arena growth:
 current root, any BUILDING, new array before allocation.
-Controller reserves **before candidate construction**, adds
+The controller reserves **before candidate construction**, adds
 other retained plans/roots/arenas, garbage, headers, runtime. Not RSS or
-global ceiling. Catalog/memory controller to connect.
+global ceiling. The catalog/memory controller remains to be connected.
 
 Directory cost O(2^G) even without doubling. C source slots, key bytes,
-transient memory, duration measured separately. No promise
+transient memory, and duration are measured separately. No promise
 of pause independent of Serie size.
 
 <a id="decisioni-da-coprire--cod-54"></a>
@@ -208,10 +208,10 @@ interruptions of all publications. No coverage claimed.
 Method fixed before checks: product-only compilation with
 warnings as errors; lint, traceability, links, catalogs; ARM64
 disassembly for static inspection without new-API calls. Original outputs,
-sources before/after, rejections preserved in
+sources before/after, and rejections are preserved in
 [campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-primary-lookup/README.md).
 
-Two separate local readings of payload/controls and directory/costs
+Two separate local readings of payload/controls and directory/costs are
 preserved as data; not independent reviews. ARM64 disassembly
 shows native payload loads/stores, `DMB ISHLD`/`DMB ISHST`,
 root `CASAL`; proves neither concurrent correctness nor zero heap.
@@ -219,7 +219,7 @@ First link check rejected campaign return path;
 original report preserved, path corrected/check repeated.
 
 No functional/concurrent tests, fault injection, models, benchmarks,
-or tool self-checks added/run locally. Remaining:
+or tool self-checks were added/run locally. Remaining:
 C1 qualification, independent reviews, ARM64/x86-64 memory, allocations/P99,
 hashing, split/rebuild builder, retention, reservations, recovery,
 cache/integrated GET. v1 code/existing suite do not qualify v2.
@@ -229,10 +229,10 @@ cache/integrated GET. v1 code/existing suite do not qualify v2.
 ## Later tests — v2 index
 
 [Rebuild campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-rebuild/risultati.md)
-adds 27 lookup/writer/directory tests, 28 rebuild/split tests,
-64 slot tests. Includes concurrency, targeted fault injection, four
+adds 27 lookup/writer/directory tests, 28 rebuild/split tests, and
+64 slot tests. It includes concurrency, targeted fault injection, four
 concrete mutants, SB-Cover, in-memory primitive benchmarks.
 [Verified builder](indice-ricostruzione.md) now prepares rebuild/
-split with separate root publication. Previous note describes
-initial campaign scope; residual limits/measured revisions
-declared in new report. GET/whole engine remain open.
+split with separate root publication. The previous note describes
+the initial campaign scope; residual limits/measured revisions are
+declared in the new report. GET/whole engine remain open.

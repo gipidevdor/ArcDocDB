@@ -7,15 +7,15 @@
 (declaim (inline snapshot-pinned-p))
 (declaim (ftype (function ((unsigned-byte 8)) boolean) snapshot-pinned-p))
 (defun snapshot-pinned-p (state)
-  "Pre: stato numerico. Post: attesa e attività trattengono versioni; gli altri stati no."
+  "Pre: numeric state. Post: waiting and active states retain versions; other states do not."
   (or (= state +snapshot-waiting+) (= state +snapshot-active+)))
 
 ;;; REQ: REQ-MVC-007 REQ-AFF-004
 (declaim (inline esigi-snapshot-sano))
 (declaim (ftype (function (registro-snapshot) null) esigi-snapshot-sano))
 (defun esigi-snapshot-sano (registry)
-  "Pre: registro esistente. Post: salute snapshot campionata con barriera acquire.
-INVARIANT-VIOLATION dopo FAULTED; nessun accesso ai campi privati del registro CSN."
+  "Pre: existing registry. Post: snapshot health sampled with an acquire barrier.
+INVARIANT-VIOLATION after FAULTED; no access to private CSN registry fields."
   (sb-thread:barrier (:read)
     (unless (eq (registro-snapshot-health registry) :open)
       (error 'invariant-violation :reason :snapshot-registry-faulted)))
@@ -24,9 +24,9 @@ INVARIANT-VIOLATION dopo FAULTED; nessun accesso ai campi privati del registro C
 ;;; REQ: REQ-MVC-005 REQ-AFF-004 REQ-CON-004
 (declaim (ftype (function (registro-snapshot) null) invalida-registro-snapshot))
 (defun invalida-registro-snapshot (registry)
-  "Pre: confine fidato dell'Archivio dopo un guasto, oppure mutazione snapshot interrotta.
-Post: salute FAULTED pubblicata, idempotente e senza mutex; mai reset o rilascio di pin/EBR.
-Unica scrittura esterna: stato terminale monotono. Il controller deve isolare l'Archivio."
+  "Pre: trusted Archivio boundary after a failure, or interrupted snapshot mutation.
+Post: FAULTED health published, idempotently and without mutex; never resets or releases pins/EBR.
+Only external write: monotonic terminal state. The controller must isolate the Archivio."
   (sb-thread:barrier (:write))
   (setf (registro-snapshot-health registry) :faulted)
   nil)
@@ -35,9 +35,9 @@ Unica scrittura esterna: stato terminale monotono. Il controller deve isolare l'
 (declaim (inline esigi-ingresso-snapshot))
 (declaim (ftype (function (registro-snapshot) null) esigi-ingresso-snapshot))
 (defun esigi-ingresso-snapshot (registry)
-  "Pre: coordinamento nel worker, prima di WITH-MUTEX :WAIT-P NIL.
-Post: niente acquisizione ricorsiva; RESOURCE-EXHAUSTED :SNAPSHOT-BUSY per proprietario corrente.
-La contesa con altri worker si decide nel tentativo del mutex, non da questa osservazione."
+  "Pre: worker coordination, before WITH-MUTEX :WAIT-P NIL.
+Post: no recursive acquisition; RESOURCE-EXHAUSTED :SNAPSHOT-BUSY for the current owner.
+Contention with other workers is decided by the mutex attempt, not this observation."
   (when (eq (sb-thread:mutex-owner (registro-snapshot-mutex registry)) sb-thread:*current-thread*)
     (error 'resource-exhausted :reason :snapshot-busy))
   nil)
@@ -45,15 +45,15 @@ La contesa con altri worker si decide nel tentativo del mutex, non da questa oss
 ;;; REQ: REQ-MVC-007 REQ-AFF-004
 (declaim (ftype (function (registro-snapshot keyword) nil) guasto-snapshot))
 (defun guasto-snapshot (registry reason)
-  "Pre: mutex snapshot posseduto. Post: FAULTED pubblicato, errore tipizzato, nessun rollback."
+  "Pre: snapshot mutex owned. Post: FAULTED published, typed error, no rollback."
   (invalida-registro-snapshot registry)
   (error 'invariant-violation :reason reason))
 
 ;;; REQ: REQ-MVC-007 REQ-AFF-008
 (declaim (ftype (function (registro-snapshot) null) verifica-contatori-snapshot))
 (defun verifica-contatori-snapshot (registry)
-  "Pre: mutex snapshot posseduto. Post: contatori/cursori compatibili con K.
-INVARIANT-VIOLATION con fail-stop per incoerenza; nessuna scansione sul percorso reader."
+  "Pre: snapshot mutex owned. Post: counters/cursors compatible with K.
+INVARIANT-VIOLATION with fail-stop for inconsistency; no scan on the reader path."
   (esigi-snapshot-sano registry)
   (let ((capacity (length (registro-snapshot-states registry))))
     (unless (and (<= (registro-snapshot-count registry) capacity)
@@ -68,8 +68,8 @@ INVARIANT-VIOLATION con fail-stop per incoerenza; nessuna scansione sul percorso
 ;;; REQ: REQ-MVC-007 REQ-AFF-008
 (declaim (ftype (function (registro-snapshot) csn-slot) trova-slot-snapshot))
 (defun trova-slot-snapshot (registry)
-  "Pre: mutex posseduto e credito disponibile. Post: slot privo di pin, al massimo K visite.
-INVARIANT-VIOLATION se stato o contabilità non sono coerenti."
+  "Pre: mutex owned and credit available. Post: unpinned slot, at most K visits.
+INVARIANT-VIOLATION for inconsistent state or accounting."
   (let* ((states (registro-snapshot-states registry)) (capacity (length states))
          (cursor (registro-snapshot-cursor registry)))
     (dotimes (step capacity)
@@ -84,8 +84,8 @@ INVARIANT-VIOLATION se stato o contabilità non sono coerenti."
 ;;; REQ: REQ-MVC-007 REQ-MVC-004
 (declaim (ftype (function (contesto-snapshot u64) csn-slot) esigi-identita-snapshot))
 (defun esigi-identita-snapshot (context expected-generation)
-  "Pre: mutex snapshot posseduto. Post: slot dell'identità originale, anche se già terminato.
-SNAPSHOT-TOO-OLD per contesto/slot riusato; nessun accesso a una nuova incarnazione."
+  "Pre: snapshot mutex owned. Post: slot of the original identity, even if already ended.
+SNAPSHOT-TOO-OLD for reused context/slot; no access to a new incarnation."
   (let* ((registry (contesto-snapshot-registry context)) (slot (contesto-snapshot-slot context)))
     (unless (and (plusp expected-generation)
                  (= expected-generation (aref (contesto-snapshot-word context) 0))
@@ -97,8 +97,8 @@ SNAPSHOT-TOO-OLD per contesto/slot riusato; nessun accesso a una nuova incarnazi
 ;;; REQ: REQ-MVC-007 REQ-MVC-003
 (declaim (ftype (function (registro-snapshot) null) ricalcola-soglia-snapshot))
 (defun ricalcola-soglia-snapshot (registry)
-  "Pre: mutex posseduto, stati aggiornati. Post: minimo CSN dei pin oppure MAX-U64.
-Verifica conteggio e metadati prima di alzare la soglia; fail-stop su incoerenza."
+  "Pre: mutex owned, states updated. Post: minimum pin CSN or MAX-U64.
+Checks count and metadata before raising threshold; fail-stop on inconsistency."
   (let ((states (registro-snapshot-states registry)) (minimum +max-csn+) (count 0)
         (last-generation (aref (registro-snapshot-words registry) 0)))
     (declare (type u64 minimum last-generation))
@@ -125,8 +125,8 @@ Verifica conteggio e metadati prima di alzare la soglia; fail-stop su incoerenza
 (declaim (ftype (function (registro-snapshot csn-slot (unsigned-byte 8)) null)
                 ritira-slot-snapshot))
 (defun ritira-slot-snapshot (registry slot terminal-state)
-  "Pre: mutex posseduto, slot con pin, stato terminale noto. Post: pin rimosso e soglia aggiornata.
-Uscita non locale durante mutazione marca FAULTED; non cancella record né riferimenti EBR."
+  "Pre: mutex owned, pinned slot, known terminal state. Post: pin removed and threshold updated.
+Nonlocal exit during mutation marks FAULTED; does not delete records or EBR references."
   (let ((complete nil))
     (unwind-protect
          (progn

@@ -9,9 +9,9 @@
                          null) check-cache-buffers))
 (defun check-cache-buffers (class buffer start key proof proof-start proof-end flags size
                           &optional (copy-p t))
-  "Pre: classe selezionata, buffer/prova stabili e privati al worker.
-Post: copia entro destinazione, nessun alias distruttivo; prova prepared presente.
-INVALID-ARGUMENT prima della copia; non verifica ancora il contenuto del record."
+  "Pre: selected class, stable worker-private buffer/proof.
+Post: copy within destination, no destructive alias; prepared proof present.
+INVALID-ARGUMENT before copying; does not yet verify record contents."
   (when (or (eq buffer (classe-cache-arena class))
             (and copy-p (or (eq buffer key) (eq buffer proof))))
     (error 'invalid-argument :reason :cache-buffer-alias))
@@ -26,9 +26,9 @@ INVALID-ARGUMENT prima della copia; non verifica ancora il contenuto del record.
 (declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32 octets index) boolean)
                 copia-posto-cache))
 (defun copia-posto-cache (class slot high low offset size destination start)
-  "Pre: posto dell'insieme e range destination già validati; un unico tentativo.
-Post: T solo dopo seqlock coerente; NIL obbliga a scartare ogni byte eventualmente copiato.
-Contatore dispari/esaurito, rifiuto o tag cambiato => miss, mai attesa o retry."
+  "Pre: set slot and destination range already validated; one attempt.
+Post: T only after consistent seqlock; NIL requires discarding every possibly copied byte.
+Odd/exhausted counter, rejection, or changed tag => miss, never waiting or retry."
   (let* ((sequences (classe-cache-sequences class)) (sequence (aref sequences slot)))
     (declare (type u64 sequence))
     (when (or (>= sequence +cache-sequence-limit+) (oddp sequence))
@@ -51,9 +51,9 @@ Contatore dispari/esaurito, rifiuto o tag cambiato => miss, mai attesa o retry."
                                       integer (or null octets) index index)
                          (values boolean index index &optional)) verifica-copia-cache))
 (defun verifica-copia-cache (class slot buffer start size key high low flags version proof ps pe)
-  "Pre: copia privata stabile; identità attesa committed e prova autorevole del caller.
-Post: T e soli range verificati; corruzione della copia => scarto conservativo del posto e NIL.
-Solo CORRUPTION-DETECTED è convertita in miss; altri errori propagano, mai quarantena del disco."
+  "Pre: stable private copy; expected committed identity and caller's authoritative proof.
+Post: T and verified ranges only; corrupt copy => conservative slot rejection and NIL.
+Only CORRUPTION-DETECTED becomes a miss; other errors propagate, never disk quarantine."
   (handler-case
       (multiple-value-bind (vs ve)
           (verifica-put-parole buffer start (+ start size) key high low flags
@@ -73,12 +73,12 @@ Solo CORRUPTION-DETECTED è convertita in miss; altri errori propagano, mai quar
 (defun cerca-record-cache (cache segment-high segment-low offset size key csn-high csn-low flags
                           destination start &key (version 2) proof-buffer
                                                 (proof-start 0) (proof-end 0))
-  "Pre: versione visibile risolta dall'indice nel compito EBR; destination privata.
-Post: HIT e range valore solo dopo copia coerente e verifica completa; MISS/VERIFY-FAILED: range zero.
-Gli esiti negativi possono sporcare destination: non consumarla. VERIFY-FAILED richiede metrica/allarme
-e rilettura dal segmento; altre condizioni propagano. Posti già rifiutati/disabilitati
-sono saltati entro gli otto way; ogni copia ricontrolla disponibilità e sequenza.
-Nessun retry, I/O o lock in lettura."
+  "Pre: visible version resolved by index within EBR task; private destination.
+Post: HIT and value range only after consistent copy and complete verification; MISS/VERIFY-FAILED: zero ranges.
+Negative outcomes may dirty destination: do not consume it. VERIFY-FAILED requires a metric/alarm
+and segment reread; other conditions propagate. Already rejected/disabled slots
+are skipped within the eight ways; every copy rechecks availability and sequence.
+No retry, I/O, or read lock."
   (check-cache-request segment-high segment-low offset size key csn-high csn-low flags version)
   (let ((class (scegli-classe-cache cache size)))
     (unless class (return-from cerca-record-cache (values :miss 0 0)))

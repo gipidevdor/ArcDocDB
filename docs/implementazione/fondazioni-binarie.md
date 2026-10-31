@@ -59,14 +59,14 @@ CRC32C tables are private: built at startup, read-only after publication.
 The [ARM64 backend](crc32c-arm64.md), when qualified and available,
 is selected at startup through the I/O module's CPU detection. Checksum
 kernels remain in memory; they perform no OS probing during service.
-Other data belongs to the caller. There are no locks, queues, counters, or
+Other data belong to the caller. There are no locks, queues, counters, or
 shared writes per operation between Serie. The module serializes only access to the
 exclusive buffer entrusted to an individual call.
 
 The codec uses buffer ranges and multiple values; it creates no document copies or
 per-entry objects. All scans are bounded by verified sizes. Batch verification
 has separate byte and record budgets and checks size before scanning the
-next body. Exceeding budget is distinct from corruption.
+next body. Exceeding a budget is distinct from corruption.
 
 > **Proposal** — The GET path compares 64-bit integers as two 32-bit words,
 > after frame verification. It avoids materializing a bignum while retaining the full
@@ -130,7 +130,7 @@ Median of five samples, 2026-10-08:
 | Prepared verification, high TXID/CSN | 290,175 | 586.7 | 0 |
 
 For CRC32C, byte count is the buffer's size; for records it includes key and header;
-for prepared it also includes OUTCOME. The 2 KiB document has a 16-byte key.
+for prepared records it also includes OUTCOME. The 2 KiB document has a 16-byte key.
 
 <a id="decisioni-e-revisione"></a>
 
@@ -138,7 +138,7 @@ for prepared it also includes OUTCOME. The 2 KiB document has a 16-byte key.
 
 The [decision table](fondazioni-decisioni.md) connects predicates to tests. Two
 readings checked format and boundaries, then buffer ownership, budgets, stamps, and
-allocations. Build without `warning` or `style-warning`; linter without violations.
+allocations. The build produced no `warning` or `style-warning`; the linter reported no violations.
 
 Linked requirements: REQ-FOR-002, REQ-FOR-003, REQ-FOR-004, REQ-LIM-001, REQ-LIM-003,
 REQ-AFF-002, REQ-AFF-004, REQ-VAL-001. Affected invariants: INV-A2, INV-A3, INV-A4,

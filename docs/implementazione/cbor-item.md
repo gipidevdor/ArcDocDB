@@ -31,11 +31,11 @@ NEXT as START to derive concatenated-item boundaries.
 The simple u8 BUFFER remains immutable and shareable for reading.
 Each worker uses an exclusive preallocated SPACE, reusable even
 after a parsing error. Rejected preflight preserves scratch;
-after success counts describe only the first item.
+after success the counts describe only the first item.
 
 Minimal headers and valid UTF-8 text are required, with absolute
 offsets in rejections. The primitive does not build ASTs, interpret
-application tags, or impose key order/uniqueness. No
+application tags, or impose key order/uniqueness. There are no
 waits, I/O, or thread management in the product. The deterministic
 document profile and C1/MC/DC qualification remain open.
 

@@ -7,10 +7,10 @@
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t) (values index &optional)) check-header-cbor-range))
 (defun check-header-cbor-range (buffer start end)
-  "Pre: argomenti esterni non verificati. Post: END index e span non vuoto.
-INVALID-ARGUMENT :cbor-range per buffer/range invalido, senza offset;
-CORRUPTION-DETECTED :cbor-truncated all'offset END per span valido vuoto.
-Nessun byte letto; nessun limite documentale implicito nello span."
+  "Pre: unverified external arguments. Post: index END and nonempty span.
+INVALID-ARGUMENT :cbor-range for invalid buffer/range, without offset;
+CORRUPTION-DETECTED :cbor-truncated at offset END for a valid empty span.
+No bytes read; no implicit document limit on the span."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :cbor-range))
@@ -22,10 +22,10 @@ Nessun byte letto; nessun limite documentale implicito nello span."
 (declaim (ftype (function (octets index index (member 1 2 4 8))
                          (values u32 u32 index &optional)) leggi-argomento-header-cbor))
 (defun leggi-argomento-header-cbor (buffer start end width)
-  "Pre: WIDTH 1/2/4/8 e span dopo il lead. Post: due parole BE u32 e fine crescente;
-HIGH zero fino a quattro byte, altrimenti primi quattro byte in HIGH.
-INVARIANT-VIOLATION per confini/progresso; CORRUPTION-DETECTED :cbor-truncated
-all'offset END prima di leggere se non entra l'intera larghezza. Al piu otto passi."
+  "Pre: WIDTH 1/2/4/8 and span after the lead. Post: two BE u32 words and increasing end;
+HIGH zero through four bytes, otherwise the first four bytes in HIGH.
+INVARIANT-VIOLATION for bounds/progress; CORRUPTION-DETECTED :cbor-truncated
+at offset END before reading if the entire width does not fit. At most eight steps."
   (unless (<= start end (length buffer))
     (error 'invariant-violation :reason :cbor-argument-range :offset start))
   (when (> width (- end start))
@@ -48,10 +48,10 @@ all'offset END prima di leggere se non entra l'intera larghezza. Al piu otto pas
                                  (member :indefinite :break) &optional))
                 leggi-indefinito-header-cbor))
 (defun leggi-indefinito-header-cbor (buffer start end major ai)
-  "Pre: lead presente e AI31. Post: sei valori con parole zero e fine START+1;
-MT2..5 :indefinite, MT7 :break, senza validarne il contesto strutturale.
-INVARIANT-VIOLATION per confini/AI interni; CORRUPTION-DETECTED :cbor-indefinite
-all'offset START per MT0/1/6. Nessun byte aggiuntivo letto."
+  "Pre: lead present and AI31. Post: six values with zero words and end START+1;
+MT2..5 :indefinite, MT7 :break, without validating their structural context.
+INVARIANT-VIOLATION for internal bounds/AI; CORRUPTION-DETECTED :cbor-indefinite
+at offset START for MT0/1/6. No additional bytes read."
   (unless (and (< start end) (<= end (length buffer)))
     (error 'invariant-violation :reason :cbor-indefinite-range :offset start))
   (unless (= ai 31)
@@ -68,13 +68,13 @@ all'offset START per MT0/1/6. Nessun byte aggiuntivo letto."
                                  (member :argument :indefinite :break) &optional))
                 leggi-header-cbor))
 (defun leggi-header-cbor (buffer start end)
-  "Pre: BUFFER immutabile simple u8 e span half-open, verificati anche a freddo.
-Post: sei valori MAJOR, AI, HIGH, LOW, NEXT, FORM dopo la sola testata completa;
-argomenti e bit float conservati, senza intero u64 o float materializzato.
-Propaga errori di range/troncatura; CORRUPTION-DETECTED :cbor-reserved sul lead,
-:cbor-indefinite per AI31 illecito, :cbor-simple sul secondo byte F8<32;
-INVARIANT-VIOLATION per progresso. Al piu nove byte, nessun payload o struttura
-validati; nonminimal ammessi, nessuna politica canonica, tag, UTF-8 o profondita."
+  "Pre: immutable simple u8 BUFFER and half-open span, checked even on cold entry.
+Post: six values MAJOR, AI, HIGH, LOW, NEXT, FORM after only the complete header;
+arguments and float bits preserved, without materializing a u64 integer or float.
+Propagates range/truncation errors; CORRUPTION-DETECTED :cbor-reserved on the lead,
+:cbor-indefinite for illegal AI31, :cbor-simple on the second byte F8<32;
+INVARIANT-VIOLATION for progress. At most nine bytes, no payload or structure
+validated; nonminimal forms allowed, no canonical policy, tags, UTF-8, or depth."
   (let ((limit (check-header-cbor-range buffer start end)))
     (declare (type index limit))
     (let* ((bytes (the octets buffer)) (cursor (the index start))

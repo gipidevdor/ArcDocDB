@@ -8,8 +8,8 @@
 (declaim (ftype (function (manifest simple-vector integer integer) (values index &optional))
                 check-inventory-budgets))
 (defun check-inventory-budgets (manifest files max-files max-segments)
-  "Pre: manifest completo e inventario stabile. Post: budget fisici e bound del workspace.
-INVALID-ARGUMENT per budget non index; RESOURCE-EXHAUSTED prima di ogni coalescenza."
+  "Pre: complete manifest and stable inventory. Post: physical budgets and workspace bound.
+INVALID-ARGUMENT for non-index budgets; RESOURCE-EXHAUSTED before any coalescing."
   (unless (typep max-files 'index)
     (error 'invalid-argument :reason :inventory-budget))
   (unless (typep max-segments 'index)
@@ -26,9 +26,9 @@ INVALID-ARGUMENT per budget non index; RESOURCE-EXHAUSTED prima di ogni coalesce
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008 REQ-AFF-018
 (declaim (ftype (function (simple-vector) (values hash-table &optional)) inventory-presence))
 (defun inventory-presence (files)
-  "Pre: inventario stabile entro il budget fisico. Post: mappa EQL privata ID→maschera1/2/3.
-INVALID-ARGUMENT per descrittore invalido o nome ripetuto; nessuna entry parziale esportata.
-Il ciclo ha length(FILES) passi; entrambi i nomi per ID restano distinguibili."
+  "Pre: stable inventory within the physical budget. Post: private EQL map ID→mask1/2/3.
+INVALID-ARGUMENT for an invalid descriptor or repeated name; no partial entry exported.
+The loop has length(FILES) steps; both names for an ID remain distinguishable."
   (let ((presence (make-hash-table :test 'eql)))
     (dotimes (i (length files))
       (let ((file (aref files i)))
@@ -48,9 +48,9 @@ Il ciclo ha length(FILES) passi; entrambi i nomi per ID restano distinguibili."
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008 REQ-AFF-018
 (declaim (ftype (function (manifest hash-table index) (values list &optional)) inventory-ids))
 (defun inventory-ids (manifest presence bound)
-  "Pre: mappa privata e bound=nomi fisici+1+CLOSED. Post: union ID u64 distinti ordinati.
-INVARIANT-VIOLATION per incoerenza interna; cicli sulle cardinalità già limitate.
-SORT modifica soltanto la lista privata; nessun hash del manifest viene modificato."
+  "Pre: private map and bound=physical names+1+CLOSED. Post: sorted union of distinct u64 IDs.
+INVARIANT-VIOLATION for internal inconsistency; loops over already bounded cardinalities.
+SORT modifies only the private list; no manifest hash table is modified."
   (unless (plusp (segmento-attivo manifest))
     (error 'invariant-violation :reason :inventory-active))
   (setf (gethash (segmento-attivo manifest) presence)
@@ -74,9 +74,9 @@ SORT modifica soltanto la lista privata; nessun hash del manifest viene modifica
                           (member :temporary :final) (member :use :rename :delete :anomaly)) null)
                 check-single-file-action))
 (defun check-single-file-action (state form action)
-  "Pre: stato, forma e azione nei tipi dichiarati, controllati con safety3.
-Post: nessuna rimozione senza prova e nessuna rinomina di un ID non vivo.
-INVARIANT-VIOLATION per implicazioni incoerenti; nessuna mutazione o I/O."
+  "Pre: state, form, and action within declared types, checked with safety3.
+Post: no removal without proof and no rename of a nonlive ID.
+INVARIANT-VIOLATION for inconsistent implications; no mutation or I/O."
   (when (eq action :delete)
     (unless (or (eq state :removed) (and (eq state :unknown) (eq form :temporary)))
       (error 'invariant-violation :reason :inventory-delete-proof)))
@@ -90,8 +90,8 @@ INVARIANT-VIOLATION per implicazioni incoerenti; nessuna mutazione o I/O."
                          (values (member :use :rename :delete :anomaly) &optional))
                 single-file-action))
 (defun single-file-action (state form)
-  "Pre: stato autorevole e un solo nome. Post: azione ADR0040§3, senza effetti durevoli.
-INVARIANT-VIOLATION per stato inatteso; unknown final non viene mai eliminato."
+  "Pre: authoritative state and one name only. Post: ADR0040§3 action, without durable effects.
+INVARIANT-VIOLATION for unexpected state; unknown final is never deleted."
   (let ((action (case state
                   ((:active :closed) (if (eq form :temporary) :rename :use))
                   (:removed :delete)
@@ -104,8 +104,8 @@ INVARIANT-VIOLATION per stato inatteso; unknown final non viene mai eliminato."
 (declaim (ftype (function (manifest u64 (integer 0 3))
                          (values reconciliation-entry &optional)) inventory-entry))
 (defun inventory-entry (manifest id mask)
-  "Pre: ID dell'union limitata, maschera privata verificata. Post: una entry immutabile.
-INVARIANT-VIOLATION per assenza di ID non vivo; conflitto domina ogni azione su file singolo."
+  "Pre: ID from the bounded union, verified private mask. Post: one immutable entry.
+INVARIANT-VIOLATION for an absent nonlive ID; conflict takes precedence over every single-file action."
   (let* ((state (trova-segmento manifest id))
          (entry
            (case mask
@@ -124,8 +124,9 @@ INVARIANT-VIOLATION per assenza di ID non vivo; conflitto domina ogni azione su 
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008
 (declaim (ftype (function (reconciliation-entry) (values (integer 0 2) &optional)) entry-severity))
 (defun entry-severity (entry)
-  "Pre: entry costruita dal planner. Post:0nomi disponibili,1CLOSED perso,2ACTIVE perso.
-INVARIANT-VIOLATION per stato inatteso; anomaly/conflict unknown non attestano contenuti."
+  "Pre: planner-constructed entry. Post: severity 0 unless a required name is missing or
+conflicting: 1 for CLOSED, 2 for ACTIVE.
+INVARIANT-VIOLATION for unexpected state; unknown anomaly/conflict does not attest to contents."
   (when (eq (%re-action entry) :missing)
     (unless (member (%re-state entry) '(:active :closed))
       (error 'invariant-violation :reason :inventory-missing-state)))
@@ -143,11 +144,11 @@ INVARIANT-VIOLATION per stato inatteso; anomaly/conflict unknown non attestano c
 (declaim (ftype (function (manifest simple-vector &key (:max-files integer) (:max-segmenti integer))
                          (values reconciliation-plan &optional)) pianifica-riconciliazione))
 (defun pianifica-riconciliazione (manifest files &key (max-files 65536) (max-segmenti 65536))
-  "Pre: manifest completo, inventario completo/stabile di nomi interpretati dal chiamante.
-Post: piano posseduto in ordine ID u64, stato della disponibilità dei soli nomi richiesti.
-Propaga errori tipizzati; nessun piano su errore, nessun I/O, alias o mutazione degli input.
-Non verifica header/CRC/identità fisica né attesta che la Serie sia apribile al traffico.
-Percorso di apertura con allocazioni, cicli limitati da budget e cardinalità verificate."
+  "Pre: complete manifest, complete/stable inventory of names interpreted by the caller.
+Post: owned plan in u64 ID order, availability status for required names only.
+Propagates typed errors; no plan on error, no I/O, aliasing, or input mutation.
+Does not verify headers/CRCs/physical identity or attest that the Serie can admit traffic.
+Opening path with allocations, loops bounded by verified budgets and cardinalities."
   (let* ((bound (check-inventory-budgets manifest files max-files max-segmenti))
          (presence (inventory-presence files))
          (ids (inventory-ids manifest presence bound))

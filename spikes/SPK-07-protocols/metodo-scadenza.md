@@ -140,8 +140,8 @@ These changes do not extend the state graph.
 
 Strict compilation and loading of core and module succeeded, `warnings-p` and
 `failure-p` both NIL, warning/style-warning counts both zero. One CHECK call,
-`:status :ok`. Final record `out/scadenza-attempt-003.sexp`, reread as data with
-`*read-eval* nil` and compared in full with the saved plist; raw stderr empty.
+`:status :ok`. The final record, `out/scadenza-attempt-003.sexp`, was reread as data with
+`*read-eval* nil` and compared in full with the saved plist; raw stderr was empty.
 
 | Correct model | Distinct states | Edges | Coverage witnesses |
 | --- | ---: | ---: | ---: |
@@ -200,7 +200,7 @@ race is exhausted separately, rather than in the product of the two models.
 The coupling between the activity check and epoch publication is one assumed
 atomic step.
 
-No decision changed. ADR-0016 states a maximum delay of “milliseconds–seconds,
+No decision was changed. ADR-0016 states a maximum delay of “milliseconds–seconds,
 never longer” while also allowing a blocked worker to delay reclamation: the
 model cannot support that real bound without an assumption about reader
 completion. This tension is reported, and only terminal progress under abstract

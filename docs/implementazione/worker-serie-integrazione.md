@@ -7,7 +7,7 @@ After PASS on freeze `96c0f4f`, `main` incorporated PR 8 through
 detects no changes in any `src/` file or existing tests.
 64 EBR/read tests, their mutation self-test in
 Makefile, reader-mutation tool, documents, and evidence are added.
-ASDF additions for new suites are preserved alongside bridge.
+ASDF additions for new suites are preserved alongside the bridge.
 
 The bridge's four sources, its 26 tests, and C4 are byte-identical
 to qualified freezes. Foundation-coverage change adds
@@ -19,7 +19,7 @@ attributed to v3 on `8101eb8`, with original denominators and limits.
 New `make check` verifies integration on `65972a4`, including
 64 tests and added self-test. First general PASS on `96c0f4f` and
 its document/evidence gate remain preserved as preceding outcomes;
-they are neither renamed nor replaced by subsequent check.
+they are neither renamed nor replaced by the subsequent check.
 Updated check passes in
 [record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check-reader-integration.lisp)
 `4000710249-command-34111-0`, `:OK/:STABLE`, exit 0: 641 unchanged sources and

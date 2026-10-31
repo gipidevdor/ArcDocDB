@@ -84,7 +84,7 @@ The event retains in preallocated fields the **original registry** reference and
 **original slot/high/low** numbers. At seal, registry and returned high/low are known;
 `leggi-csn-lotto`, called by writer before event handoff, supplies slot/high/low.
 Reading the current batch when an old event arrives would replace the expected token
-and defeat reuse protection. This discipline belongs to controller.
+and defeat reuse protection. This discipline belongs to the controller.
 
 | ID | State/action | Statically expected result and observations to verify |
 |---|---|---|
@@ -129,7 +129,7 @@ FAULTED Serie and consumer quiescence must already hold at call time.
 Overall conformance still requires demonstrating: registry rejections before
 mutation; internal slot/CSN identity; indivisible assignment and registration; monotonic `H`
 under ADR-0046; try-lock without blocking wait; K-bounded scans; fail-stop boundaries
-and real handoff ordering. Authorized diff contains only registry calls.
+and real handoff ordering. The authorized diff contains only registry calls.
 
 Using two u32s avoids explicit u64 CSN reconstruction in bridge; it does not prove
 absence of heap/boxing/GC in delegated calls, multiple returns, u64 comparisons,
@@ -141,7 +141,7 @@ or error handling. COD-30 remains **unattested until measurements**.
 
 Final builder `5b4be8856be1e25f35f7a6e68f45ae727c18b168` reread; fingerprints of
 previous reading and intermediate step remain in review document.
-R1 resolved statically. **No new compound decision**: still 12 decisions
+R1 is resolved statically. **No new compound decision**: still 12 decisions
 D01…D12 in modified functions and 7 E01…E07 delegated/unchanged. D02 preserves exactly
 the type/prepared predicate; new selections are two simple `unless` forms.
 
@@ -164,7 +164,7 @@ structures; this finding is not a heap measurement.
 
 Parent reported separate offset FI test in `csn-threads`; it was not read
 or run by this review. Agreed O1/O2 remain controller conditions,
-whose implementation was not examined. Parent's first reading still to attest;
+whose implementation was not examined. The parent's first reading still requires attestation;
 no human certification, measured coverage, or heap-absence guarantee.
 
 <a id="addendum--preflight-file-e-contratto-delegato-e08"></a>

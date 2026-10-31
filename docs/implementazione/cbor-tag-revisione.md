@@ -3,8 +3,8 @@
 # First C1 reading of CBOR tag composition
 
 Static reading on 2026-10-14 **before the first compilation**, performed
-by a reviewer distinct from the product author. No LOAD/EVAL, compile,
-suite, benchmark, mutation, or campaign run during this reading.
+by a reviewer distinct from the product author. No LOAD/EVAL, compilation,
+suite, benchmark, mutation, or campaign was run during this reading.
 The corpus was frozen before the new sources; cold plan
 `71f0cbd4f4b9e2c180c2fe4dde208fa8d88a6787`.
 
@@ -31,8 +31,8 @@ It certifies neither tag semantics, document admission, nor global determinism.
 
 ## Static outcome and contract
 
-**No blocking defect identified in the two sources read.** Six functions
-with complete FTYPEs, safety3, requirements, and docstrings; maximum33 lines and eight
+**No blocking defect was identified in the two sources read.** Six functions
+with complete FTYPEs, safety 3, requirements, and docstrings; maximum 33 lines and eight
 syntactic paths under the convention below. This static
 conclusion does not anticipate warning-free compilation or campaign results.
 
@@ -40,11 +40,11 @@ Preflight follows the ten preregistered phases: destination range,
 source range/empty source, HIGH then LOW, SPACE/alias, limits, complete bytes,
 logical capacity, complete overlap, minimum two nodes, and scanning. Emission
 begins only after scanning and all content postconditions.
-Public rejections occur before writing data; preflight without reset,
-failed parsing with dirty but reusable scratch under the existing scanner contract.
+Public rejections occur before writing data; preflight does not reset scratch, and
+failed parsing leaves dirty but reusable scratch under the existing scanner contract.
 
 HIGH/LOW remain independent u32 words. `seleziona-header-cbor` calculates
-size1/2/3/5/9 without reassembling u64; emission passes major6 and the
+sizes 1/2/3/5/9 without reassembling u64; emission passes major 6 and the
 same words. Before adding header size,
 SPAN<=MAX-BYTES<=16MiB is checked. ITEM-SIZE is then compared with budget and
 END-START: NEXT=START+ITEM-SIZE is within already validated END, without using the
@@ -54,21 +54,20 @@ BUFFER/SOURCE equal to SPACE.KINDS are rejected before reset. The other
 private array is simple u32 and cannot be one of the already validated simple u8 arrays.
 BUFFER=SOURCE requires that source span not intersect [START,NEXT),
 header included; touching boundaries are allowed. The existing copy receives
-source and destination spans of equal length and disjoint. On success,
+disjoint source and destination spans of equal length. On success,
 only the footprint changes, preserving SOURCE span; on public error,
 entire physical arrays are preserved even when identical.
 
-MAX-NODES1 is valid configuration but insufficient: the composer
-rejects before the scanner. With minimum2, MAX-NODES-1 is passed, at least1.
+MAX-NODES 1 is a valid configuration but insufficient: the composer
+rejects before the scanner. With the minimum of 2, MAX-NODES-1 is passed, which is at least 1.
 The scanner checks exact minimal content, including UTF8 and float
 widths, and returns nodes/peak/NEXT checked before emission.
-The new tag node is included in budget without modifying scratch:
+The new tag node is included in the budget without modifying scratch:
 scratch describes only the content. MAX-DEPTH passes unchanged; tags and
-tag chains consume no array/map frames or levels. A scalar at depth0
-and container at depth100 remain possible within other budgets.
+tag chains consume no array/map frames or levels. A scalar at depth 0
+and container at depth 100 remain possible within other budgets.
 
-Callee results are used or serve only verification semantics through
-conditions; no error code is ignored. Copying returns RESULT,
+Callee results are used directly or serve only to verify conditions; no error code is ignored. Copying returns RESULT,
 compared with NEXT and returned as the single lexical value. Internal
 invariants are fail-stop conditions without rollback; the Serie transition
 at the runtime boundary remains outside the primitive, which owns no Serie.
@@ -108,7 +107,7 @@ condition by condition and compare with SB-COVER.
 
 ## Inventory of all guards
 
-**23 WHEN/UNLESS sites: input14 and write9. No new LOOP, IF, COND, or CASE.**
+**23 WHEN/UNLESS sites: 14 in input and 9 in write. No new LOOP, IF, COND, or CASE.**
 IA=INVALID-ARGUMENT, RE=RESOURCE-EXHAUSTED, IV=INVARIANT-VIOLATION.
 All local errors have NIL offsets. Scanner and UTF8 errors
 retain their own type, reason, and absolute SOURCE offset.
@@ -135,7 +134,7 @@ reclassifies them nor removes their points from respective measurements.
 ## Lines and paths
 
 Count from DEFUN to final parenthesis inclusive, including docstrings and
-declarations. Paths: base1 + WHEN/UNLESS + one short circuit for every
+declarations. Paths: base 1 + WHEN/UNLESS + one short circuit for every
 AND/OR operand after the first. No new loop or other branching construct.
 This convention does not replace raw coverage or MC/DC.
 
@@ -153,7 +152,7 @@ This convention does not replace raw coverage or MC/DC.
 ## C1 checklist — twelve points
 
 1. **Requirements/ADRs:** REQ-CBR-007 and limit/reliability requirements are on
-   every DEFUN. Method, ADR-0014/0024/0035/0048, and structural scope consistent.
+   every DEFUN. The method, ADR-0014/0024/0035/0048, and structural scope are consistent.
 2. **Invariants/witnesses:** INV-A5/A8/P6 identified; corpus with cold
    oracles, sentinels, limits, aliases, nodes/depth, error/reuse, and private workers.
    Witness execution remains future work.
@@ -161,24 +160,24 @@ This convention does not replace raw coverage or MC/DC.
    propagated unchanged. Public rejections and array preservation
    have witnesses; IV guards and their qualification contribution remain open.
 4. **Limits:** no new loop/recursion/wait; dependencies bounded by
-   SPAN<=16MiB, nodes, and fixed stack102. Header at most9 bytes and linear copying.
+   SPAN<=16MiB, nodes, and a fixed stack of 102 slots. The header is at most 9 bytes and linear copying.
 5. **Hot heap:** no AST, u64 object, buffer, or structure created in
    new code; no measurement performed here. Benchmark, null baseline,
    and positive control must still produce COD-30 data.
 6. **Verified data:** complete/minimal item checked before first
    emission; payload preserved, no application semantics implicitly added.
-7. **Decisions:** all5 AND/OR forms,11 operands,2 chains/4 relations, and23 guards
+7. **Decisions:** all 5 AND/OR forms, 11 operands, 2 chains/4 relations, and 23 guards
    inventoried above. No exclusion or full coverage inferred from static reading.
 8. **Ownership:** exclusive destination/scratch, stable SOURCE; aliases
    rejected before reset. Scratch retains no source ownership.
 9. **Integration:** ASDF loads input then write after dependencies, support/
    serial/thread and global RUN present, export present. Exact direct coverage
    on two files, dispatch, CLI, and aggregate codec RUN present; self-test
-   adds2 positive and4 negative cases (test, fake, child, map source).
+   adds 2 positive and 4 negative cases (test, fake, child, map source).
    REQ-CBR-007 is implemented, without :cov or promotion to verified.
    On first pass the matrix still said designed: reported to the
    coordinator for regeneration before freeze. Trace/make check not run here.
-10. **Rules:** FTYPE6/6, safety3, docstrings/requirements, maximum33 lines/8 paths;
+10. **Rules:** FTYPE 6/6, safety 3, docstrings/requirements, maximum 33 lines/8 paths;
     no new macro, mutable global state, syscall, or prohibited construct.
     Warning-free compilation and lint remain subsequent checks.
 11. **Parallelism:** no lock, wait, thread, or shared write across
@@ -194,8 +193,8 @@ C4 coverage `8e32ee2ba7b758eb5b0cea349ab8b3d53bd9f2c8`.
 Coverage delta is limited to tag selection/dispatch/CLI/fixtures and
 addition of tag RUN to aggregate codec; previous scopes preserved.
 
-The cold plan reports20 nominal tests,9658 API calls,1024 fuzz, and8192
-parallel compositions, plus116 verification scans: static counts,
+The cold plan reports 20 named tests, 9658 API calls, 1024 fuzz calls, and 8192
+parallel compositions, plus 116 verification scans: static counts,
 not observed outcomes. Second C1 reading, actual freeze, compilation,
 campaigns, DATA readings, and integrated make check still need to occur.
 **REQ-LIM-001/002, C1 qualification, and MC/DC remain open.**

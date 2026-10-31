@@ -2,7 +2,7 @@
 
 # Composing CBOR arrays — first C1 reading
 
-Static reading of 2026-10-13, before compiling the new sources
+Static reading on 2026-10-13, before compiling the new sources
 and running campaigns. The corpus was frozen before writing the
 product. References: [preregistered method](cbor-array-metodo.md),
 [contract](cbor-array.md), [decision inventory](cbor-array-decisioni.md),
@@ -24,8 +24,8 @@ coverage, performance, or MC/DC and does not close the C1 gate.
 | `tests/codec/cbor-array-write-threads.lisp` | `5720110265b67019937f08cbd949b4469a04b867` |
 
 Existing span/copy, header, scratch, preflight, and minimal-scanner helpers
-were also read, along with exports, ASDF order, coverage scope, requirement,
-and matrix. Relevant dependency hashes are:
+were also read, along with exports, ASDF order, coverage scope, the requirement,
+and the matrix. Relevant dependency hashes are:
 
 | File in `src/codec/` | Git blob |
 |---|---|
@@ -36,7 +36,7 @@ and matrix. Relevant dependency hashes are:
 | `cbor-scan.lisp` | `e3d7d77407046338d23e26eb0b8a2e8fdc3d699d` |
 | `cbor-scan-minimal.lisp` | `f1afe79c7a4d49abd6a6e5f6975dec830ef7b1f6` |
 
-The product author had already corrected, before campaigns, guard
+Before the campaigns, the product author had already corrected the guard
 `COUNT <= LENGTH(ITEM-ENDS) <= 16MiB`: it incorrectly also limited the
 table's ignored tail. Lines 46–49 of `cbor-array-write.lisp`
 check COUNT separately against length and limit;
@@ -49,10 +49,10 @@ This reading concerns the corrected version identified above.
 
 ## Sizes, paths, and guards
 
-Lines from DEFUN through closing form inclusive, with docstrings and declarations.
+Line counts include everything from DEFUN through the closing form, including docstrings and declarations.
 Path count: base one; one increment per WHEN/UNLESS and LOOP;
 one increment per AND/OR operand after the first. Chained numeric
-comparisons are Lisp predicates and inventoried
+comparisons are Lisp predicates and are inventoried
 separately. The count is not an SB-COVER coverage measurement.
 
 | Function | File | Lines | Paths |
@@ -109,8 +109,8 @@ MAX-DEPTH is at least one before subtraction; the scanner counts only
 arrays/maps and the writer adds the root level. Tags add
 nodes without adding container levels.
 
-All children are verified before first emission, write line 96.
-MT4 header and shared copy preserve exact wire bytes:
+All children are verified before the first emission, write line 96.
+The MT4 header and shared copy preserve exact wire bytes:
 they add no map ordering, deduplication, tag semantics, or
 NaN policies. Existing forward copy is usable because
 preflight proved disjointness including the header; its internal
@@ -134,7 +134,7 @@ while aggregate sums remain local.
    already dirty scratch. Test presence does not equal PASS.
 3. **Errors.** Public types and reasons are distinct and propagated without
    catches: INVALID-ARGUMENT, RESOURCE-EXHAUSTED, and scanner
-   CORRUPTION-DETECTED. Corpus contains precedence, NIL/absolute offsets,
+   CORRUPTION-DETECTED. The corpus contains precedence, NIL/absolute offsets,
    trailing data, nonminimal forms, truncation, UTF-8, and reuse after error. Internal
    reasons are inventoried; no negative runtime test is assumed
    for every guard made unreachable by the public domain.
@@ -151,7 +151,7 @@ while aggregate sums remain local.
 7. **Compound decisions.** The inventory connects all conditions to
    planned witnesses and includes guards and chained relations. Raw coverage
    and condition-by-condition verification remain to be produced;
-   no denominator exclusion or MC/DC attestation.
+   no denominator exclusion or MC/DC attestation is claimed.
 8. **Ownership.** OWNER/SHARED declare exclusive destination and scratch,
    stable source and table. All three scratch aliases are rejected
    even for an empty array. No new mutable global state.
@@ -159,10 +159,10 @@ while aggregate sums remain local.
    requirement, and updated matrix are statically consistent. Coverage
    scope identifies exactly the two new files and the codec group
    includes array RUN. `make check` and self-tests remain to be run.
-10. **Rules and deviations.** No further static deviation required
+10. **Rules and deviations.** No further static deviation is required
     for the blobs read; the COUNT guard was corrected before
     campaigns. Compilation, measurements, and coverage are not anticipated.
-11. **Parallelism.** Product introduces no locks, waits, or shared
+11. **Parallelism.** The product introduces no locks, waits, or shared
     per-operation writes. Preregistered tests use two real
     workers, two waves, and 8192 compositions on private resources; future
     results will not demonstrate scaling or simultaneous execution on cores.

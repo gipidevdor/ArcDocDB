@@ -15,7 +15,7 @@ inventory. It changes neither product nor frozen corpus.
 | `src/codec/cbor-array-input.lisp` | `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` |
 | `src/codec/cbor-array-write.lisp` | `a410297c29c5d043ad60d3804bd3711e22c2833b` |
 
-No functional defect or open static finding identified in the examined
+No functional defect or open static finding was identified in the examined
 blobs. Strict build, lint, corpus results, heap allocation, parallel
 intervals, coverage, and mutations remain pending. This reading does not
 close a C1 gate, attest MC/DC, or qualify the engine.
@@ -28,8 +28,8 @@ close a C1 gate, attest MC/DC, or qualify the engine.
 | --- | --- |
 | 1. Requirements and ADRs | REQ-CBR-005 from ADR-0014, LIM-001/002, AFF-004/008, INV-F1/P6/A8, and ADR-0033/0035/0048 are consistent with a local composer of minimal wire items. It introduces no tag semantics, map ordering/deduplication, or NaN normalization. |
 | 2. Invariants | Types and spans, relative partition, full budgets, scratch separation, and disjoint footprint precede scanning. All children are verified before the header. Guards also check endpoints, progress, remainders, statistics, and final copy; the corpus compares complete physical arrays. |
-| 3. Errors | Method steps are respected in order. Preflight produces INVALID-ARGUMENT or RESOURCE-EXHAUSTED with offset NIL; initform in conditions:8. Remaining nodes0 produces :cbor-array-node-budget at the next child's absolute start; other scanner errors propagate untranslated. All public rejections precede the first write. Internal INVARIANT-VIOLATION requires owner fail-stop, without rollback. |
-| 4. Limits | The two new LOOPs read at most COUNT entries, with COUNT<=SPAN<=16MiB verified. Every scanner receives its span as byte budget and remaining nodes; reset/drain are bounded to 102 frames. Existing copy bounded to SPAN, header at most 5 bytes. No recursion, wait, retry, or worker creation in the product. |
+| 3. Errors | Method steps are respected in order. Preflight produces INVALID-ARGUMENT or RESOURCE-EXHAUSTED with offset NIL; initform in conditions:8. Remaining nodes 0 produces :cbor-array-node-budget at the next child's absolute start; other scanner errors propagate untranslated. All public rejections precede the first write. Internal INVARIANT-VIOLATION requires owner fail-stop, without rollback. |
+| 4. Limits | The two new LOOPs read at most COUNT entries, with COUNT<=SPAN<=16MiB verified. Every scanner receives its span as byte budget and remaining nodes; reset/drain are bounded to 102 frames. The existing copy is bounded to SPAN, and the header to at most 5 bytes. No recursion, wait, retry, or worker creation in the product. |
 | 5. Heap | New success path with multiple values, cursors, and direct calls, without constructors, closures, AST, or temporary arrays. On SBCL64, index/u32 values and bounded sums remain immediate. Keyword calls, scanner, and copy nevertheless require a serial benchmark with zero baseline and positive sensor; zero heap allocation is not statically attested. |
 | 6. Verified data | The result is minimal MT4, COUNT in HIGH0/LOW, followed by the already-verified, exactly copied payload. Only [START,NEXT) is written. Header progress, length equality, and final NEXT are checked; the final variable returns one value. |
 | 7. Compound decisions | Five AND/OR and two LOOPs in the new files, listed below. Chained relations, internal guards, and error branches remain explicit: no denominator exclusion, no attestation of dynamic condition independence. |
@@ -61,17 +61,17 @@ Overlap uses [START,NEXT), not the whole range up to END
 the SOURCE-START<SOURCE-END test allows emptiness. With BUFFER=SOURCE,
 success changes only the destination footprint and preserves the disjoint source
 span. On public errors, all physical arrays remain
-intact. Intact scratch during preflight is also guaranteed by KINDS and
-REMAINING aliases rejected before any scanner.
+intact. Scratch also remains intact during preflight because KINDS and
+REMAINING aliases are rejected before any scanner runs.
 
 The root requires 1 node and 1 level (input:101–104). The child loop
 starts with NODES=1, PEAK=1, CHILD-DEPTH=MAX-DEPTH−1 (write:50). Each child
 uses MAX-NODES−NODES and then adds its nodes, including tags; peak
-is MAX(PEAK,1+CHILD-PEAK). Remainder1 is passed to the scanner, remainder0
-is rejected before its reset (write:17–25). For 8100/00, budget3
-exhausts the remainder at the second child, budget4 accepts. A child with 99
+is MAX(PEAK,1+CHILD-PEAK). A remainder of 1 is passed to the scanner; a remainder of 0
+is rejected before its reset (write:17–25). For 8100/00, a budget of 3
+exhausts the remainder at the second child, while a budget of 4 accepts it. A child with 99
 containers adds the root and reaches 100; a child with 100 is
-rejected with child limit99. COUNT0 calls no scanner.
+rejected with a child limit of 99. COUNT0 causes no scanner call.
 Scratch therefore describes the last child, not local aggregates.
 
 Only after complete scanning and statistic guards does the writer
@@ -100,7 +100,7 @@ may exceed the budget. It does not require the entire physical
 table length to be <=16MiB. The coordinator declared the correction
 and preservation of the original before any compilation;
 this reading concerns only the final blob above. The two bounds
-are not implied by u32 type alone. Guards that cannot be falsified through
+are not implied by the u32 type alone. Guards that cannot be falsified through
 the public contract remain to be inventoried and measured, without exclusions.
 
 Syntactic count: 1 initial, 1 per IF/WHEN/UNLESS or LOOP, plus 1 for
@@ -139,22 +139,22 @@ guards, including internal postconditions, are part of the reading.
 | tests/codec/cbor-array-write.lisp | b13f58264f3cd97e1947ee52936732a7fcebe672 |
 | tests/codec/cbor-array-write-threads.lisp | 5720110265b67019937f08cbd949b4469a04b867 |
 
-Fingerprints rechecked and unchanged. The corpus remains independent of the
+The fingerprints were rechecked and remain unchanged. The corpus remains independent of the
 new product's formulas: arithmetic header and literal children, scanner
-verification only supplementary. 19 serial tests cover types,
+verification is only supplementary. 19 serial tests cover types,
 ranges, precedence, complete and root budgets, partition, overlap,
-exact/minus1 capacity, absolute errors, arity, sentinels, and reuse.
-258 non-fuzz calls planned; fuzz1024 seed41525235 with 512 successes
+exact/minus-one capacity, absolute errors, arity, sentinels, and reuse.
+258 non-fuzz calls are planned; 1024 fuzz calls with seed 41525235 with 512 successes
 and 64 for each of eight rejection classes. These are static counts,
 not runtime results. Unread tails are tested with FFFFFFFF
 sentinels; no runtime test with a table beyond 16Mi cells is claimed.
 
 The 20th test reuses 2 workers for 2 waves of 2048 calls each:
 8192 compositions. Separate READY/GO/DONE per wave, private buffers and scratch,
-shared immutable SOURCE/ITEM-ENDS. Cold tokens25478/36728,
-sink per worker/wave52178944/75218944; entire arrays and arity verified
-on every call. Wait15s, join20s, bounded cleanup with verified
-termination. Expected serial+parallel total9474 calls. Intervals
+shared immutable SOURCE/ITEM-ENDS. Cold tokens 25478/36728,
+sink per worker/wave is 52178944/75218944; entire arrays and arity are verified
+on every call. Waits are bounded to 15s, joins to 20s, and cleanup is bounded with verified
+termination. The expected serial+parallel total is 9474 calls. Intervals
 include corpus comparisons, not just primitive work.
 
 <a id="integrazione-e-verifiche-pendenti"></a>

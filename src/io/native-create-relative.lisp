@@ -14,11 +14,11 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-STO-003 REQ-REC-001
 (declaim (ftype (function (fd simple-base-string (eql :append)) fd) native-create-relative))
 (defun native-create-relative (directory name mode)
-  "Pre: parent posseduto e foglia .tmp ASCII privata; creazione nuova nel pool I/O.
-Post: nuovo FD WRONLY/EXCL/APPEND/CLOEXEC/NOFOLLOW, permessi richiesti 0600 soggetti a umask.
-UNSUPPORTED-FORMAT per ABI/piattaforma; INVARIANT-VIOLATION per modo diverso da :append.
-SYSCALL-ERROR cattura errno subito; caller assume ownership prima di fstat, nessun cleanup o retry.
-Preparazione prima dell'EDIT: nessun flush, punto durevole di decisione o eliminazione implicita."
+  "Pre: owned parent and private ASCII .tmp leaf; new creation in the I/O pool.
+Post: new WRONLY/EXCL/APPEND/CLOEXEC/NOFOLLOW FD, requested permissions 0600 subject to umask.
+UNSUPPORTED-FORMAT for ABI/platform; INVARIANT-VIOLATION for mode other than :append.
+SYSCALL-ERROR captures errno immediately; caller assumes ownership before fstat, no cleanup or retry.
+Preparation before EDIT: no flush, durable decision point, or implicit deletion."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   (unless (eq mode :append) (error 'invariant-violation :reason :io-create-relative-mode))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)

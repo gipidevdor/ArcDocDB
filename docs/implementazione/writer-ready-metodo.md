@@ -15,7 +15,7 @@ Each partition is a FIFO ring with a local guard acquired by one CAS.
 No spin, callback, I/O, global counter, or per-task allocation. The ring
 transports writer references, without membership, generations, or writer
 state cleanup. The [handoff](writer-handoff.md) protocol remains unchanged.
-The common list is touched only to publish or acquire a segment, not for
+The common list is touched only to publish or acquire a slice, not for
 every message.
 
 Construction accepts 1..64 partitions, default 4, and 1..65536 slots per
@@ -76,7 +76,7 @@ overflow, and reuse protocol; it is not selected without its own tests.
 - Allocations: two preallocated scenarios with one and four partitions,
   five 4096-cycle samples each, warmup 128 and GC outside counter. Capacity 3
   and two writers per partition force wrap; each cycle includes preallocated
-  payload acceptance, publication, extraction, and segment end. The handoff/ready
+  payload acceptance, publication, extraction, and slice end. The handoff/ready
   list composition is measured. Identity, count, status, and cursor contribute
   to an exact sink; positive heap control, wrong sink rejected, and zero clock
   distinguished. Error paths excluded; observed zero is not a universal guarantee,

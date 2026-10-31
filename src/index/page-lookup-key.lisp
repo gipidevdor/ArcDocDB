@@ -7,8 +7,8 @@
 (declaim (ftype (function (lettore-indice-pagine octets index octets index index) boolean)
                 confronta-byte-lookup))
 (defun confronta-byte-lookup (reader buffer offset key start count)
-  "Pre: intervalli verificati e chiavi della stessa lunghezza. Post: confronto completo dei byte.
-Budget cumulativo addebitato prima del confronto, anche su mismatch; nessuna allocazione."
+  "Pre: verified intervals and equal-length keys. Post: complete byte comparison.
+Cumulative budget charged before comparison, even on mismatch; no allocation."
   (when (> count (lettore-indice-pagine-key-remaining reader))
     (error 'arcdocdb.conditions:resource-exhausted :reason :index-page-lookup-key-budget))
   (decf (lettore-indice-pagine-key-remaining reader) count)
@@ -18,9 +18,9 @@ Budget cumulativo addebitato prima del confronto, anche su mismatch; nessuna all
 (declaim (ftype (function (lettore-indice-pagine octets index index index page-number page-number)
                          boolean) confronta-chiave-esterna))
 (defun confronta-chiave-esterna (reader key start length total page generation)
-  "Pre: riferimento esterno verificato nel bucket, totale della entry. Post: catena completa coerente.
-Verifica totale e posizione di ogni frammento anche dopo mismatch; nessun risultato parziale.
-Cicli limitati dai crediti pagine, topologia decrescente del codec e totale <=65535."
+  "Pre: verified external reference in bucket, entry total. Post: complete consistent chain.
+Verifies total and position of every fragment even after mismatch; no partial result.
+Loops bounded by page credits, codec's descending topology, and total <=65535."
   (let ((buffer (lettore-indice-pagine-key-page reader)) (position 0) (same (= length total)))
     (loop repeat (lettore-indice-pagine-max-pages reader) do
       (leggi-pagina-lookup reader page generation buffer)
@@ -42,8 +42,8 @@ Cicli limitati dai crediti pagine, topologia decrescente del codec e totale <=65
 ;;; REQ: REQ-IDX-001 REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (lettore-indice-pagine index octets index index) boolean) chiave-entry-uguale-p))
 (defun chiave-entry-uguale-p (reader entry key start end)
-  "Pre: bucket verificato nello scratch. Post: digest uguale non sostituisce i byte della chiave.
-Chiave inline o catena esterna verificata sotto gli stessi budget della richiesta."
+  "Pre: verified bucket in scratch. Post: equal digest does not replace key bytes.
+Inline key or external chain verified under the same request budgets."
   (let* ((buffer (lettore-indice-pagine-bucket reader)) (total (leggi-u16 buffer (+ entry +entry-key-length+))))
     (if (zerop (leggi-u16 buffer (+ entry +entry-flags+)))
         (and (= total (- end start))

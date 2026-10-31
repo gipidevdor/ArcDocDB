@@ -7,8 +7,8 @@
 (declaim (ftype (function (frammento-indice frammento-indice (or null frammento-indice) u32)
                          frammento-indice) destinazione-ricostruzione))
 (defun destinazione-ricostruzione (source first second high)
-  "Pre: figli ordinati o candidato rebuild della geometria verificata. Post: destinazione del digest.
-Prefisso del sorgente verificato in preflight; nessuna scelta basata sullo slot fisico."
+  "Pre: ordered children or rebuild candidate of the verified geometry. Post: digest destination.
+Source prefix verified in preflight; no selection based on physical slot."
   (esigi-frammento-sano (frammento-indice-owner source) first)
   (if second
       (progn
@@ -21,8 +21,8 @@ Prefisso del sorgente verificato in preflight; nessuna scelta basata sullo slot 
                                          digests-frammento digests-frammento contenuto-slot contesto-indice)
                          null) copia-ricostruzione))
 (defun copia-ricostruzione (index source first second highs lows words context)
-  "Pre: preflight completo, candidati vuoti, scratch privati distinti. Post: copie vive compatte.
-C slot visitati; copia solo byte delle chiavi vive e payload identici salvo offset arena."
+  "Pre: complete preflight, empty candidates, distinct private scratch. Post: compact live copies.
+C slots visited; copies only live-key bytes and identical payloads except for arena offset."
   (let ((arena (frammento-indice-arena source)))
     (dotimes (slot (indice-primario-capacity index))
       (when (campiona-ricostruzione source slot words)
@@ -36,8 +36,8 @@ C slot visitati; copia solo byte delle chiavi vive e payload identici salvo offs
 ;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-AFF-004
 (declaim (ftype (function (contenuto-slot contenuto-slot) boolean) copia-ricostruzione-uguale-p))
 (defun copia-ricostruzione-uguale-p (original copy)
-  "Pre: due payload vivi privati validati. Post: identici salvo offset locale dell'arena.
-Il seqlock non fa parte del payload; key-len/flag/riservato devono restare identici."
+  "Pre: two validated private live payloads. Post: identical except for local arena offset.
+Seqlock is not part of the payload; key-len/flags/reserved must remain identical."
   (and (= (aref original 0) (aref copy 0)) (= (aref original 1) (aref copy 1))
        (= (ash (aref original 2) -32) (ash (aref copy 2) -32))
        (= (aref original 3) (aref copy 3)) (= (aref original 4) (aref copy 4))))
@@ -47,8 +47,8 @@ Il seqlock non fa parte del payload; key-len/flag/riservato devono restare ident
                                          digests-frammento digests-frammento contenuto-slot contenuto-slot)
                          null) verifica-ricostruzione))
 (defun verifica-ricostruzione (index source first second highs lows words work)
-  "Pre: copie costruite, writer esclusivo. Post: ogni chiave viva sorgente ritrovata con payload identico.
-Conteggio candidati controllato poi dal piano; lookup byte-per-byte non assume fedeltà dal conteggio."
+  "Pre: copies built, exclusive writer. Post: every live source key found with identical payload.
+Candidate count checked later by the plan; bytewise lookup does not infer faithful copying from count."
   (let ((arena (frammento-indice-arena source)))
     (dotimes (slot (indice-primario-capacity index))
       (when (campiona-ricostruzione source slot words)

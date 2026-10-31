@@ -2,27 +2,27 @@
 
 # Production Unix socket — M1 profile
 
-Restricted profile implemented under author's direction of 2026-10-22:
-startup → recovery → admission → PUT/GET from distinct processes. Completes
+Restricted profile implemented under the author's direction of 2026-10-22:
+startup → recovery → admission → PUT/GET from distinct processes. It completes
 [bootstrap](production-engine-bootstrap.md), reuses ADR-0055 and framing
-from [ADR-0056](../adr/0056-sessione-locale-m16.md). M16 proposal's multithread/
-multiseries defaults outside profile.
+from [ADR-0056](../adr/0056-sessione-locale-m16.md). The M16 proposal's multithread/
+multiseries defaults are outside this profile.
 
 <a id="contratto-fissato-prima-del-codice"></a>
 
 ## Contract fixed before code
 
-Server separate library `arcdocdb/local`, no startup on loading.
-Calling thread owns engine/transport. Up to eight connections
-served in nonblocking steps, one request in flight per connection.
-Listener opened only after `apri-motore` returns READY.
+The server is a separate library, `arcdocdb/local`, with no startup on loading.
+The calling thread owns the engine/transport. Up to eight connections are
+served in nonblocking steps, with one request in flight per connection.
+The listener is opened only after `apri-motore` returns READY.
 No test manually rebuilds server state.
 
 Frame: `u32be length | CBOR [1, kind, id, code, payload]`. HELLO/WELCOME,
-correlation, ordered maps, states follow session contract.
-Server limit 65,536 body bytes; client requests at least 4096,
-at most 17,825,792. Minimum negotiated; in-flight always 1.
-HELLO/WELCOME limit 4096. u64 IDs positive, strictly
+correlation, ordered maps, and states follow the session contract.
+The server limit is 65,536 body bytes; the client requests at least 4096 and
+at most 17,825,792. The minimum is negotiated; the in-flight limit is always 1.
+The HELLO/WELCOME limit is 4096. u64 IDs are positive and strictly
 increasing; no reuse or automatic retry after disconnect.
 
 | Opcode | Arguments | Status-0 result |
@@ -32,45 +32,45 @@ increasing; no reuse or automatic retry after disconnect.
 | 2 GET | `key: bstr` | `[true, document: bstr]` or `[false, null]` |
 | 3 DELETE | `key: bstr` | durable unsigned u64 CSN, even if already absent |
 
-Binary keys 1 to 1024 bytes; documents 1 to 60,000 bytes. Document
+Binary keys are 1 to 1024 bytes; documents are 1 to 60,000 bytes. A document
 contains one CBOR item with minimal headers/valid UTF-8, maximum
-depth 100, verified separately from container. Profile neither
-normalizes nor promises ordering/deduplication of maps inside document.
-Envelope/control maps deterministic, exact shape;
-no external bytes pass through Lisp reader. No implicit batch payload.
+depth 100, verified separately from the container. The profile neither
+normalizes nor promises ordering/deduplication of maps inside the document.
+Envelope/control maps are deterministic and have an exact shape;
+no external bytes pass through the Lisp reader. No implicit batch payload.
 
 Status 1: invalid arguments; 2: exhausted capacity; 3: unavailable engine;
-4: unsupported opcode; 5: limit exceeded. Rejections before
-engine admission, `null` payload. Envelope/handshake/
-ID/transfer errors close connection. Fault after admission
-preventing certain answer closes; client reports unknown outcome.
+4: unsupported opcode; 5: limit exceeded. Rejections occur before
+engine admission, with a `null` payload. Envelope/handshake/
+ID/transfer errors close the connection. A fault after admission
+that prevents a certain answer closes the connection; the client reports an unknown outcome.
 PUT/DELETE respond only after strong engine completion.
 
-Maximum response buffer owned before dispatch. GET requires
-negotiated frame at least 60,032 bytes, enough for any profile
-result; otherwise status 5 before reading. Value
-copied/GET finished before waiting for peer: no EBR pin or writer
-lease retained during send. Conservative, declared limit.
+The maximum response buffer is owned before dispatch. GET requires
+a negotiated frame of at least 60,032 bytes, enough for any profile
+result; otherwise status 5 before reading. The value is
+copied and GET is finished before waiting for the peer: no EBR pin or writer
+lease is retained during send. This is a conservative, declared limit.
 
 <a id="risorse-e-ciclo-di-vita"></a>
 
 ## Resources and lifecycle
 
 Input/output buffers and scratch have finite per-connection capacities,
-allocated before listener. Prefix causes no allocation proportional
+allocated before the listener opens. The prefix causes no allocation proportional
 to unverified lengths. Receive/send retain explicit offsets;
-exact boundary reads leave subsequent coalesced frames in kernel.
-No per-connection thread, unbounded spin, engine waiting for peer.
-Decoder uses connection scratch; each frame produces fixed-size envelope
+exact boundary reads leave subsequent coalesced frames in the kernel.
+There is no per-connection thread, unbounded spin, or engine wait for a peer.
+The decoder uses connection scratch; each frame produces a fixed-size envelope
 structure and argument copies within declared limits.
-Transient allocations serial in actor, not a
-queue. Client verifies document with fixed call-local scratch.
-Profile claims neither nonallocation nor RSS ceiling.
+Transient allocations are serial within the actor rather than queued.
+The client verifies the document with fixed call-local scratch.
+The profile claims neither nonallocation nor an RSS ceiling.
 
-Runtime directory exclusively locked until service close:
-profile permits one listener per directory, even with different names.
-All ancestors kept open, identities rechecked; root and
-service UID trusted, must not mutate namespace during use,
+The runtime directory is exclusively locked until service close:
+the profile permits one listener per directory, even with different names.
+All ancestors are kept open and their identities rechecked; root and
+the service UID are trusted and must not mutate the namespace during use,
 because Unix bind/chmod operate by pathname.
 
 Injectable monotonic clock; HELLO within 5 s of accept, frame within 30 s
@@ -79,21 +79,21 @@ Readiness-driven waits use a preallocated, actor-owned poll set (at most nine
 descriptors), capped by the closest deadline and 100 ms; the client waits on
 its actual input/output interest. No fixed 1 ms delay is imposed per request.
 [Wait/error/qualification contract](prestazioni-local-m1.md).
-Partial progress does not renew deadline. Slow client loses
-own connection; others continue actor loop.
+Partial progress does not renew the deadline. A slow client loses
+its own connection; others continue through the actor loop.
 
-Explicit absolute path, maximum 100 UTF-8 bytes, no NUL. Existing runtime
-directory 0700 owned by service UID, protected ancestors without symlinks or
-group/other writes; socket 0600. Root/service UID trusted.
+Explicit absolute path, maximum 100 UTF-8 bytes, no NUL. The existing runtime
+directory has mode 0700 and is owned by the service UID, with protected ancestors without symlinks or
+group/other writes; the socket has mode 0600. Root and the service UID are trusted.
 Namespace checks/owned descriptors accompany bind.
-Data/runtime directories distinct. Occupied node,
-even orphan after SIGKILL, retained; startup explicitly fails.
-Operator removes orphan while service stopped or chooses new path.
-Restart tests use new path to preserve crash node.
+Data/runtime directories are distinct. An occupied node,
+even an orphan after SIGKILL, is retained; startup explicitly fails.
+The operator removes the orphan while the service is stopped or chooses a new path.
+Restart tests use a new path to preserve the crash node.
 
 Shutdown: stop admission, close connections/listener, remove
-only node still owned by identity, release namespace/engine.
-Cleanup attempts all resources, preserves primary/secondary causes.
+only the node still owned by identity, release namespace/engine.
+Cleanup attempts all resources and preserves primary/secondary causes.
 SIGKILL runs no application cleanup. No TCP fallback.
 
 <a id="metodo-preregistrato"></a>
@@ -114,26 +114,26 @@ SIGKILL runs no application cleanup. No TCP fallback.
    no listener during recovery, collision without file destruction.
 7. FI `:after-commit` through engine callback in real service:
    CLI client unknown outcome/no false acknowledgment, reopen with committed
-   value present, next CSN 2. FI driver separate C4 tool;
+   value present, next CSN 2. The FI driver is a separate C4 tool;
    no failure option in product CLIs.
 
 Two author static readings/independent review, then source/test
-commit; all agents closed before execution. Every diagnostic command
-uses recorder. Failures/variants preserved, lossless originals,
-common repository collection. Qualification/report must state
+commit; all agent assignments end before execution. Every diagnostic command
+uses the recorder. Failures/variants and lossless originals are preserved
+through the common repository collection. Qualification/report must state
 exact platform, source, executed cases, residual limits.
-No benchmark/performance result inferred from campaign.
-Milestone #1 remains open until all criteria demonstrated.
+No benchmark/performance result is inferred from the campaign.
+Milestone #1 remains open until all criteria are demonstrated.
 
 <a id="ingressi-eseguibili"></a>
 
 ## Executable entries
 
-Server receives data directory, socket path, hexadecimal Archivio/Serie UUIDs
+The server receives the data directory, socket path, hexadecimal Archivio/Serie UUIDs
 (32 digits each), optional `--create`/`--version 1|2`. `--create` means
-explicit initialization only: do not pass on restart. Runtime
-directory must be prepared with stated permissions. Stdout `:state :ready`
-record follows listener opening; diagnostics stderr.
+explicit initialization only: do not pass it on restart. Runtime
+directory must be prepared with the stated permissions. The stdout `:state :ready`
+record follows listener opening; diagnostics go to stderr.
 SIGTERM/SIGINT initiate orderly CLI-process shutdown.
 
 ```text
@@ -143,10 +143,10 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/local-client.lisp SOCK
 sbcl --noinform --no-userinit --no-sysinit --script tools/local-client.lisp SOCKET get 01
 ```
 
-Client represents key/CBOR document in hex, returns structured
-record, does not use Lisp reader for arguments. Example `182A`
-is unsigned 42 CBOR document. Error/unknown outcome produces nonzero
-exit; caller decides how to resolve possible retry.
+The client represents the key/CBOR document in hex, returns a structured
+record, and does not use the Lisp reader for arguments. Example `182A`
+is a CBOR document containing the unsigned integer 42. Error/unknown outcome produces nonzero
+exit; the caller decides how to resolve a possible retry.
 
 ## Optional startup image discovery
 

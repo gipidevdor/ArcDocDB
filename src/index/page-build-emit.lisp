@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-009 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (costruttore-pagine page-kind fixnum u32 index page-number) identita-pagina) emetti-pagina-costruita))
 (defun emetti-pagina-costruita (builder kind count parameter used next)
-  "Pre: BUSY, budget del lotto ammesso, corpo pronto. Post: pagina verificata e append esatto.
-Il sink non e' un commit: su errore/nonlocal exit il confine del lotto rende FAULTED.
-Nessun flush o pubblicazione; offset mai riusato dopo un effetto incompleto."
+  "Pre: BUSY, batch budget admitted, body ready. Post: verified page and exact append.
+The sink is not a commit: on error/nonlocal exit the batch boundary sets FAULTED.
+No flush or publication; offset never reused after an incomplete effect."
   (unless (costruttore-pagine-busy builder) (error 'invariant-violation :reason :index-build-state))
   (let* ((domain (costruttore-pagine-domain builder)) (size (costruttore-pagine-size builder))
          (offset (costruttore-pagine-offset builder))
@@ -28,8 +28,8 @@ Nessun flush o pubblicazione; offset mai riusato dopo un effetto incompleto."
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine entry-costruzione) page-number) emetti-chiave-costruita))
 (defun emetti-chiave-costruita (builder entry)
-  "Pre: chiave esterna pianificata. Post: coda prima della testa, PageRef decrescenti.
-Al piu' 17 frammenti per chiave 65535 byte; errore propagato al confine del lotto."
+  "Pre: external key planned. Post: tail before head, decreasing PageRef values.
+At most 17 fragments for a 65535-byte key; error propagated to the batch boundary."
   (let* ((key (entry-costruzione-key entry)) (length (length key)) (next 0)
          (chunk (- (costruttore-pagine-size builder) +page-header+)) (parts (ceiling length chunk)))
     (dotimes (step parts)
@@ -41,8 +41,8 @@ Al piu' 17 frammenti per chiave 65535 byte; errore propagato al confine del lott
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine) null) emetti-chiavi-piano))
 (defun emetti-chiavi-piano (builder)
-  "Pre: piano ammesso. Post: tutte le chiavi esterne hanno testa verificata prima del bucket.
-Massimo C chiavi, contatori del costruttore aggiornati soltanto dagli append completi."
+  "Pre: admitted plan. Post: all external keys have a verified head before the bucket.
+Maximum C keys, builder counters updated only by complete appends."
   (dotimes (slot (length (costruttore-pagine-plan builder)))
     (when (= (aref (costruttore-pagine-external builder) slot) 1)
       (setf (aref (costruttore-pagine-heads builder) slot)
@@ -51,8 +51,8 @@ Massimo C chiavi, contatori del costruttore aggiornati soltanto dagli append com
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine index entry-costruzione index) index) scrivi-entry-costruita))
 (defun scrivi-entry-costruita (builder slot entry cursor)
-  "Pre: bucket azzerato, teste esterne disponibili. Post: entry e chiave canoniche, nuovo cursore arena.
-Packing in ordine fisico degli slot, nessun buco; digest calcolato con il seme del costruttore."
+  "Pre: zeroed bucket, external heads available. Post: canonical entry and key, new arena cursor.
+Packing in physical slot order, no gaps; digest computed with the builder's seed."
   (let* ((body (costruttore-pagine-body builder)) (capacity (length (costruttore-pagine-plan builder)))
          (offset (+ capacity (* slot +entry-bytes+))) (key (entry-costruzione-key entry))
          (external (= 1 (aref (costruttore-pagine-external builder) slot))))

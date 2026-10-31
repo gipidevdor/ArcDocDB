@@ -10,11 +10,11 @@ measurements. [Contract](controllore-pool.md) fixes APIs/domains/limits.
 
 Component C3: [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)
 requires full standard, one review, statement/branch coverage
-at least 95%. Additional twelve-point C1 reading strengthens
-verification; changes neither class nor data-path qualification.
-REQ-THR-001 satisfied only in control portion; REQ-AFF-008/013
+at least 95%. An additional twelve-point C1 reading strengthens
+verification; it changes neither the class nor data-path qualification.
+REQ-THR-001 is satisfied only in the control portion; REQ-AFF-008/013
 and REQ-CON-005 bound budgets, injected time, separation from request
-path. REQ-OBS-001/002 and operational pool outside scope.
+path. REQ-OBS-001/002 and the operational pool are outside scope.
 
 <a id="controlli-previsti"></a>
 
@@ -24,7 +24,7 @@ path. REQ-OBS-001/002 and operational pool outside scope.
   coherent minimum/maximum/initial. Negative values, prohibited zero,
   over-budget values, floats, symbols, strings, NIL outside contract
   rejected before instance publication.
-- Period 1..2^20, dwell period through 2^20, queue-high1..2^20: exact
+- Period 1..2^20, dwell period through 2^20, queue-high 1..2^20: exact
   thresholds, interval mismatch, wrong budgets rejected. No default
   presented as calibration result or implicit time unit.
 - Complete sample domains; actual minimum..maximum, including
@@ -87,7 +87,7 @@ that change no C1/C2 data, obligations, leases.
 First/second change readings compare sources/contract;
 inventory retains scalar predicates, compound decisions,
 preconditions, postconditions, any macros/delegates. Both readings
-are automated agents, not certification or human independence.
+are performed by automated agents and do not constitute certification or human independence.
 
 Coverage includes every package file, including package/helpers,
 without attributing old-worker branches to new component. Preserve
@@ -122,8 +122,8 @@ output reconstructed as original process output.
 
 [Results](controllore-pool-risultati.md) must distinguish executed tests,
 limits, remaining work. [Code reading](controllore-pool-revisione.md)
-separate from process records/measurements.
-RSK-12 open for sensors, real feedback, actuator delay,
+is separate from process records/measurements.
+RSK-12 remains open for sensors, real feedback, actuator delay,
 stability/tuning. Live pool, park/wake, admission, retirement, shutdown,
 I/O, compaction, Archivio coordinator excluded; neither phase
 gates nor requirement `progettato` states closed by campaign.
@@ -138,6 +138,6 @@ components collected by GC. Final count
 still includes all native records without exclusions/mark
 changes. Generated EQUALP comparison in denominator: two identical
 controllers and isolated differences in period, dwell, queue-high, CPU, P99
-exercise both comparison outcomes. Final suite
-23 tests; 20-test fixtures read in first review
-preserved as preimage. Six product sources unchanged.
+exercise both comparison outcomes. The final suite has
+23 tests; the 20-test fixtures read in the first review
+are preserved as the preimage. The six product sources are unchanged.

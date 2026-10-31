@@ -6,10 +6,10 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-STO-003 REQ-REC-001
 (declaim (ftype (function (fd simple-base-string (eql :input)) fd) native-open-relative))
 (defun native-open-relative (directory name mode)
-  "Pre: parent posseduto e foglia ASCII privata; solo apertura readonly nel pool I/O.
-Post: FD CLOEXEC/NOFOLLOW/NONBLOCK da openat; il caller ne assume subito ownership.
-UNSUPPORTED-FORMAT per ABI/piattaforma, INVARIANT-VIOLATION per modo diverso da :input.
-Nessun fstat o cleanup qui; SYSCALL-ERROR cattura errno subito, nessun retry o creazione."
+  "Pre: owned parent and private ASCII leaf; readonly opening only in the I/O pool.
+Post: CLOEXEC/NOFOLLOW/NONBLOCK FD from openat; caller immediately assumes ownership.
+UNSUPPORTED-FORMAT for ABI/platform, INVARIANT-VIOLATION for mode other than :input.
+No fstat or cleanup here; SYSCALL-ERROR captures errno immediately, no retry or creation."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   (unless (eq mode :input) (error 'invariant-violation :reason :io-open-relative-mode))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
@@ -25,9 +25,9 @@ Nessun fstat o cleanup qui; SYSCALL-ERROR cattura errno subito, nessun retry o c
 (declaim (ftype (function (fd) (values identity-component identity-component integer &optional))
                 native-file-metadata))
 (defun native-file-metadata (descriptor)
-  "Pre: FD input o append gia' posseduto dal wrapper, senza close concorrente.
-Post: identita' e dimensione del regolare da una fstat, senza restringere gli interi.
-IO-FAULT per tipo diverso, SYSCALL-ERROR originario; nessuna close, lettura o mutazione."
+  "Pre: input or append FD already owned by the wrapper, without concurrent close.
+Post: regular-file identity and size from one fstat, without narrowing integers.
+IO-FAULT for a different type, original SYSCALL-ERROR; no close, read, or mutation."
   (let ((stat (sb-posix:fstat descriptor)))
     (unless (sb-posix:s-isreg (sb-posix:stat-mode stat))
       (error 'io-fault :reason :io-file-kind :operation :file-metadata))

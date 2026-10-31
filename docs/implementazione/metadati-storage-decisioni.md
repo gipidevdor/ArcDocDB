@@ -35,7 +35,7 @@ DECISION: counts 2/3/65,535 valid, 0/1 invalid, encoder 65,536 rejected.
 
 `scandisci-chiusi` starts at start and every advance is returned by
 `spazio-ripetuto`, which requires start ≤ end, checks count before
-multiplication, and returns an offset ≤ end. Final `closed-range` check
+multiplication, and returns an offset ≤ end. The final `closed-range` check
 is defensive against an internal defect; external data cannot take its error
 branch after these checks. The branch is not forced with a mock to present
 complete coverage. Definition/proclamation forms remain in the report.

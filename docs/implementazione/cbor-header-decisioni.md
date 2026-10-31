@@ -8,7 +8,7 @@ this table constitutes neither MC/DC nor an approved exception.
 
 | Decision | Oracle or invariant |
 |---|---|
-| `check-header-cbor-range`: AND buffer/start/end type and numeric chain | Generic, adjustable, fill-pointer, displaced, multidimensional arrays; noninteger, negative, beyond-fixnum, reversed, and beyond-length indices, all rejected before lead. |
+| `check-header-cbor-range`: AND buffer/start/end type and numeric chain | Generic, adjustable, fill-pointer, displaced, multidimensional arrays; noninteger, negative, beyond-fixnum, reversed, and beyond-length indices, all rejected before reading the lead byte. |
 | `check-header-cbor-range`: start=end | Valid empty spans at 0, 1, and 3 with end offset; empty invalid buffer preserves range priority. |
 | `leggi-argomento-header-cbor`: start<=end<=length | Internal contract guard: the public helper checked span and lead. No valid public input falsifies this guard. |
 | `leggi-argomento-header-cbor`: width>end-start | All 152 truncated prefixes of lead+widths 1/2/4/8 for eight major types; missing bytes are physically present but outside end. |

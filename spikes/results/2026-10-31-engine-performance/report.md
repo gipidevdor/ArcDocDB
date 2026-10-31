@@ -118,3 +118,31 @@ after the qualification commands finished.
 The source-English/code-reference update arriving on main is integrated after
 this frozen campaign. Its integration and executable-form comparison are recorded
 separately; the original byte-level qualification receipt is preserved.
+
+## Integration with the source-reference edition
+
+The qualified optimization revision is `4c50ebcaf08d101c8f59546cbd3270e94209411b`.
+Main advanced independently to `31e438bb67f4db0a35f81363d5cb78dcf97ba05a` with
+English source contracts and the code reference. The branches are merged without
+rewriting the other checkout. The ADR conflict preserves the revised English
+sentence and the complete optimization decision.
+
+[Static integration comparison](integration-identity.lisp), reproduced by
+[integration-proof.lisp](integration-proof.lisp), checks all 494 runtime source
+files with both reader-conditional branches retained. Only recognized declared
+documentation and comments are excluded; executable tokens/data are unchanged.
+418 files have prose-only changes. All 288 Lisp test files, ASDF and the three
+measurement drivers are byte-identical to the qualified revision. Positive and
+negative controls detect body arithmetic, return-string, conditional-branch,
+initializer-string and condition-report changes; an empty file inventory fails.
+Documentation reflection is intentionally changed by the English edition.
+The original byte-level qualification receipt remains attached to its original
+snapshot, rather than being relabelled as a measurement of translated text.
+
+The [recorded integration comparison](integration-check/report.lisp) and
+[final merged-tree lint/trace/links/docs checks](final-docs/report.lisp) pass.
+The updated documentation gate also recompiles the product/local systems in its
+isolated runtime cache with warnings treated as errors, verifies loaded exports
+and source contracts against the generated reference, and runs the public Unix
+example. The qualified executable forms and byte-identical tests are preserved;
+the English contracts and source-reference tooling remain integrated.

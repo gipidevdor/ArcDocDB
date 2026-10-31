@@ -3,8 +3,8 @@
 # Directory inventory: C1 readings
 
 Two static readings precede executions: root on the I/O boundary and
-planner connection; a distinct reviewer on I/O boundary, I/O author
-on planner connection. Method and cases are in
+planner connection; a distinct reviewer on the I/O boundary, and the I/O author
+on the planner connection. Method and cases are in
 [inventario-directory-metodo.md](inventario-directory-metodo.md).
 
 Final reading sources are `native-directory.lisp` SHA-256
@@ -24,7 +24,7 @@ Other files are identified by execution-commit blobs.
 | Decisions | IND-D01…D10 in method; dynamic qualification and coverage distinct from reading |
 | Ownership | Borrowed parent; independent openat; FD transferred to DIR only on success; one cleanup |
 | ABI | Linux/macOS 64-bit; SB-POSIX-grovelled dirent layout, consistent inode64 selector |
-| Rules | ftype, safety3, functions under 60 lines; explicit normal branches and original conditions propagated |
+| Rules | ftype, safety 3, functions under 60 lines; explicit normal branches and original conditions propagated |
 | Parallelism | No lock or shared write between Serie; thread-local Latin1 binding |
 | Durability | No new atomic point: names, files, and frontiers unchanged |
 

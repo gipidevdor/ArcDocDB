@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (t t t t) null) prepara-codec))
 (defun prepara-codec (descriptor space max-work max-bytes)
-  "Pre: confine pubblico. Post: tipi/budget validi e contatore privato azzerato.
-INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED per capacita dei termini."
+  "Pre: public boundary. Post: valid types/budgets and private counter zeroed.
+INVALID-ARGUMENT for configuration; RESOURCE-EXHAUSTED for term capacity."
   (unless (and (typep descriptor 'descrittore-full-text) (typep space 'spazio-codec-full-text)
                (typep max-work 'index) (plusp max-work) (typep max-bytes 'index) (plusp max-bytes))
     (error 'invalid-argument :reason :fulltext-codec-input))
@@ -17,8 +17,8 @@ INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED per capacita dei termini
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (t t t spazio-codec-full-text descrittore-full-text) null) controlla-buffer-codec))
 (defun controlla-buffer-codec (buffer start end space descriptor)
-  "Pre: spazio/descrittore validi. Post: span simple u8, nessun alias con buffer interni.
-INVALID-ARGUMENT prima di qualunque scrittura o prestito."
+  "Pre: valid workspace/descriptor. Post: simple u8 span, no aliasing with internal buffers.
+INVALID-ARGUMENT before any write or loan."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :fulltext-codec-span))
@@ -31,8 +31,8 @@ INVALID-ARGUMENT prima di qualunque scrittura o prestito."
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (descrittore-full-text u32 u16) null) controlla-riga-campo))
 (defun controlla-riga-campo (descriptor row field)
-  "Pre: riga/campo numerici. Post: campo dichiarato e riga PUT committed nel legame.
-CORRUPTION-DETECTED per riga non coperta o campo sconosciuto; non risolve CSN."
+  "Pre: numeric row/field. Post: declared field and committed-PUT row in the binding.
+CORRUPTION-DETECTED for an uncovered row or unknown field; does not resolve CSN."
   (unless (campo-dichiarato-p descriptor field)
     (error 'corruption-detected :reason :fulltext-undeclared-field))
   (unless (and (< row (length (descrittore-full-text-rows descriptor)))
@@ -43,8 +43,8 @@ CORRUPTION-DETECTED per riga non coperta o campo sconosciuto; non risolve CSN."
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (spazio-codec-full-text index index) null) prepara-copertura))
 (defun prepara-copertura (space length-count position-count)
-  "Pre: conteggi del file/run. Post: bitmap privata azzerata dopo riserva del lavoro.
-RESOURCE-EXHAUSTED prima di accedere oltre scratch; niente allocazioni per entry."
+  "Pre: file/run counts. Post: private bitmap zeroed after work reservation.
+RESOURCE-EXHAUSTED before accessing beyond scratch; no per-entry allocations."
   (when (or (> length-count (length (spazio-codec-full-text-prefix space)))
             (> position-count (length (spazio-codec-full-text-marks space))))
     (error 'resource-exhausted :reason :fulltext-codec-scratch))
@@ -55,8 +55,8 @@ RESOURCE-EXHAUSTED prima di accedere oltre scratch; niente allocazioni per entry
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (spazio-codec-full-text index u32 u32) null) marca-posizione))
 (defun marca-posizione (space base count position)
-  "Pre: base del campo entro la bitmap riservata. Post: una posizione unica marcata.
-CORRUPTION-DETECTED per posizione fuori campo o duplicata anche fra termini distinti."
+  "Pre: field base within the reserved bitmap. Post: one unique position marked.
+CORRUPTION-DETECTED for an out-of-field or duplicate position, even across distinct terms."
   (lavoro-codec space)
   (unless (< position count) (error 'corruption-detected :reason :fulltext-position-range))
   (let ((i (+ base position)))
@@ -70,7 +70,7 @@ CORRUPTION-DETECTED per posizione fuori campo o duplicata anche fra termini dist
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (spazio-codec-full-text index) null) verifica-copertura))
 (defun verifica-copertura (space count)
-  "Pre: tutte le posizioni esaminate. Post: unione esatta [0,COUNT), altrimenti corruzione."
+  "Pre: all positions examined. Post: exact union [0,COUNT), otherwise corruption."
   (unless (<= count (length (spazio-codec-full-text-marks space)))
     (error 'invariant-violation :reason :fulltext-coverage-range))
   (dotimes (i count)

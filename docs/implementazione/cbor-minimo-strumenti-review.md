@@ -3,7 +3,7 @@
 # C4 reading of tools for minimal CBOR headers
 
 Static reading by the new kernel's author, completed before product
-campaigns. Covers `tools/foundation-coverage.lisp` and
+campaigns. The reading covers `tools/foundation-coverage.lisp` and
 `spikes/out/cbor-minimal-collection/collect.lisp`, with targeted reading of
 the unchanged dependency `tools/evidence-storage.lisp`. It is not an independent
 C1 product reading or human approval. The reviewer executed no product, tests,
@@ -28,7 +28,7 @@ driver checks that FASL mapping is internal. Forced compilation and
 warnings promoted to errors prevent apparently successful coverage
 after an incomplete build. The caller assigns a new directory: the driver
 alone does not demonstrate exclusivity or absence of old reports.
-Self-tests and actual numerators remain pending; no MC/DC attestation.
+Self-tests and actual numerators remain pending; no MC/DC attestation is claimed.
 
 <a id="raccolta-finding-e-correzione"></a>
 
@@ -36,13 +36,13 @@ Self-tests and actual numerators remain pending; no MC/DC attestation.
 
 The collector reads manifests and index with `*read-eval* NIL` and EOF; it reads
 reports through `read-evidence`, which also validates descriptors, SHA256, and compressed/expanded
-bytes. The `load` concerns only the local tool
+bytes. The `load` applies only to the local tool
 `tools/evidence-storage.lisp`, not external manifests, reports, or logs.
 
 A defect was found in the first `:lisp-and-log` tree filter: it allowed
 only `.lisp`/`.log`, so it copied a `report.lisp` descriptor without the
 `.gz` payload. Auditing copied files could succeed without guaranteeing
-reread of that report. Finding on original collector blob
+reread of that report. The finding concerns the original collector blob
 `4ec1aa3c993f0236caa44bd0ef30867ac37c73b7`, lines 43–45. Before running the
 collector, the coordinator added `.gz` to the same suffixes. Corrected blob
 `12670016a52b29eaedca72bb746343f840824b53` was reread: descriptors
@@ -51,8 +51,8 @@ copied preserving the same relative path. The separate guard still needs to
 verify descriptor+payload in filtered trees and among process files.
 Guard PASS is not claimed from the static correction alone.
 
-Each copy retains source bytes and SHA256 and compares both source
-after copying and destination. For processes, the decoded report is
+Each copy retains source bytes and SHA256 and compares both the source
+after copying and the destination. For processes, the decoded report is
 compared in full after copying; the directory is copied without
 an extension filter, preserving the descriptor's payload leaf. Existing destinations
 are rejected. Filtered trees now include `.lisp`, `.log`, `.gz`

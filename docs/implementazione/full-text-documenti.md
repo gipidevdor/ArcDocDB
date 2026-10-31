@@ -12,7 +12,7 @@ writes no WAL, reserves no Serie delta, and publishes neither commits nor READY.
 The first use remains a Usenet NNTP server in Common Lisp: `subject`, `body`,
 or `headers.subject` are configurable paths. The application interprets NNTP/MIME
 and supplies decoded UTF-8 text; it may preserve the original article in an unindexed
-binary field. Message-ID, keys, and original document are not modified.
+binary field. Message-ID, keys, and the original document are not modified.
 
 <a id="configurazione-posseduta"></a>
 
@@ -37,12 +37,12 @@ The only allowed profile is `unicode-word-18.0.0-v1`.
 `:limits` is a simple-vector of five positive u64s in META order:
 total text input, bytes per term, total tokens, prepared payload,
 work. Defaults: 16 MiB, 1024, 1048576, 64 MiB, 268435456.
-Token limit is still within u32. Declared values are retained in full;
+The token limit is still within u32. Declared values are retained in full;
 the hot path uses effective limits within fixnum. IDs are encoded once
 in 24 bytes, without raw u64 slot reads during preparation.
 
 Before copies, the constructor checks memory and the 64 KiB META limit.
-It uses conservative bound `256 + 32*campi + 9*chiavi + byte(alias e chiavi)`:
+It uses the conservative bound `256 + 32*campi + 9*chiavi + byte(alias and keys)`:
 this covers CBOR headers and maximum physical-metadata values still unknown.
 A declaration that does not fit is rejected before build or commit.
 The cold-memory budget includes copies, vectors, objects, and conservative overhead;
@@ -71,7 +71,7 @@ state, and alias checks precede invalidating the previous result.
 2. Analysis of present fields in field-id order, using already implemented NFC/folding/NFC
    and Word_Break; copy into the private run. Missing and present-empty remain distinct.
 3. Resumable run sorting, distinct-term counting, and final measurement.
-   No partial result returned before all checks complete.
+   No partial result is returned before all checks complete.
 
 The root document must be a map. Paths traverse only maps and
 select simple text keys: tags and complex keys are not aliases for
@@ -90,10 +90,10 @@ The CBOR kernel may verify an entire string in one step within the 16 MiB span:
 quantum is not a byte limit or real-time guarantee. Work charges nodes,
 payload, comparisons, analysis, and run operations; `:max-work` may lower the declaration's
 limit. `:max-nodes` bounds CBOR; `:max-file-bytes` the final bound.
-The caller checks deadline at boundaries and may cancel the task.
+The caller checks the deadline at boundaries and may cancel the task.
 
 Text input, tokens, and staging are summed over all index fields.
-Used prepared payload is `20*token + byte(termini ripetuti) + 12*campi presenti`:
+Used prepared payload is `20*token + byte(repeated terms) + 12*present fields`:
 this limit is distinct from the worker's preallocated physical memory, accounted for by the
 constructor. Reaching all configured maximums together is not promised.
 
@@ -143,7 +143,7 @@ reuse, 100 levels, 16 fields with IDs through 65535, and maximum u64 IDs/generat
 On 128 generated documents, scanning independently built word lists
 compares 115200 answers on runs and files, and checks 128 bounds against serialized files.
 Four workers have separate contexts and a bounded rendezvous. After warmup,
-1000 preparations with lookup allocate no bytes on measured heap on SBCL 2.6.9 arm64,
+1000 preparations with lookup allocate no bytes on the measured heap on SBCL 2.6.9 arm64,
 even with maximum u64 IDs/limits. Two new semantic mutants concern key
 selection and cost deduplication; instrumented coverage excludes allocation measurements.
 

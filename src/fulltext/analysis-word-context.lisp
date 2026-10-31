@@ -7,37 +7,37 @@
 (declaim (ftype (function (u32) boolean) wb-ignorato-p wb-lettera-p wb-nuova-riga-p
                 wb-mezzo-lettera-p wb-mezzo-numero-p wb-estendibile-p))
 (defun wb-ignorato-p (class)
-  "Pre: classe Word_Break. Post: T solo per Extend, Format, ZWJ. Nessun errore."
+  "Pre: Word_Break class. Post: T only for Extend, Format, ZWJ. No error."
   (not (null (or (= class +wb-extend+) (= class +wb-format+) (= class +wb-zwj+)))))
 (defun wb-lettera-p (class)
-  "Pre: classe Word_Break. Post: T per AHLetter. Nessun errore."
+  "Pre: Word_Break class. Post: T for AHLetter. No error."
   (not (null (or (= class +wb-aletter+) (= class +wb-hebrew-letter+)))))
 (defun wb-nuova-riga-p (class)
-  "Pre: classe Word_Break. Post: T per CR/LF/Newline. Nessun errore."
+  "Pre: Word_Break class. Post: T for CR/LF/Newline. No error."
   (not (null (or (= class +wb-cr+) (= class +wb-lf+) (= class +wb-newline+)))))
 (defun wb-mezzo-lettera-p (class)
-  "Pre: classe Word_Break. Post: T per MidLetter o MidNumLetQ. Nessun errore."
+  "Pre: Word_Break class. Post: T for MidLetter or MidNumLetQ. No error."
   (not (null (or (= class +wb-midletter+) (= class +wb-midnumlet+) (= class +wb-single-quote+)))))
 (defun wb-mezzo-numero-p (class)
-  "Pre: classe Word_Break. Post: T per MidNum o MidNumLetQ. Nessun errore."
+  "Pre: Word_Break class. Post: T for MidNum or MidNumLetQ. No error."
   (not (null (or (= class +wb-midnum+) (= class +wb-midnumlet+) (= class +wb-single-quote+)))))
 (defun wb-estendibile-p (class)
-  "Pre: classe Word_Break. Post: T per AHLetter, Numeric, Katakana. Nessun errore."
+  "Pre: Word_Break class. Post: T for AHLetter, Numeric, Katakana. No error."
   (not (null (or (wb-lettera-p class) (= class +wb-numeric+) (= class +wb-katakana+)))))
 
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text index) u32) classe-parola))
 (defun classe-parola (space i)
-  "Pre: I entro B corrente. Post: classe Unicode, oppure Other per sentinella.
-RESOURCE-EXHAUSTED se termina il lavoro."
+  "Pre: I within current B. Post: Unicode class, or Other for a sentinel.
+RESOURCE-EXHAUSTED if work is exhausted."
   (if (= i +nessuno+) +wb-other+
       (proprieta-unicode space +word-ranges+ (aref (spazio-full-text-b space) i))))
 
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) passo-contesto-sinistro passo-contesto-destro))
 (defun passo-contesto-sinistro (space)
-  "Pre: fase LEFT. Post: un predecessore significativo e conteggio RI inclusivo.
-Ignorati conservano il contesto; capacita gia verificata durante la normalizzazione."
+  "Pre: LEFT phase. Post: one significant predecessor and inclusive RI count.
+Ignored elements preserve context; capacity already verified during normalization."
   (let ((i (spazio-full-text-cursor space)))
     (when (= i (spazio-full-text-b-count space))
       (setf (spazio-full-text-phase space) :right (spazio-full-text-significant space) +nessuno+)
@@ -52,8 +52,8 @@ Ignorati conservano il contesto; capacita gia verificata durante la normalizzazi
     (incf (spazio-full-text-cursor space)))
   nil)
 (defun passo-contesto-destro (space)
-  "Pre: fase RIGHT, cursore decrescente. Post: un successore significativo inclusivo.
-A fine scansione avvia i confini, senza pubblicare risultati parziali."
+  "Pre: RIGHT phase, decreasing cursor. Post: one inclusive significant successor.
+At scan end, starts boundary processing without publishing partial results."
   (when (zerop (spazio-full-text-cursor space))
     (setf (spazio-full-text-phase space) :boundaries (spazio-full-text-boundary space) 1
           (spazio-full-text-word-start space) 0 (spazio-full-text-has-letter space) nil)

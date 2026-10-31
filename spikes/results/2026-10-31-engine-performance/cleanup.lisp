@@ -1,0 +1,1 @@
+(:kind :engine-performance-cleanup :status :passed :verified-original-command-reports 26 :temporary-output-logical-bytes 49722059 :generated-manual-logical-bytes 100354302 :current-worktree-cache-logical-bytes 43071706 :retained-unique-evidence t :other-worktree-files-untouched t)

@@ -6,8 +6,8 @@
 (declaim (ftype (function (piano-immagine-motore arcdocdb.index.page:costruttore-pagine index index)
                          arcdocdb.index.page:riferimento-costruito) emetti-bucket-costruzione))
 (defun emetti-bucket-costruzione (plan builder start end)
-  "Pre: sottoinsieme ordinato canonico, nessun writer. Post: bucket o overflow completi, chiavi a lotti.
-Un ciclo per al piu' N entry; il builder applica quota e fail-stop, nessuna unicita' probabilistica."
+  "Pre: canonical sorted subset, no writer. Post: complete bucket or overflow, keys in batches.
+One loop over at most N entries; builder applies quota and fail-stop, no probabilistic uniqueness."
   (let* ((capacity (floor (* 7 (nth-value 1 (arcdocdb.index.page::geometria-pagina
                                            (arcdocdb.index.page::costruttore-pagine-size builder)))) 8))
          (tail nil) (cursor start))
@@ -28,9 +28,9 @@ Un ciclo per al piu' N entry; il builder applica quota e fail-stop, nessuna unic
 (declaim (ftype (function (piano-immagine-motore arcdocdb.index.page:costruttore-pagine index index fixnum fixnum)
                          arcdocdb.index.page:riferimento-costruito) emetti-albero-costruzione))
 (defun emetti-albero-costruzione (plan builder start end remaining depth)
-  "Pre: span ordinato per digest completo, prefisso fissato dagli antenati, 0<=remaining<=64.
-Post: albero append-only; radici dei figli precedenti e routing controllati dal builder.
-INVARIANT-VIOLATION per profondita'/span; 65 livelli anche con digest tutti identici."
+  "Pre: span sorted by complete digest, prefix fixed by ancestors, 0<=remaining<=64.
+Post: append-only tree; preceding child roots and routing checked by the builder.
+INVARIANT-VIOLATION for depth/span; 65 levels even with all digests identical."
   (unless (and (<= 0 depth) (< depth +build-radix-levels+) (<= 0 remaining 64)
                (<= start end (length (piano-immagine-motore-order plan))))
     (error 'invariant-violation :reason :engine-image-build-tree-range))

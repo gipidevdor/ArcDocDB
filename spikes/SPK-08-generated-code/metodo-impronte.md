@@ -89,7 +89,7 @@ it reports actual operations, calculated ns/op, total and per-operation bytes,
 checksum, order, and replicate. No estimated overhead is subtracted and no
 times are invented; ticks = 0 makes a measurement unresolved and produces an
 error. GC and scheduling during the loop remain included. Report and fixture
-allocations excluded; bytes-consed is not RSS. The loop reads preallocated
+allocations are excluded; bytes-consed is not RSS. The loop reads preallocated
 data and produces a fixnum checksum; it creates no structures per call.
 Limits are rows 16–8192, passes 1–1024, warmup 1–64, seconds >0 and ≤300,
 payload byte-budget ≤64 MiB, and total operations ≤200,000,000.
@@ -151,7 +151,7 @@ the full call. No BENCH was run during this work.
 
 Recorded process environment: SBCL 2.6.9, Darwin 27.0.0, ARM64, Apple M4,
 16 GiB RAM, 10 logical CPUs; little-endian host, clock with 1,000,000 units/s.
-External load uncontrolled. Safety 3 unchanged in every attempt.
+External load is uncontrolled. Safety 3 unchanged in every attempt.
 
 Every attempt uses the same argv, with empty stdin from `/dev/null`:
 

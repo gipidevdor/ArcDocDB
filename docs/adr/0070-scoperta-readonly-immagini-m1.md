@@ -35,7 +35,7 @@ the greatest hex label. This is only deterministic priority, not chronology,
 CSN, or proof of commit. Source and revision are rechecked after all
 callbacks. The selected name is then reopened and verified fully
 against the canonical source using the ADR-0064 path, before READY.
-Corruption or quota exhaustion during this verification refuses startup:
+Corruption or quota exhaustion during this verification prevents startup:
 no fallback to the second candidate. A footer alone cannot be adopted.
 
 With no eligible footers, the already rebuilt canonical resident index remains available.
@@ -47,7 +47,7 @@ canonical recovery; an error in recovery precedes any search for derivatives.
 
 ## Limits and consequences
 
-The quota covers two name inventories (characters up to four bytes),
+The quota covers two name inventories (up to four bytes per character),
 candidate transient data, footers, and selected-image verification. The controller
 separately reserves the resident index, objects, headers, and GC/RSS. The canonical
 M1 inventory limits also remain; the new configuration does not increase them.

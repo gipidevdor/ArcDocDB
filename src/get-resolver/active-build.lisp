@@ -6,8 +6,8 @@
 ;;; REQ: REQ-AFF-008 REQ-IDX-001
 (declaim (ftype (function (integer integer integer integer integer) null) verifica-budget-attivo))
 (defun verifica-budget-attivo (pages puts records bytes budget)
-  "Pre: configurazione esplicita prima dei compiti. Post: budget finiti rappresentabili.
-INVALID-ARGUMENT prima di creare capacità o array; non cambia limiti dei documenti."
+  "Pre: explicit configuration before tasks. Post: finite representable budgets.
+INVALID-ARGUMENT before creating capabilities or arrays; does not change document limits."
   (unless (and (<= 1 pages +active-max-pages+) (<= 1 puts #xffffffff)
                (<= 1 records arcdocdb.wal::+max-lotto-records+)
                (<= arcdocdb.wal::+seal-total+ bytes arcdocdb.wal::+max-lotto-bytes+)
@@ -24,11 +24,11 @@ INVALID-ARGUMENT prima di creare capacità o array; non cambia limiti dei docume
 (defun crea-sorgente-get-attiva (controller lease segment
                                 &key (max-pages 65536) (max-puts 1048576) (batch-records 65536)
                                      (batch-bytes 67108864) (budget-payload 67108864) associazione-file)
-  "Pre: lease, nuovo ACTIVE con header verificato nel pool I/O; append/readonly dello STESSO file.
-Post: sorgente locale pronta, nessun I/O/frontiera/pubblicazione. Header/id/versione confrontati.
-INVALID-ARGUMENT per associazione/root già avviata; salute/invarianti propagano dal controller.
-ASSOCIAZIONE-FILE verifica le capacità esatte senza I/O; nil mantiene la precondizione del caller.
-Il caller conserva i FD fino al reclaim; il solo header non attesta identità fisica."
+  "Pre: lease, new ACTIVE with a header verified in the I/O pool; append/readonly for the SAME file.
+Post: local source ready, no I/O/frontier/publication. Header/id/version compared.
+INVALID-ARGUMENT for association/root already started; health/invariants propagate from the controller.
+ASSOCIAZIONE-FILE verifies the exact capabilities without I/O; nil retains the caller's precondition.
+The caller retains the FDs until reclaim; the header alone does not attest to physical identity."
   (verifica-budget-attivo max-pages max-puts batch-records batch-bytes budget-payload)
   (arcdocdb.series::%check-owner controller lease) (arcdocdb.series::%require-healthy controller)
   (let ((log (arcdocdb.series::controllore-serie-log controller)))
@@ -54,10 +54,10 @@ Il caller conserva i FD fino al reclaim; il solo header non attesta identità fi
 (declaim (ftype (function (sorgente-get-attiva (or null radice-get-attiva) index u32) null)
                 verifica-delta-attivo))
 (defun verifica-delta-attivo (source previous start puts)
-  "Pre: root pianificata/lotto verificati. Post: contiguità, cardinalità e picco autorizzati prima degli array.
-Picco = payload precedente + 24/new PUT + quattro vettori da 128 byte; nessuna copia dei vecchi PUT.
-Esclude altre radici trattenute/eventi/oggetti: budget complessivo resta al controller.
-INVALID-ARGUMENT per fonte/offset, RESOURCE-EXHAUSTED per saturazione, senza adozione."
+  "Pre: planned root/batch verified. Post: contiguity, cardinality, and peak authorized before arrays.
+Peak = previous payload + 24/new PUT + four 128-byte vectors; no copying of old PUTs.
+Excludes other retained roots/events/objects: the overall budget remains the controller's responsibility.
+INVALID-ARGUMENT for source/offset, RESOURCE-EXHAUSTED for saturation, without adoption."
   (when previous
     (unless (eq (radice-get-attiva-source previous) source)
       (error 'invalid-argument :reason :active-root-source)))
@@ -76,9 +76,9 @@ INVALID-ARGUMENT per fonte/offset, RESOURCE-EXHAUSTED per saturazione, senza ado
 (declaim (ftype (function (sorgente-get-attiva (or null radice-get-attiva) lotto u32 t) radice-get-attiva)
                 costruisci-delta-attivo))
 (defun costruisci-delta-attivo (source previous batch puts content)
-  "Pre: delta ammesso e buffer sealed stabile. Post: root privata condividendo solo pagine immutabili.
-Costruisce una pagina, quattro vettori e una root per lotto, senza catena di root precedenti.
-Invarianti o allocazione incompleta non espongono la root e non adottano il lotto."
+  "Pre: admitted delta and stable sealed buffer. Post: private root sharing only immutable pages.
+Builds one page, four vectors, and one root per batch, without a chain of previous roots.
+Invariants or incomplete allocation do not expose the root or adopt the batch."
   (verifica-delta-attivo source previous (inizio-lotto batch) puts)
   (let* ((rows (make-array (* puts +row-words+) :element-type '(unsigned-byte 32) :initial-element 0))
          (end (+ (inizio-lotto batch) (lunghezza-lotto batch)))
@@ -97,10 +97,10 @@ Invarianti o allocazione incompleta non espongono la root e non adottano il lott
                           (member :async :group :strong)) (values commit-serie index radice-get-attiva &optional))
                 registra-lotto-get-attivo))
 (defun registra-lotto-get-attivo (source lease batch previous content level)
-  "Pre: lease e lotto SEALED con token CSN, prima dell'I/O; content/grafo del caller immutabili.
-Post: evento/generation catturati e root pianificata; NON ancora acquisibile dai reader.
-Il normale PUBBLICA-COMMIT-SERIE verifica copertura/durability e CAS prima di esporre la root.
-Rifiuti pre-adozione conservano lotto/CSN al caller; interruzione nell'adozione => fail-stop Archivio."
+  "Pre: lease and SEALED batch with CSN token, before I/O; caller's content/graph immutable.
+Post: event/generation captured and root planned; NOT yet acquirable by readers.
+The normal PUBBLICA-COMMIT-SERIE verifies coverage/durability and CAS before exposing the root.
+Rejections before adoption leave the batch/CSN with the caller; interruption during adoption => Archivio fail-stop."
   (let ((controller (sorgente-get-attiva-controller source)))
     (arcdocdb.series::%check-owner controller lease) (arcdocdb.series::%require-healthy controller)
     (arcdocdb.series::%check-admission controller batch previous level)

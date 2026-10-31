@@ -6,9 +6,9 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-STO-003
 (declaim (ftype (function (file-io t t t) null) verifica-apertura-relativa))
 (defun verifica-apertura-relativa (directory name max-transfer max-file-bytes)
-  "Pre: capacita' del controller. Post: parent aperto, foglia/budget/callback ammessi, senza I/O.
-IO-FAULT per parent chiuso/faulted; INVALID-ARGUMENT per modo, foglia o budget;
-UNSUPPORTED-FORMAT senza tutti e tre i callback."
+  "Pre: controller capability. Post: open parent, admitted leaf/budgets/callbacks, without I/O.
+IO-FAULT for closed/faulted parent; INVALID-ARGUMENT for mode, leaf, or budget;
+UNSUPPORTED-FORMAT unless all three callbacks are present."
   (esigi-aperto directory :directory)
   (unless (and (typep max-transfer 'index) (<= 1 max-transfer +max-transfer+)
                (typep max-file-bytes 'file-offset))
@@ -25,10 +25,10 @@ UNSUPPORTED-FORMAT senza tutti e tre i callback."
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-REC-001
 (declaim (ftype (function (file-io file-io simple-base-string) null) esegui-apertura-relativa))
 (defun esegui-apertura-relativa (directory file leaf)
-  "Pre: child/foglia preallocati, backend verificato. Post: solo nuovo FD valido posseduto dal child.
-Parent controllato prima/dopo, IO-FAULT se non disponibile; INVARIANT-VIOLATION per FD invalido
-o alias del parent, senza assumere ownership o chiuderlo; syscall normalizzata in IO-FAULT.
-Solo la finestra chiamata/store e' senza interrupt; syscall/callback puo' bloccare nel pool I/O."
+  "Pre: preallocated child/leaf, verified backend. Post: only a valid new FD is owned by the child.
+Parent checked before/after, IO-FAULT if unavailable; INVARIANT-VIOLATION for an invalid FD
+or parent alias, without assuming ownership or closing it; syscall normalized to IO-FAULT.
+Only the call/store window is interrupt-free; syscall/callback may block in the I/O pool."
   (esigi-aperto directory :directory)
   (handler-case
       (sb-sys:without-interrupts
@@ -52,9 +52,9 @@ Solo la finestra chiamata/store e' senza interrupt; syscall/callback puo' blocca
                           (values identity-component identity-component file-offset &optional))
                 leggi-metadati-relativi))
 (defun leggi-metadati-relativi (directory file)
-  "Pre: child valido posseduto, parent/backend stabili. Post: identita' POSIX ed EOF entro budget.
-INVARIANT-VIOLATION per tuple invalide, RESOURCE-EXHAUSTED per EOF oltre budget, senza coercizioni.
-IO-FAULT originario o syscall normalizzata, anche per parent non disponibile; nessuna close qui."
+  "Pre: valid owned child, stable parent/backend. Post: POSIX identity and EOF within budget.
+INVARIANT-VIOLATION for invalid tuples, RESOURCE-EXHAUSTED for EOF beyond budget, without coercion.
+Original IO-FAULT or normalized syscall, including for unavailable parent; no close here."
   (esigi-aperto directory :directory)
   (handler-case
       (multiple-value-bind (device inode size)
@@ -78,9 +78,9 @@ IO-FAULT originario o syscall normalizzata, anche per parent non disponibile; ne
                 verifica-entry-relativa))
 (defun verifica-entry-relativa (directory file leaf device inode
                                 &optional (mode :input) (reason :io-open-relative-identity))
-  "Pre: identita' del child regolare gia' misurata. Post: stessa identita' alla foglia nofollow.
-Parent verificato prima/dopo callback; INVALID-ARGUMENT al disaccordo o modo;
-IO-FAULT per capacita' non disponibile, niente risultato parziale."
+  "Pre: regular child identity already measured. Post: the same identity at the nofollow leaf.
+Parent checked before/after callback; INVALID-ARGUMENT for mismatch or mode;
+IO-FAULT for unavailable capability, no partial result."
   (esigi-aperto directory :directory)
   (multiple-value-bind (entry-device entry-inode) (leggi-identita-entry directory leaf)
     (esigi-aperto directory :directory)
@@ -93,9 +93,9 @@ IO-FAULT per capacita' non disponibile, niente risultato parziale."
 (declaim (ftype (function (file-io) (values (or null fixnum) boolean &optional))
                 cleanup-lettura-relativa))
 (defun cleanup-lettura-relativa (file)
-  "Pre: child non pubblicato; FD valido implica ownership. Post: CLOSED prima di una sola close.
-Parent anche invalidato non impedisce cleanup. Syscall/IO-FAULT sono ridotti a errno/fallimento;
-ritorno diverso da zero conserva fallimento con errno NIL; altre condizioni fuori contratto."
+  "Pre: unpublished child; valid FD implies ownership. Post: CLOSED before a single close.
+Even an invalidated parent does not prevent cleanup. Syscall/IO-FAULT reduced to errno/failure;
+a nonzero return preserves failure with errno NIL; other conditions are outside the contract."
   (if (and (typep (file-fd file) 'fd) (not (eq (file-state file) :closed)))
       (progn
         (setf (file-state file) :closed)
@@ -115,10 +115,10 @@ ritorno diverso da zero conserva fallimento con errno NIL; altre condizioni fuor
                           &optional (member :open-relative :create-relative)) null)
                 segnala-apertura-relativa))
 (defun segnala-apertura-relativa (primary cleanup-errno cleanup-failed &optional (operation :open-relative))
-  "Pre: cleanup concluso o tentato. Post: condizione primaria EQ se cleanup riuscito.
-Guasto di cleanup produce IO-FAULT con reason/offset primari e campi I/O originali se presenti.
-Errno NIL non distingue il ritorno close nonzero da un IO-FAULT close senza errno.
-OPERATION identifica apertura/creazione per una primaria non I/O; cleanup senza primaria viola l'invariante."
+  "Pre: cleanup completed or attempted. Post: EQ-identical primary condition if cleanup succeeded.
+Cleanup failure produces IO-FAULT with primary reason/offset and original I/O fields if present.
+Errno NIL does not distinguish a nonzero close return from a close IO-FAULT without errno.
+OPERATION identifies opening/creation for a non-I/O primary cause; cleanup without a primary cause violates the invariant."
   (when primary
     (if cleanup-failed
         (let ((io-primary (typep primary 'io-fault)))
@@ -139,14 +139,14 @@ OPERATION identifica apertura/creazione per una primaria non I/O; cleanup senza 
                           (values file-io file-offset &optional)) apri-lettura-nella-directory))
 (defun apri-lettura-nella-directory (directory name &key (max-transfer +max-transfer+)
                                                        (max-file-bytes +default-file-limit+))
-  "Pre: pool I/O, parent/namespace esclusivi e stabili, nessuna cancellazione asincrona.
-Post: child readonly e EOF verificato; parent borrowed e frontiere intatte, nessun FD parziale.
-Nomi privati, backend ereditato senza fallback; zero byte ammessi, nessuna apertura append.
-EOF e' la dimensione osservata, non una frontiera durevole; nessuna verifica di formati o CRC.
-INVALID-ARGUMENT/UNSUPPORTED-FORMAT/RESOURCE-EXHAUSTED/IO-FAULT ai rifiuti previsti.
-INVARIANT-VIOLATION per FD o metadati del backend fuori contratto, compreso l'alias del parent.
-Errori tipizzati differiti dopo cleanup; uscite nonlocali estranee tentano cleanup e preservano
-la causa senza allegare il cleanup-errno. Nessun retry, timeout wall, unlink o flush implicito."
+  "Pre: I/O pool, exclusive stable parent/namespace, no asynchronous cancellation.
+Post: read-only child and verified EOF; borrowed parent and frontiers intact, no partial FD.
+Private names, inherited backend without fallback; zero bytes allowed, no append opening.
+EOF is the observed size, not a durable frontier; no format or CRC verification.
+INVALID-ARGUMENT/UNSUPPORTED-FORMAT/RESOURCE-EXHAUSTED/IO-FAULT for expected rejections.
+INVARIANT-VIOLATION for backend FDs or metadata outside the contract, including a parent alias.
+Typed errors deferred until after cleanup; foreign nonlocal exits attempt cleanup and preserve
+the cause without attaching cleanup-errno. No implicit retry, wall timeout, unlink, or flush."
   (verifica-apertura-relativa directory name max-transfer max-file-bytes)
   (let* ((leaf (map 'simple-base-string #'identity name))
          (file (%make-file :input (file-backend directory) max-transfer max-file-bytes))

@@ -7,8 +7,8 @@
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-TXM-007 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (manifest-closed) null) check-closed-shape))
 (defun check-closed-shape (entry)
-  "Pre: entry CLOSED privata. Post: lunghezza nel formato e mappa indicizzata con EQL.
-INVARIANT-VIOLATION per costruzione interna incoerente; nessuna modifica."
+  "Pre: private CLOSED entry. Post: length within format and EQL-indexed map.
+INVARIANT-VIOLATION for inconsistent internal construction; no modification."
   (unless (<= +segment-header-bytes+ (%closed-valid-bytes entry) +segment-max-bytes+)
     (error 'invariant-violation :reason :manifest-closed-shape))
   (unless (eq (hash-table-test (%closed-outcomes entry)) 'eql)
@@ -18,8 +18,8 @@ INVARIANT-VIOLATION per costruzione interna incoerente; nessuna modifica."
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (manifest-closed manifest-closed) boolean) same-closed-p))
 (defun same-closed-p (left right)
-  "Pre: entry private con mappe esiti canoniche. Post: lunghezza e insieme TXID/CSN identici.
-INVARIANT-VIOLATION per forma interna; confronto limitato al numero noto di esiti."
+  "Pre: private entries with canonical outcome maps. Post: identical length and TXID/CSN set.
+INVARIANT-VIOLATION for internal shape; comparison bounded by known outcome count."
   (check-closed-shape left)
   (check-closed-shape right)
   (and (= (%closed-valid-bytes left) (%closed-valid-bytes right))
@@ -32,9 +32,9 @@ INVARIANT-VIOLATION per forma interna; confronto limitato al numero noto di esit
 (declaim (ftype (function (octets index index u32 u64)
                          (values hash-table index &optional)) decode-closure-outcomes))
 (defun decode-closure-outcomes (buffer start end count offset)
-  "Pre: COUNT coppie TXID/CSN verificate nel payload. Post: mappa posseduta, fine delle coppie.
-Duplicati identici coalescono; CORRUPTION-DETECTED al record assoluto per CSN discordanti.
-Zero e tutti i bit u64 sono significativi; ciclo limitato da COUNT e dai byte disponibili."
+  "Pre: COUNT verified TXID/CSN pairs in payload. Post: owned map, end of pairs.
+Identical duplicates coalesce; CORRUPTION-DETECTED at absolute record offset for differing CSNs.
+Zero and all u64 bits are meaningful; loop bounded by COUNT and available bytes."
   (check-range buffer start end)
   (unless (<= count (floor (- end start) +closure-outcome-bytes+))
     (error 'invariant-violation :reason :manifest-outcome-range :offset start))
@@ -56,9 +56,9 @@ Zero e tutti i bit u64 sono significativi; ciclo limitato da COUNT e dai byte di
 (declaim (ftype (function (octets manifest-edit u64)
                          (values hash-table u64 &optional)) decode-edit-closed))
 (defun decode-edit-closed (buffer edit offset)
-  "Pre: EDIT strutturalmente valido e budget già verificati. Post: CLOSED posseduti e massimo ID.
-CORRUPTION-DETECTED se duplicati dello stesso ID differiscono in lunghezza o insieme esiti.
-Il ciclo ha CLOSED-COUNT iterazioni e il consumo finale è controllato."
+  "Pre: structurally valid EDIT, budgets already verified. Post: owned CLOSED entries and maximum ID.
+CORRUPTION-DETECTED if duplicate IDs differ in length or outcome set.
+Loop has CLOSED-COUNT iterations; final consumption checked."
   (let ((start (%edit-closed-start edit)) (end (- (%edit-removed-start edit) +count-bytes+))
         (result (make-hash-table :test 'eql)) (maximum (%edit-open-id edit)))
     (check-range buffer start end)
@@ -85,8 +85,8 @@ Il ciclo ha CLOSED-COUNT iterazioni e il consumo finale è controllato."
 (declaim (ftype (function (octets manifest-edit index u64)
                          (values hash-table u64 &optional)) decode-edit-removed))
 (defun decode-edit-removed (buffer edit end maximum)
-  "Pre: span REMOVED verificato. Post: mappa posseduta idempotente e massimo ID nominato.
-INVARIANT-VIOLATION per consumo incoerente; ciclo limitato da REMOVED-COUNT."
+  "Pre: verified REMOVED span. Post: idempotent owned map and maximum named ID.
+INVARIANT-VIOLATION for inconsistent consumption; loop bounded by REMOVED-COUNT."
   (let ((start (%edit-removed-start edit)) (result (make-hash-table :test 'eql)))
     (check-range buffer start end)
     (unless (= (- end start) (* (%edit-removed-count edit) +removed-id-bytes+))

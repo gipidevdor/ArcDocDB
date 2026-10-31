@@ -10,13 +10,13 @@
 (defun leggi-item-cbor-minimo (buffer start end space
                               &key (max-bytes +cbor-scan-max-bytes+)
                                 (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8 stabile, finestra e budget verificati; scratch privato.
-Post: esattamente NODES, PEAK array/map, NEXT assoluto del primo item minimo;
-START<NEXT<=END, coda non letta, statistiche del solo item. MAX-BYTES limita
-l'intera finestra, coda inclusa. Preflight senza mutare scratch; reset prima
-del parsing, riuso dopo errore. Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
-CORRUPTION-DETECTED (offset assoluti) e INVARIANT-VIOLATION.
-Al piu SPAN passi e drain102; nessun AST, semantica tag, attesa o I/O."
+  "Pre: stable simple u8, window and budgets verified; private scratch.
+Post: exactly NODES, PEAK array/map, absolute NEXT of the first minimal item;
+START<NEXT<=END, tail unread, statistics for the item only. MAX-BYTES limits
+the entire window, including the tail. Preflight without mutating scratch; reset before
+parsing, reuse after error. Propagates INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
+CORRUPTION-DETECTED (absolute offsets), and INVARIANT-VIOLATION.
+At most SPAN steps and drain102; no AST, tag semantics, waiting, or I/O."
   (let ((span (check-input-struttura-cbor buffer start end space max-bytes max-nodes max-depth)))
     (declare (type index span))
     (unless (<= span +cbor-scan-max-bytes+)

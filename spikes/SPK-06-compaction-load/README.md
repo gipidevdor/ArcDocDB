@@ -27,12 +27,12 @@ Regular sampling every 500 ms after first sample. Exact EWMA with `alpha=1/2`;
 finite length bounds rational-numerator growth.
 
 > **Proposed** — The 500 ms step and `1/2` weight are declared experimental parameters;
-> ADR-0023 indicates a window around one second. They do not calibrate engine controller.
+> ADR-0023 indicates a window around one second. They do not calibrate the engine controller.
 
 Thresholds follow ADR-0023: high if any signal strictly exceeds 80%, low after both
 strictly below 40% for at least 10 s, otherwise normal. Ongoing MERGE slows in normal,
 suspends in high, and is abandoned after 30 continuous seconds of high. Exiting high
-resets timer. No new MERGE in normal/high; urgent CLEAN in high requires at least
+resets the timer. No new MERGE in normal/high; urgent CLEAN in high requires at least
 80% dead space and has one worker.
 
 MERGE admission separately checks CLOSED, immutability, not ACTIVE, no snapshot,
@@ -49,7 +49,7 @@ sample mutation. Starvation and priorities remain distinct properties.
 Common Lisp/SBCL only, `safety 3`, zero warnings/style-warnings. Reuses public I/O
 and record APIs from [SPK-05](../SPK-05-segment-read/README.md), without its controller.
 An immutable 8192-record file of 2048-byte records (16 MiB) is generated and verified
-before matrix. Body is synthetic, without CBOR; no commit, snapshot, or durability attestation.
+before the matrix. Body is synthetic, without CBOR; no commit, snapshot, or durability attestation.
 
 Matrix: 1/2 readers, 32,768 aggregate random reads per case, same deterministic
 sequence for comparisons, three replications with alternating order.
@@ -95,7 +95,7 @@ sbcl --script tools/run-spikes.lisp --bench SPK-06
 Checks and measurements run in isolated processes; runner compiles in a separate
 per-PID directory with fatal warnings and produces one outcome plist.
 Hardware, OS, SBCL, command, configured heap, and before/after source blobs are in
-structured record. `--check` uses small fixtures and is not a performance measurement.
+the structured record. `--check` uses small fixtures and is not a performance measurement.
 Campaigns run serially with other spikes.
 
 <a id="risultati-e-limiti"></a>
@@ -105,7 +105,7 @@ Campaigns run serially with other spikes.
 The [first campaign](../../docs/valutazione/risultati-SPK-06-2026-10-08.md)
 passes model and worker checks; 24 cases complete 786,432 verified reads and 18
 copies reopened and fully compared. Checks, measurements, derived comparison,
-and first compilation error are retained in catalog. Final-run sources are stable
+and first compilation error are retained in the catalog. Final-run sources are stable
 before/after.
 
 Dataset is small, freshly written, with uncontrolled page cache and external load.

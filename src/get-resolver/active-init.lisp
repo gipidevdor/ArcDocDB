@@ -7,11 +7,11 @@
 (declaim (ftype (function (sorgente-get-attiva t &key (:content t)) radice-get-attiva)
                 inizializza-radice-get-attiva))
 (defun inizializza-radice-get-attiva (source lease &key (content nil))
-  "Pre: sorgente del nuovo ACTIVE, lease, header durevole e EDIT deciso; ammissione chiusa.
-Post: root vuota pubblicata/pianificata, end=64 e zero pagine/PUT/nodi; CONTENT preso in prestito.
-Nessun I/O, evento o token CSN. Il primo lotto usa questa root come PREVIOUS.
-INVALID-ARGUMENT per file chiuso/avanzato o controller avviato; salute/invarianti propagano.
-Il caller conserva content e FD sotto EBR; il CAS non prova la decisione durevole EDIT."
+  "Pre: new ACTIVE source, lease, durable header, and decided EDIT; admission closed.
+Post: empty published/planned root, end=64 and zero pages/PUTs/nodes; borrowed CONTENT.
+No I/O, event, or CSN token. The first batch uses this root as PREVIOUS.
+INVALID-ARGUMENT for a closed/advanced file or started controller; health/invariants propagate.
+The caller retains content and FD under EBR; CAS does not prove the durable EDIT decision."
   (let* ((controller (sorgente-get-attiva-controller source))
          (segment (sorgente-get-attiva-segment source))
          (file (arcdocdb.wal::log-io-file (arcdocdb.series::controllore-serie-log controller))))

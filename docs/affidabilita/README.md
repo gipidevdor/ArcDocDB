@@ -25,7 +25,7 @@ ultimate goal; performance is reasonable and subordinate.
 ## The reliability case
 
 Argument structure: a top-level claim, subclaims, and for each the supporting
-evidence (documents, tests, models). Evidence marked ‘to produce’ becomes passing
+evidence (documents, tests, models). Evidence marked ‘to produce’ is supplied and verified
 as phases progress; a claim without passing evidence is not asserted.
 
 **A0 — No committed data are lost or corrupted without the system detecting and

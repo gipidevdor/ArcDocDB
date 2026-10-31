@@ -16,9 +16,9 @@
 (defstruct (sorgente-get-attiva
              (:constructor %make-sorgente-get-attiva
                  (controller segment max-pages max-puts batch-records batch-bytes budget)) (:copier nil))
-  "Pre: controller e FD readonly del medesimo nuovo ACTIVE, associazione fisica del caller.
-Post: capacità/configurazione possedute e immutabili, nessuna frontiera inventata.
-Creazione prima dei compiti; il FD vive fino al reclaim EBR dell'ultima radice."
+  "Pre: controller and read-only FD of the same new ACTIVE, caller's physical association.
+Post: owned immutable capability/configuration, no invented frontier.
+Created before tasks; FD lives until EBR reclamation of last root."
   (controller nil :type controllore-serie :read-only t)
   (segment nil :type segmento-get :read-only t)
   (max-pages 1 :type (integer 1 65536) :read-only t)
@@ -30,9 +30,9 @@ Creazione prima dei compiti; il FD vive fino al reclaim EBR dell'ultima radice."
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
 (defstruct (radice-get-attiva
              (:constructor %make-radice-get-attiva (source directory count puts nodes end content)) (:copier nil))
-  "Pre: delta verificato o avvio vuoto a offset 64; directory persistente privata.
-Post: niente riferimenti al lotto/evento riusabili o alla radice precedente.
-Il CAS iniziale pubblica il solo header; i CAS successivi richiedono copertura WAL."
+  "Pre: verified delta or empty startup at offset 64; private persistent directory.
+Post: no references to reusable batch/event or previous root.
+Initial CAS publishes header only; subsequent CAS operations require WAL coverage."
   (source nil :type sorgente-get-attiva :read-only t)
   (directory nil :type (or null simple-vector) :read-only t)
   (count 0 :type (integer 0 65536) :read-only t)
@@ -45,13 +45,13 @@ Il CAS iniziale pubblica il solo header; i CAS successivi richiedono copertura W
 (declaim (ftype (function (radice-get-attiva) t) contenuto-radice-get-attiva)
          (ftype (function (radice-get-attiva) index) payload-radice-get-attiva))
 (defun contenuto-radice-get-attiva (root)
-  "Pre: root preparata o acquisita sotto EBR. Post: payload immutabile del caller.
-Non attesta pubblicazione, coerenza dell'indice concreto o lifetime delle risorse esterne."
+  "Pre: root prepared or acquired under EBR. Post: caller's immutable payload.
+Does not attest to publication, concrete-index consistency, or external-resource lifetime."
   (radice-get-attiva-content root))
 
 ;;; REQ: REQ-AFF-008 REQ-IDX-001
 (defun payload-radice-get-attiva (root)
-  "Pre: root completa. Post: 24 byte/PUT più 128 byte/nodo nella vista, su SBCL 64 bit.
-Esclude header/oggetti Lisp, radici ritirate, FD, lotto e payload del caller; non misura RSS."
+  "Pre: complete root. Post: 24 bytes/PUT plus 128 bytes/node in view, on 64-bit SBCL.
+Excludes Lisp headers/objects, retired roots, FD, batch, and caller payload; does not measure RSS."
   (+ (* +active-row-payload+ (radice-get-attiva-puts root))
      (* +active-node-payload+ (radice-get-attiva-nodes root))))

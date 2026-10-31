@@ -14,7 +14,7 @@
 ## Context
 
 Published results comprise 52,277 files: source copies, SBCL compiled files,
-fixtures, logs, and structured registers. Compressing each register individually retains
+fixtures, logs, and structured records. Compressing each record individually retains
 the high file count. Deleting items from sealed archives would break
 their inventory; the author requires keeping only relevant recent results locally.
 

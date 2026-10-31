@@ -6,7 +6,7 @@ C4 campaign of 2026-10-23 under
 [preregistered method](get-costi-metodo.md), on Apple M4 ARM64, 16 GiB,
 Darwin 27.0.0, SBCL 2.6.9, safety 3. Base `93a24872`, new uncommitted tool
 and method included in before/after hashes. External load,
-scheduler, CPU caches uncontrolled; no concurrent writer.
+scheduler, and CPU caches are uncontrolled; no concurrent writer.
 No change to product GET path or integrity checks.
 
 <a id="risposta-alla-diagnosi-iniziale"></a>
@@ -16,9 +16,9 @@ No change to product GET path or integrity checks.
 Starting figures are from
 [GET campaign of October 11](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/risultati.md):
 throughput includes bytewise comparison, sentinels, clock, cleanup.
-[Product CRC](../../src/foundation/crc32c.lisp) already slicing-by-8;
+[Product CRC](../../src/foundation/crc32c.lisp) already uses slicing-by-8;
 [cache copies](../../src/cache/read.lisp) use specialized u8 arrays.
-“Byte-at-a-time CRC or generic copy” diagnosis does not describe code.
+“Byte-at-a-time CRC or generic copy” diagnosis does not describe the code.
 Isolated measurement nevertheless confirms CRC as first optimization candidate.
 
 Medians of five replicates, microseconds per operation:
@@ -29,18 +29,18 @@ Medians of five replicates, microseconds per operation:
 | 256 B | 0.378 | 0.549 | 0.046 | 0.319 | 0.582 | 0.876 |
 | 4096 B | 5.798 | 5.976 | 0.402 | 4.279 | 6.358 | 10.611 |
 
-For 4096 B value, CRC actually processes 4112 B, about **709 MB/s**
+For a 4096 B value, CRC actually processes 4112 B, about **709 MB/s**
 decimal. Both copies cost about fourteen times less than CRC alone
 in this hot fixture. Full-verification pipeline reaches about
-157 thousand operations/s; including oracle lowers to about 94 thousand.
+157 thousand operations/s; including the oracle lowers this to about 94 thousand.
 Microbenchmarks, not new full-GET performance: exclude
 EBR, index, resolver, cache seqlock, syscalls, per-request clock.
-Times neither subtracted from historical measurements nor used to predict
-database acceleration factor from their ratio.
+Times are neither subtracted from historical measurements nor used to predict
+a database acceleration factor from their ratio.
 
 Operational conclusion: next experiment must compare faster CRC32C
 with current one, retaining safety, incremental checksum,
-ranges, CSN, corruption detection. Copy is not first intervention
+ranges, CSN, corruption detection. Copy is not the first intervention
 justified by these measurements. An ISA-specific native/SBCL backend
 requires availability verification, fallback, disassembly, new ADR
 before entering product. Not implemented in this campaign.
@@ -60,15 +60,15 @@ hits; not latency of an individual DRAM access.
 | 1,048,576 | 114.002 MiB | 2 KiB | 102.4 ns | 361.0 ns | 143.7 ns | 438.4 ns |
 | 4,194,304 | 456.008 MiB | 8 KiB | 101.6 ns | 437.0 ns | 232.3 ns | 589.1 ns |
 
-At maximum cardinality, uniform hit costs **4.30 times** eight-key
-case in same index. Ratio between medians, not a confidence
+At maximum cardinality, a uniform hit costs **4.30 times** the eight-key
+case in the same index. Ratio between medians, not a confidence
 interval. Uniform hit reaches 2.288 million attempts/s;
 including XXH64, 1.697 million. Miss reads no live-slot payload/key
-when fingerprint differs: same cost as hit
+when fingerprint differs: the same cost as a hit is
 not expected.
 
-Corpus has real digests and directory with 1024 distinct fragments;
-not fake table directly indexed by ordinal. Every uniform
+The corpus has real digests and a directory with 1024 distinct fragments;
+not a fake table directly indexed by ordinal. Every uniform
 window visits all keys. Average load 50%, arena reserved
 for C keys: not measurements at 7/8 saturation, during split or compaction.
 Driver checks every key and five fields before/after windows.
@@ -77,12 +77,12 @@ Maximum index + fixture payload **679,485,440 B**, about 648 MiB;
 whole-process peak RSS **1,386,151,936 B**, about 1.291 GiB,
 observed by `/usr/bin/time -l`. Peak includes startup, runtime,
 garbage; not RSS per cardinality. Index process
-takes 46.85 s; byte process 14.77 s. Overall times outside
-window definition. Beyond-RAM working set not measured.
+takes 46.85 s; byte process 14.77 s. Overall times are outside
+the window definition. A beyond-RAM working set was not measured.
 
-Observed growth consistent with memory-hierarchy cost,
+The observed growth is consistent with memory-hierarchy cost,
 but does not identify LLC misses, TLB misses, DRAM access count, or DRAM latency:
-hardware counters and environmental control required. One hundred million
+hardware counters and environmental control are required. One hundred million
 keys, Zipf distribution, more readers, concurrent writer, paged cache,
 RAM pressure, cold storage remain distinct campaigns. Data does not
 yet qualify c0rvus capacity.
@@ -106,16 +106,16 @@ yet qualify c0rvus capacity.
   domain, budgets, cursor period, ownership, sink, clock separation.
   Not independent review.
 
-First self-check precedes addition of explicit miss-output-immutability
-check; final version self-checked in both
+The first self-check precedes addition of explicit miss-output-immutability
+check; the final version was self-checked in both
 campaigns. Additional self-check launched without external record
 preserved as ancillary data, not basis of quantitative conclusions.
 Records, both source versions, raw data, median derivation,
-static checks preserved in
+static checks are preserved in
 [campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-get-costs/catalogo.lisp).
 
 Writer-free readings and historical scaling do not demonstrate lock-freedom.
 Distinction among resident lookup, safe page acquisition,
-and I/O still applies: no progress property promoted by
+and I/O still applies: no progress property is promoted by
 benchmarks. Automatic resident/paged selection remains
 [automatic-index design](indice-automatico.md), separate from diagnosis.

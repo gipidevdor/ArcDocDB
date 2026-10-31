@@ -15,7 +15,7 @@ It uses its Archivio's [canonical CSN registry](csn.md) through the
 ## Scope and resources
 
 One registry per Archivio; specialized arrays with fixed capacity `K`, with
-`1 <= K <= 65.536`. Request contexts are preallocated and reusable.
+`1 <= K <= 65,536`. Request contexts are preallocated and reusable.
 The registry retains CSN, generation, deadline, wait limit, and state per
 slot. It does not copy documents or hold physical segment references.
 

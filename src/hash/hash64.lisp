@@ -6,11 +6,11 @@
 ;;; REQ: REQ-IDX-001 REQ-LIM-003 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t t t) (values u32 u32 &optional)) xxh64))
 (defun xxh64 (buffer start end seed-high seed-low)
-  "Pre: simple u8 vector, span half-open di 0..65535 byte e seme in due u32.
-Post: esattamente due u32 HIGH/LOW del digest XXH64, nessuna modifica o stato condiviso.
-INVALID-ARGUMENT: tipi (:hash-arguments), span (:buffer-range), lunghezza (:hash-span-limit).
-Il seme e la sua gestione appartengono alla Serie; nessuna casualita implicita.
-Funzione non crittografica: l'uguaglianza delle chiavi richiede sempre confronto bytewise."
+  "Pre: simple u8 vector, half-open span of 0..65535 bytes, seed in two u32s.
+Post: exactly two u32 HIGH/LOW words of XXH64 digest, no modification or shared state.
+INVALID-ARGUMENT: types (:hash-arguments), span (:buffer-range), length (:hash-span-limit).
+Seed and its management belong to Serie; no implicit randomness.
+Noncryptographic function: key equality always requires bytewise comparison."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (typep seed-high 'u32) (typep seed-low 'u32))
     (error 'invalid-argument :reason :hash-arguments))

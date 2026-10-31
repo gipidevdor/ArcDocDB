@@ -10,13 +10,13 @@
 and ASCII leaf name and returns two values: a new read-only
 capability and size observed through its own FD. Name
 is copied before I/O. Parent and existing capabilities remain
-caller-owned; only acquired child is closed if the call
+caller-owned; only the acquired child is closed if the call
 fails before publication.
 
 Opening is relative to parent FD, with `NOFOLLOW`, `CLOEXEC`, and
 `NONBLOCK`. Only regular files are allowed. Exact device/inode
 comparison with relative entry precedes return. The controller
-owns namespace and prevents concurrent mutation: checking
+owns the namespace and prevents concurrent mutation: checking
 does not replace that precondition and is not an atomic snapshot.
 
 | Option | Contract |
@@ -41,7 +41,7 @@ The [method](io-apertura-relativa-metodo.md) specifies budgets, errors,
 ownership, and decisions; [two C1 readings](io-apertura-relativa-revisione.md)
 precede executions. This API performs no rename, deletion, creation,
 or writable reopening. [Owned source collection](fonti-recovery.md)
-now acquires ACTIVE/CLOSED set with budgets and cleanup; recovery
+now acquires the ACTIVE/CLOSED set with budgets and cleanup; recovery
 coordination remains a subsequent increment.
 
 [Preserved local tests](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-io-apertura-relativa/README.md)

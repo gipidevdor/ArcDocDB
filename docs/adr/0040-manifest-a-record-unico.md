@@ -70,7 +70,7 @@ removed segment.
 For each new file (`ACTIVE` segment, compaction output):
 
 1. **prepare**: write `<id>.seg.tmp`, make it durable, synchronize the directory;
-2. **decide**: the EDIT, written by the Serie's writer in a sealed control log batch
+2. **decide**: make the EDIT, written by the Serie's writer in a sealed control log batch
    ([ADR-0037](0037-lotto-sigillato.md)), durable;
 3. **complete**: rename to `<id>.seg`; for removed sources, wait for the epoch,
    close descriptors, delete.
@@ -116,7 +116,7 @@ segments not yet deleted is carried into the new file.
 ### 5. Catalog: the same law
 
 - **Serie creation.** Prepare the complete `<id>.tmp/` directory (control log with
-  the initial EDIT, first segment), durable. The Serie's **document** in the catalog, with
+  the initial EDIT, first segment) and make it durable. The Serie's **document** in the catalog, with
   state `active` and `:strong` durability, is the decision. Then rename to `<id>/`.
 - **Deletion.** The document changes to `dropping`: this is the decision, and the Serie stops
   accepting requests. Then, once the epoch is passed, remove the directory and write the
@@ -143,7 +143,7 @@ start (LevelDB/RocksDB `VersionEdit`); temporary file, decision, rename.
 
 - One record type instead of seven; no durable state for restart to interpret.
 - The swap remains a single record (INV-C7, INV-C8, INV-C9); each row in the tables above is a
-  fault injection scenario.
+  fault-injection scenario.
 - A final file is never deleted without a record saying so (INV-A10).
 - Closing a segment no longer stops the writer to write hints and indexes.
 

@@ -14,20 +14,20 @@ Do two writer barriers and two reader barriers in seqlock prevent accepting fiel
 from a generation different from the counter read?
 
 One writer, one reader, nonwrapping counter, two fields. Enumerate orders of eight
-events: four writes **observed by reader**, four reads. Reads see last observed
+events: four writes **observed by reader**, four reads. Reads see the last observed
 write at that position; odd counter precedes even counter. Barriers add precedence
 edges: odd → fields → even; first counter read → fields → second read.
 Fields may be observed in either order relative to each other.
 
-Model admits reordering when one edge removed: four mutants, one per barrier.
+The model admits reordering when one edge is removed: four mutants, one per barrier.
 Oracle compares **both fields with accepted counter's generation**, not merely
-field-to-field consistency. Every mutant must produce witness order; complete
+field-to-field consistency. Every mutant must produce a witness order; the complete
 model must have zero violations. Ceiling 8! orders per configuration, 5 configurations.
 Result retains counts and deterministic witnesses.
 
 Barrier contract and forms in body preceding barrier come from
 [SBCL 2.6.9 manual, §13.7](https://www.sbcl.org/manual/#Barriers), consulted 2026-10-08.
-Model is an **abstraction** of that contract, not full ARM64/x86-64 memory-model implementation.
+The model is an **abstraction** of that contract, not full ARM64/x86-64 memory-model implementation.
 
 <a id="controllo-del-compilatore-e-limiti"></a>
 
@@ -65,5 +65,5 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
 The [structured record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-memoria-check.lisp)
 retains command, source hashes, environment, original stdout, witnesses.
 Retained disassembly compiles kernel barriers to `DMB ISHST` for writes and
-`DMB ISHLD` for reads. Result proves neither concurrent-engine correctness nor
-absence of reorderings excluded by model.
+`DMB ISHLD` for reads. The result proves neither concurrent-engine correctness nor
+absence of reorderings excluded by the model.

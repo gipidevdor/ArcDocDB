@@ -8,9 +8,9 @@
                          &key (:start index) (:end index)) entry-costruzione)
                 crea-entry-costruzione))
 (defun crea-entry-costruzione (builder key words &key (start 0) (end (length key)))
-  "Pre: costruttore libero, candidato ordinario fidato. Post: chiave posseduta e digest dal seme della Serie.
-START/END selezionano uno span copiato una sola volta, anche da un’arena piu' grande.
-Rifiuta history, metadati incoerenti e record fuori formato; nessun I/O o prova di commit."
+  "Pre: free builder, trusted ordinary candidate. Post: owned key and digest from the Serie seed.
+START/END select a span copied exactly once, even from a larger arena.
+Rejects history, inconsistent metadata, and records outside the format; no I/O or proof of commit."
   (esigi-costruttore-libero builder)
   (arcdocdb.binary:check-range key start end)
   (unless (and (<= 1 (- end start) +max-key-bytes+) (zerop (aref words 4))
@@ -32,8 +32,8 @@ Rifiuta history, metadati incoerenti e record fuori formato; nessun I/O o prova 
 (declaim (ftype (function (costruttore-pagine (or null riferimento-costruito) (member :bucket :directory :any)) null)
                 verifica-riferimento-costruito))
 (defun verifica-riferimento-costruito (builder reference kind)
-  "Pre: riferimento opzionale. Post: stesso dominio/owner, pagina gia' consegnata e tipo coerente.
-INVALID-ARGUMENT prima degli effetti; una prova non autorizza riuso o pubblicazione durevole."
+  "Pre: optional reference. Post: same domain/owner, page already delivered and consistent type.
+INVALID-ARGUMENT before effects; a proof does not authorize reuse or durable publication."
   (when reference
     (unless (and (eq (riferimento-costruito-owner reference) builder)
                  (< (identita-pagina-page (riferimento-costruito-identity reference)) (costruttore-pagine-offset builder))
@@ -43,8 +43,8 @@ INVALID-ARGUMENT prima degli effetti; una prova non autorizza riuso o pubblicazi
 ;;; REQ: REQ-IDX-001 REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine entry-costruzione) null) inserisci-entry-piano))
 (defun inserisci-entry-piano (builder entry)
-  "Pre: entry dello stesso costruttore, piano con capacita' sufficiente. Post: sonda flat canonica.
-Chiave duplicata respinta prima di I/O; ciclo <= C e confronto soltanto dopo digest uguali."
+  "Pre: entry from the same builder, plan with sufficient capacity. Post: canonical flat probe.
+Duplicate key rejected before I/O; loop <= C and comparison only after equal digests."
   (unless (eq (entry-costruzione-owner entry) builder)
     (error 'invalid-argument :reason :index-build-entry-owner))
   (let* ((plan (costruttore-pagine-plan builder)) (capacity (length plan))
@@ -61,8 +61,8 @@ Chiave duplicata respinta prima di I/O; ciclo <= C e confronto soltanto dopo dig
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (costruttore-pagine index) null) verifica-budget-costruzione))
 (defun verifica-budget-costruzione (builder pages)
-  "Pre: lotto completamente pianificato, nessun effetto. Post: quota, identita' e sink pronti per tutto il lotto.
-RESOURCE-EXHAUSTED per numero pagine/frontiera; callback preflight deve restituire NIL."
+  "Pre: batch fully planned, no effects. Post: quota, identity, and sink ready for the entire batch.
+RESOURCE-EXHAUSTED for page count/frontier; preflight callback must return NIL."
   (let ((bytes (* pages (costruttore-pagine-size builder))))
     (unless (and (plusp pages) (<= pages (- (costruttore-pagine-max-pages builder) (costruttore-pagine-written builder)))
                  (<= bytes (- +page-id-max+ (costruttore-pagine-offset builder))))
@@ -73,8 +73,8 @@ RESOURCE-EXHAUSTED per numero pagine/frontiera; callback preflight deve restitui
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine simple-vector (or null riferimento-costruito)) index) pianifica-bucket))
 (defun pianifica-bucket (builder entries next)
-  "Pre: BUSY con scratch esclusivi. Post: slot, inline/esterne e numero pagine esatti prima di append.
-Input <=7/8 C, tipi/owner/duplicati verificati; memoria O(C), nessuna raccolta del dataset."
+  "Pre: BUSY with exclusive scratch. Post: exact slots, inline/external entries, and page count before append.
+Input <=7/8 C, types/owner/duplicates verified; O(C) memory, no collection of the dataset."
   (verifica-riferimento-costruito builder next :bucket)
   (let* ((plan (costruttore-pagine-plan builder)) (size (costruttore-pagine-size builder))
          (capacity (length plan)) (available (- size +page-header+ (* capacity (1+ +entry-bytes+)))) (pages 1))

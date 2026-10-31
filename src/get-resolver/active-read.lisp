@@ -7,10 +7,10 @@
 (declaim (ftype (function (contesto-get radice-get-attiva)
                          (values segmento-get u32 u8 null &optional)) risolvi-candidato-radice-attiva-get))
 (defun risolvi-candidato-radice-attiva-get (context root)
-  "Pre: CANDIDATE; ROOT pubblicata acquisita DOPO il pin nello stesso compito EBR.
-Post: pagina della SOLA root catturata; prova NIL per ordinario, nessuna rilettura controller.
-Il caller attesta pubblicazione e lifetime: una root pianificata non autorizza GET.
-Vista estranea INVALID-ARGUMENT; invarianti FAULTED; errori/uscite liberano EBR."
+  "Pre: CANDIDATE; published ROOT acquired AFTER the pin in the same EBR task.
+Post: page from ONLY the captured root; NIL proof for ordinary, no controller reread.
+The caller attests publication and lifetime: a planned root does not authorize GET.
+Foreign view INVALID-ARGUMENT; invariants FAULTED; errors/exits release EBR."
   (esigi-stato-get context :candidate)
   (let ((complete nil))
     (unwind-protect
@@ -29,9 +29,9 @@ Vista estranea INVALID-ARGUMENT; invarianti FAULTED; errori/uscite liberano EBR.
 (declaim (ftype (function (contesto-get sorgente-get-attiva)
                          (values segmento-get u32 u8 null &optional)) risolvi-candidato-attivo-get))
 (defun risolvi-candidato-attivo-get (context source)
-  "Pre: CANDIDATE sotto EBR, sorgente associata al segmento del candidato.
-Post: root pubblicata con acquire, resolver della vista catturata; nessuna frontiera da H/EOF.
-Salute controller propagata; root/fonte impossibili FAULTED; errori liberano EBR."
+  "Pre: CANDIDATE under EBR, source bound to the candidate's segment.
+Post: root published with acquire semantics, resolver of the captured view; no frontier from H/EOF.
+Controller health propagated; impossible root/source FAULTED; errors release EBR."
   (esigi-stato-get context :candidate)
   (let ((complete nil))
     (unwind-protect
@@ -51,8 +51,8 @@ Salute controller propagata; root/fonte impossibili FAULTED; errori liberano EBR
                          (member :hit :miss :verify-failed :disabled :proof-required :buffer-required))
                 sonda-cache-attiva-get))
 (defun sonda-cache-attiva-get (context source)
-  "Pre: CANDIDATE dopo AVVIA-GET sotto EBR. Post: sonda GET con pagina ordinaria pubblicata.
-Nessun I/O/heap esplicito; il risultato resta provvisorio fino a copia e CONCLUDI-GET."
+  "Pre: CANDIDATE after AVVIA-GET under EBR. Post: GET probe with published ordinary page.
+No explicit I/O/heap allocation; result remains provisional until copying and CONCLUDI-GET."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-attivo-get context source)
     (declare (ignore proof)) ; NIL già verificato: nessun esito d'errore scartato.
     (sonda-cache-get context segment end flags)))
@@ -64,8 +64,8 @@ Nessun I/O/heap esplicito; il risultato resta provvisorio fino a copia e CONCLUD
                                  (member :inserted :present :busy :unavailable :bypassed :not-attempted)
                                  boolean boolean &optional)) leggi-record-attivo-get))
 (defun leggi-record-attivo-get (context source)
-  "Pre: nuovo AVVIA-GET nel pool I/O e sorgente acquisita nella nuova epoca.
-Post: lettura/cache dal FD readonly, byte soltanto entro la pagina pubblicata del candidato.
-Non migra pin né autorizza risposta; copia e verifica finale con tempo fresco restano obbligatorie."
+  "Pre: new AVVIA-GET in the I/O pool and source acquired in the new epoch.
+Post: read/cache from the read-only FD, bytes only within the candidate's published page.
+Does not migrate a pin or authorize a response; copying and final verification with fresh time remain mandatory."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-attivo-get context source)
     (leggi-record-get context segment end flags :outcome-offset proof)))

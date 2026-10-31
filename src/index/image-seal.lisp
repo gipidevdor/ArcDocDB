@@ -7,8 +7,8 @@
 (declaim (ftype (function (costruttore-pagine riferimento-costruito arcdocdb.io:file-io fonte-indice) sigillo-immagine)
                 prepara-sigillo-immagine))
 (defun prepara-sigillo-immagine (builder root file source)
-  "Pre: costruttore libero. Post: file esatto, root ultima, prefisso di una pagina e conteggio coerenti.
-Tutti i rifiuti avvengono prima degli effetti; il legame alla fonte e' fidato dal controller."
+  "Pre: free builder. Post: exact file, last root, one-page prefix, and consistent count.
+All rejections occur before effects; the source binding is trusted by the controller."
   (esigi-costruttore-libero builder)
   (verifica-riferimento-costruito builder root :any)
   (let* ((size (costruttore-pagine-size builder)) (identity (riferimento-costruito-identity root))
@@ -29,9 +29,9 @@ Tutti i rifiuti avvengono prima degli effetti; il legame alla fonte e' fidato da
 (declaim (ftype (function (costruttore-pagine riferimento-costruito arcdocdb.io:file-io fonte-indice
                          &key (:observer (or null function))) sigillo-immagine) sigilla-immagine-pagine))
 (defun sigilla-immagine-pagine (builder root file source &key observer)
-  "Pre: root completa e fonte canonica stabile. Post: footer append e flush esatto, costruttore SEALED.
-E' completamento del derivato, non commit dei dati. Errore dopo ammissione => FAULTED, mai riuso.
-Observer iniettabile per le frontiere: :before-footer/:after-footer/:after-flush; ritorna NIL."
+  "Pre: complete root and stable canonical source. Post: footer appended and exact flush, builder SEALED.
+Completes the derivative, not a data commit. Error after admission => FAULTED, never reused.
+Injectable observer for frontiers: :before-footer/:after-footer/:after-flush; returns NIL."
   (let* ((seal (prepara-sigillo-immagine builder root file source)) (size (sigillo-immagine-size seal))
          (end (+ (costruttore-pagine-offset builder) size)) (complete nil)
          (buffer (costruttore-pagine-buffer builder)))

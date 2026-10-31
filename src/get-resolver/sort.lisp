@@ -7,8 +7,8 @@
 (declaim (inline cifra-prova-resolver))
 (declaim (ftype (function (resolver-words index (integer 0 7)) u8) cifra-prova-resolver))
 (defun cifra-prova-resolver (proofs base digit)
-  "Pre: entry completa e DIGIT 0..7. Post: ottetto LSD del TXID senza intero u64.
-Controlli degli array safety 3 sempre attivi; nessuna modifica o allocazione esplicita."
+  "Pre: complete entry and DIGIT 0..7. Post: TXID LSD octet without a u64 integer.
+Safety 3 array checks always active; no modification or explicit allocation."
   (ldb (byte 8 (* 8 (mod digit 4)))
        (aref proofs (+ base (if (< digit 4) +proof-txid-low+ +proof-txid-high+)))))
 
@@ -16,9 +16,9 @@ Controlli degli array safety 3 sempre attivi; nessuna modifica o allocazione esp
 (declaim (ftype (function (resolver-words resolver-words resolver-words u32 (integer 0 7)) null)
                 passata-prove-resolver))
 (defun passata-prove-resolver (source target histogram count digit)
-  "Pre: array distinti di COUNT entry, 256 contatori. Post: distribuzione LSD stabile.
-INVARIANT-VIOLATION per misure, prefissi o consumo incoerenti; cicli COUNT e 256.
-Nessuna allocazione durante la passata, nessuna modifica della sorgente."
+  "Pre: distinct arrays of COUNT entries, 256 counters. Post: stable LSD distribution.
+INVARIANT-VIOLATION for inconsistent sizes, prefixes, or consumption; loops COUNT and 256.
+No allocation during the pass, no source modification."
   (unless (and (= (length source) (* count +proof-words+))
                (= (length source) (length target)) (not (eq source target))
                (= (length histogram) +radix-buckets+))
@@ -51,9 +51,9 @@ Nessuna allocazione durante la passata, nessuna modifica della sorgente."
 ;;; REQ: REQ-FOR-004 REQ-AFF-008
 (declaim (ftype (function (resolver-words) null) verifica-ordine-prove-resolver))
 (defun verifica-ordine-prove-resolver (proofs)
-  "Pre: array ordinato per TXID, offset fisici stabili su duplicati. Post: ordine e duplicati coerenti.
-CSN diversi per TXID uguale sono CORRUPTION-DETECTED; uguali ammessi senza coalescenza.
-INVARIANT-VIOLATION per ordine/offset; ciclo su cardinalità verificata."
+  "Pre: array sorted by TXID, stable physical offsets for duplicates. Post: consistent order and duplicates.
+Different CSNs for the same TXID are CORRUPTION-DETECTED; equal ones allowed without coalescing.
+INVARIANT-VIOLATION for order/offset; loop over verified cardinality."
   (unless (zerop (mod (length proofs) +proof-words+))
     (error 'invariant-violation :reason :resolver-proof-shape))
   (loop for base from +proof-words+ below (length proofs) by +proof-words+
@@ -78,9 +78,9 @@ INVARIANT-VIOLATION per ordine/offset; ciclo su cardinalità verificata."
 ;;; REQ: REQ-FOR-004 REQ-AFF-008
 (declaim (ftype (function (resolver-words) resolver-words) ordina-prove-resolver))
 (defun ordina-prove-resolver (proofs)
-  "Pre: prove private verificate, budget per due array e istogramma già autorizzato.
-Post: array ordinato stabilmente dopo otto passate limitate; zero/una prova senza scratch.
-Propaga invarianti/corruzione; percorso freddo con allocazioni esplicite limitate."
+  "Pre: verified private proofs, budget for two arrays and histogram already authorized.
+Post: array stably sorted after eight bounded passes; zero/one proof without scratch.
+Propagates invariants/corruption; cold path with bounded explicit allocations."
   (unless (zerop (mod (length proofs) +proof-words+))
     (error 'invariant-violation :reason :resolver-proof-shape))
   (when (<= (length proofs) +proof-words+)
@@ -96,9 +96,9 @@ Propaga invarianti/corruzione; percorso freddo con allocazioni esplicite limitat
 ;;; REQ: REQ-FOR-004 REQ-AFF-008
 (declaim (ftype (function (resolver-words u32 u32) (values boolean index &optional)) trova-prova-resolver))
 (defun trova-prova-resolver (proofs high low)
-  "Pre: prove immutabili ordinate; TXID in due u32. Post: prima entry uguale oppure NIL/0.
-Al più 33 passi su cardinalità u32; nessun I/O, lock, scrittura o boxing u64.
-INVARIANT-VIOLATION per forma o bound; offset/CSN non sono ancora una prova di lettura."
+  "Pre: sorted immutable proofs; TXID as two u32s. Post: first equal entry or NIL/0.
+At most 33 steps over u32 cardinality; no I/O, lock, write, or u64 boxing.
+INVARIANT-VIOLATION for shape or bound; offset/CSN are not yet a read proof."
   (unless (zerop (mod (length proofs) +proof-words+))
     (error 'invariant-violation :reason :resolver-proof-shape))
   (let ((left 0) (right (floor (length proofs) +proof-words+)))

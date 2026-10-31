@@ -7,9 +7,9 @@ before reading the six new kernel files. Support was written by a native subordi
 reviewer, also without reading new product or spike; delivery and
 model were reread by the main author. Only frozen
 contract, RFC 8949, repository documentation, and already-frozen cold header
-oracle were used. No product parser is used as expectation.
-This local static reading is independent of kernel author and is not
-human approval. No campaign was run by reviewer.
+oracle were used. No product parser supplies the expected results.
+This local static reading is independent of the kernel author and is not
+human approval. No campaign was run by the reviewer.
 
 After reading, the coordinator authorized only a supplement to the
 existing depth test: 100 single-child arrays followed by indefinite
@@ -44,8 +44,8 @@ Git blobs, checked after test freeze and before campaigns:
 The 24 named tests include manual vectors, 256 ASTs with metadata generated
 during construction and a trailing mutation for each, 512 spans over 256 leads,
 4096 deterministic random spans of 1..64 bytes (seed `49CBA017`), truncations at
-every offset of two mixed fixtures. Independent model is cold recursive,
-with 64-byte and 64-call limits; accumulates arguments arithmetically and uses
+every offset of two mixed fixtures. The independent model is cold and recursive,
+with 64-byte and 64-call limits; it accumulates arguments arithmetically and uses
 manual UTF-8 grammar for error priority. SBCL confirms only
 text acceptance, without supplying expected offsets.
 
@@ -58,10 +58,10 @@ array, index endpoints, and span before scratch access; then
 workspace, aliases, configurations, and byte-budget in agreed order. In alias
 test, kinds array is made nonzero before rejection to observe an
 improper change. This fixture observes kinds, while absence of any
-preflight write is checked statically on complete kernel.
+preflight write is checked statically on the complete kernel.
 
-Parent is charged once at the start of non-tag terminal. A tag counts
-one node and retains pending without adding frame; a tag before a
+The parent is charged once at the start of a non-tag terminal. A tag counts
+one node and retains the pending state without adding a frame; a tag before a
 container consumes arity only when that container starts. Indefinite
 maps alternate key/value even for tagged children or containers.
 Break checks tag, indefinite frame, and parity, counts no node, and closes
@@ -72,18 +72,18 @@ is the last valid index of 102 slots. Indefinite strings do not nest
 between chunks; both supplementary fixtures exercise that combined limit.
 Tags occupy no frames. Empty arrays and maps still increase
 peak. Node and depth limits precede increment/push; each step
-consumes at least one byte, outer loop is span-bounded, and drain bounded to 102
-steps. No recursion, wait, or thread creation in product.
+consumes at least one byte, outer loop is span-bounded, and the drain is bounded to 102
+steps. The product performs no recursion, waits, or thread creation.
 
-u64 arguments remain high/low u32. Guard of zero high and low within room
-precedes payload addition; map compares pairs with floor(room/2) before
+u64 arguments remain high/low u32. A guard requiring zero high and low within room
+precedes payload addition; the map check compares pairs with floor(room/2) before
 doubling. No boxed u64 integer needs construction. Truncated
 payload precedes UTF-8; each chunk is validated separately with absolute
 offsets. Complete root signals trailing before interpreting a second
 header. Exactly three values emerge after checking cursor, budget, and
 absence of residual frames/depth/tags; no AST or decoded content emerges.
 
-Scratch and buffer belong to caller. Scratch retains no buffer
+Scratch and buffer belong to the caller. Scratch retains no buffer
 references; both arrays have read-only references and exclusive contents.
 Success shows no explicit constructors; this does not attest zero heap allocation,
 which must be measured on successful calls with preallocated fixtures and scratch.
@@ -100,10 +100,10 @@ Wait 15 s, join 20 s, and cleanup 1 s are bounded; cleanup
 checks every known worker has terminated. This is not a pool-scaling
 measurement or concurrent apply implementation.
 
-No open functional defect detected. Strict build,
+No open functional defect was detected. Strict build,
 lint, traceability, runtime, coverage, heap measurement, and mutations remain pending. Internal defenses
-propagate `invariant-violation`; kernel owns neither Serie nor controller
-and does not implement `FAULTED` transition. Deterministic profile, tag semantics,
+propagate `invariant-violation`; the kernel owns neither the Serie nor the controller
+and does not implement the `FAULTED` transition. Deterministic profile, tag semantics,
 duplicate/ordered keys, writer admission, and engine gates remain
 to be implemented or verified by subsequent owners.
 
@@ -122,6 +122,6 @@ to be implemented or verified by subsequent owners.
 | 7. Decisions | [Inventory](cbor-struttura-decisioni.md): 20 compound decisions, no denominator exclusion; coverage and MC/DC not attested. |
 | 8. Ownership | Immutable buffer, exclusive scratch per call/worker, no retained buffer or mutable global state. |
 | 9. Integration | ASDF orders header/UTF-8 before scanner and test support before suite; `make check` and matrix remain to be acquired on snapshot. |
-| 10. Standard | Complete FTYPEs, typed slots, safety3, docstrings, and active guards; automatic checks pending, no exception approved. |
+| 10. Standard | Complete FTYPEs, typed slots, safety 3, docstrings, and active guards; automatic checks pending, no exception approved. |
 | 11. Parallelism | No wait/lock/shared write per operation between Serie in kernel; private two-worker fixture, runtime test still pending. |
 | 12. Durability | No I/O, delete, or durable change: not applicable to kernel. |

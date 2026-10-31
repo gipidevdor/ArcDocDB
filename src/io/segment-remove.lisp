@@ -13,8 +13,8 @@
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string arcdocdb.binary:u64) prova-rimozione-segmento) prova-segmento-rimovibile))
 (defun prova-segmento-rimovibile (directory file name id)
-  "Pre: caller proved ID is REMOVED by durable CONTROL, header identity and reader quiescence.
-Post: exact canonical leaf/inode under the exclusive directory, one-use removal permit.
+  "Pre: caller proved that durable CONTROL marks ID as REMOVED, verified header identity, and proved reader quiescence.
+Post: exact canonical leaf/inode under the exclusive directory, single-use removal permit.
 This factory verifies physical binding; it does not infer logical obsolescence from absence."
   (esigi-aperto file :input) (esigi-esclusiva-directory directory)
   (unless (and (plusp id) (eq (file-backend file) (file-backend directory))

@@ -6,9 +6,9 @@
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche t) (values ritiro u64 &optional)) prenota-ritiro))
 (defun prenota-ritiro (registry resource)
-  "Pre: RESOURCE descrittore canonico non NIL, ancora referenziato; nessuno swap già eseguito.
-Post: ticket e generazione originale, riferimento forte e crediti per slot/avanzamento E.
-RESOURCE-EXHAUSTED prima di mutare per K/u64; INVALID-ARGUMENT per NIL o duplicato."
+  "Pre: RESOURCE is a canonical non-NIL descriptor, still referenced; no swap already performed.
+Post: ticket and original generation, strong reference and slot/E-advance credits.
+RESOURCE-EXHAUSTED before mutation for K/u64; INVALID-ARGUMENT for NIL or duplicate."
   (when (null resource) (error 'invalid-argument :reason :retirement-resource-null))
   (sb-thread:with-mutex ((registro-epoche-mutex registry))
     (verifica-contatori-epoche registry)
@@ -38,8 +38,8 @@ RESOURCE-EXHAUSTED prima di mutare per K/u64; INVALID-ARGUMENT per NIL o duplica
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche retirement-slot (unsigned-byte 8)) null) libera-ritiro))
 (defun libera-ritiro (registry slot terminal-state)
-  "Pre: mutex, stato/originalità verificati dal chiamante. Post: risorsa e credito rilasciati.
-Solo annullamento prima dello swap o completamento dopo reclaim; interruzione fail-stop."
+  "Pre: mutex, state/original identity verified by the caller. Post: resource and credit released.
+Only cancellation before swap or completion after reclamation; interruption causes fail-stop."
   (let ((complete nil))
     (unwind-protect
          (progn
@@ -54,8 +54,8 @@ Solo annullamento prima dello swap o completamento dopo reclaim; interruzione fa
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) null) annulla-ritiro))
 (defun annulla-ritiro (ticket expected-generation)
-  "Pre: nessuno swap/riferimento rimosso; evento originale. Post: credito libero, stessa identità idempotente.
-INVALID-ARGUMENT se il ritiro è già pubblicato, riusato o concluso con un altro esito."
+  "Pre: no swap/reference removed; original event. Post: free credit, same identity idempotent.
+INVALID-ARGUMENT if retirement is already published, reused, or completed with another outcome."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)
@@ -69,9 +69,9 @@ INVALID-ARGUMENT se il ritiro è già pubblicato, riusato o concluso con un altr
 ;;; REQ: REQ-CMP-005 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) null) pubblica-ritiro))
 (defun pubblica-ritiro (ticket expected-generation)
-  "Pre: ogni riferimento da indice/versioni trattenute rimosso; risorsa ancora leggibile e ticket riservato.
-Post: r=E, E avanzata senza wrap; gli eventi di reclaim devono conservare la generazione.
-Non rende nulla durevole e non elimina file. Duplicato/riuso: INVALID-ARGUMENT; interruzione: FAULTED."
+  "Pre: every index/retained-version reference removed; resource still readable and ticket reserved.
+Post: r=E, E advanced without wrap; reclaim events must retain generation.
+Makes nothing durable and deletes no files. Duplicate/reuse: INVALID-ARGUMENT; interruption: FAULTED."
   (let ((registry (ritiro-registry ticket)))
     (sb-thread:with-mutex ((registro-epoche-mutex registry))
       (verifica-contatori-epoche registry)

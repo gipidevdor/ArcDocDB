@@ -8,8 +8,8 @@
                                          (:arena-bytes integer)) frammento-indice)
                 crea-frammento-indice))
 (defun crea-frammento-indice (index &key (depth 0) (prefix 0) (arena-bytes 65536))
-  "Pre: controller/writer, geometria desiderata del rebuild/split. Post: BUILDING vuoto.
-Budget di 41*C + arena verificato prima di allocare; la capacità non cresce in-place."
+  "Pre: controller/writer, desired rebuild/split geometry. Post: empty BUILDING.
+Budget of 41*C + arena verified before allocation; capacity does not grow in place."
   (esigi-indice-sano index)
   (unless (and (<= 0 depth (indice-primario-max-depth index))
                (<= 0 prefix (1- (ash 1 depth))) (<= 1 arena-bytes #x100000000))
@@ -30,10 +30,10 @@ Budget di 41*C + arena verificato prima di allocare; la capacità non cresce in-
 (defun crea-indice-primario (&key (capacity 8192) (max-depth 20)
                                 (directory-budget-bytes 8388608) (fragment-budget-bytes 8388608)
                                 (arena-bytes 65536) (hash-seed-high nil) (hash-seed-low nil))
-  "Pre: controller; limiti della configurazione locale, non della dimensione totale di una Serie.
-Post: root iniziale G=0, generazione 0, un frammento vuoto. Nessun thread o I/O.
-Hash opzionale configurato con entrambi gli u32 immutabili; NIL/NIL conserva la API a digest fidati.
-INVALID-ARGUMENT :primary-hash-seed-configuration per seme incompleto o fuori u32, prima degli array."
+  "Pre: controller; local configuration limits, not the total size of a Serie.
+Post: initial root G=0, generation 0, one empty fragment. No thread or I/O.
+Optional hash configured with both immutable u32s; NIL/NIL preserves the trusted-digest API.
+INVALID-ARGUMENT :primary-hash-seed-configuration for incomplete or non-u32 seed, before arrays."
   (unless (or (and (null hash-seed-high) (null hash-seed-low))
               (and (typep hash-seed-high 'u32) (typep hash-seed-low 'u32)))
     (error 'invalid-argument :reason :primary-hash-seed-configuration))
@@ -51,16 +51,16 @@ INVALID-ARGUMENT :primary-hash-seed-configuration per seme incompleto o fuori u3
 ;;; REQ: REQ-IDX-003 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function () contesto-indice) crea-contesto-indice))
 (defun crea-contesto-indice ()
-  "Pre: controller prima dell'avvio dei worker. Post: scratch privato, riusabile senza allocazione.
-La quantita di contesti è limitata dal pool; nessun collegamento a una Serie o pin acquisito."
+  "Pre: controller before worker startup. Post: private scratch, reusable without allocation.
+The pool bounds the number of contexts; no Serie binding or pin acquired."
   (%make-contesto-indice (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)))
 
 ;;; REQ: REQ-IDX-005 REQ-AFF-004
 (declaim (inline esigi-frammento-writer))
 (declaim (ftype (function (indice-primario frammento-indice u32) null) esigi-frammento-writer))
 (defun esigi-frammento-writer (index fragment high)
-  "Pre: gettone writer esclusivo. Post: dominio, prefisso del digest e stato scrivibile verificati.
-RETIRED non si riapre; digest incoerente con il frammento rifiutato prima dei cambi."
+  "Pre: exclusive writer token. Post: domain, digest prefix, and writable state verified.
+RETIRED does not reopen; a digest inconsistent with the fragment is rejected before changes."
   (esigi-frammento-sano index fragment)
   (when (eq (frammento-indice-exposure fragment) :retired)
     (error 'invalid-argument :reason :primary-fragment-retired))
@@ -72,8 +72,8 @@ RETIRED non si riapre; digest incoerente con il frammento rifiutato prima dei ca
 ;;; REQ: REQ-IDX-007 REQ-AFF-004
 (declaim (ftype (function (indice-primario u32) frammento-indice) frammento-corrente-indice))
 (defun frammento-corrente-indice (index high)
-  "Pre: writer con gettone della Serie; digest della chiave. Post: frammento corrente canonico.
-Solo per preflight/mutazioni del writer; non autorizza un reader a conservare slot o location."
+  "Pre: writer with the Serie token; key digest. Post: canonical current fragment.
+Only for writer preflight/mutations; does not authorize a reader to retain slots or locations."
   (esigi-indice-sano index)
   (let* ((root (acquisisci-root index))
          (fragment (aref (root-indice-directory root) (prefix-hash high (root-indice-depth root)))))

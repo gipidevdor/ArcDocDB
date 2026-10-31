@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007
 (declaim (ftype (function (simple-vector) simple-vector) copia-campi-documento))
 (defun copia-campi-documento (fields)
-  "Pre: forma e budget gia verificati. Post: copie possedute, testi UTF-8 verificati.
-Nessun buffer o vettore del chiamante viene trattenuto."
+  "Pre: shape and budgets already verified. Post: owned copies, verified UTF-8 text.
+No caller buffer or vector retained."
   (let ((result (make-array (length fields))))
     (dotimes (i (length fields) result)
       (let* ((field (svref fields i)) (alias (svref field 1)) (path (svref field 2))
@@ -23,11 +23,11 @@ Nessun buffer o vettore del chiamante viene trattenuto."
 (defun crea-configurazione-full-text (fields index-id generation-id contract-version
                                     &key (limits #(16777216 1024 1048576 67108864 268435456))
                                       (profile c::+profile+) (max-memory 67108864))
-  "Pre: ID positivi gia assegnati; FIELDS=#(#(id alias-u8 #(key-u8 ...)) ...), ordinati.
-LIMITS=#(input-bytes term-bytes tokens prepared-bytes work), cinque u64 positivi.
-Post: dichiarazione copiata immutabile e bound META conservativo, senza autorita di catalogo.
-INVALID-ARGUMENT per forma/duplicati, UNSUPPORTED-FORMAT per profilo;
-RESOURCE-EXHAUSTED prima di copiare oltre META/memoria; propaga errori UTF-8."
+  "Pre: positive IDs already assigned; FIELDS=#(#(id alias-u8 #(key-u8 ...)) ...), ordered.
+LIMITS=#(input-bytes term-bytes tokens prepared-bytes work), five positive u64s.
+Post: immutable copied declaration and conservative META bound, without catalog authority.
+INVALID-ARGUMENT for shape/duplicates, UNSUPPORTED-FORMAT for profile;
+RESOURCE-EXHAUSTED before copying beyond META/memory; propagates UTF-8 errors."
   (unless (and (typep fields 'simple-vector) (<= 1 (length fields) 16)
                (typep index-id '(integer 1 18446744073709551615))
                (typep generation-id '(integer 1 18446744073709551615))
@@ -52,9 +52,9 @@ RESOURCE-EXHAUSTED prima di copiare oltre META/memoria; propaga errori UTF-8."
 ;;; REQ: REQ-SEC-010
 (declaim (ftype (function (t) index) limite-fisso-indice-full-text))
 (defun limite-fisso-indice-full-text (config)
-  "Pre: dichiarazione validata. Post: header/directory, META massimo della dichiarazione,
-35 byte padding e footer; riservare una volta per segmento, poi sommare U(documento).
-INVALID-ARGUMENT per tipo, INVARIANT-VIOLATION per bound interno incoerente."
+  "Pre: validated declaration. Post: header/directory, declaration's maximum META,
+35 padding bytes and footer; reserve once per segment, then add U(documento).
+INVALID-ARGUMENT for type, INVARIANT-VIOLATION for inconsistent internal bound."
   (unless (typep config 'configurazione-full-text) (error 'invalid-argument :reason :fulltext-config-input))
   (unless (<= 1 (configurazione-full-text-meta-bound config) f::+meta-max-bytes+)
     (error 'invariant-violation :reason :fulltext-config-meta-bound))

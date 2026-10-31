@@ -24,7 +24,7 @@ the explicit compatibility profile.
 `valuta-modo-indice(policy, current, budget, resident, paged, migration)` returns
 two immediate values: destination `:residente`/`:paginato` and action.
 `current` is `:iniziale`, `:residente`, or `:paginato`. Budget in 0..2^60-1 bytes;
-estimates in 1..2^60-1. The conservative limit keeps calculations within SBCL64 fixnums.
+estimates in 1..2^60-1. The conservative limit keeps calculations within 64-bit SBCL fixnums.
 
 - `resident` and `paged`: conservative peaks of the next work if admitted
   in the respective mode, including directory, keys, history, metadata, and transients.
@@ -36,7 +36,7 @@ estimates in 1..2^60-1. The conservative limit keeps calculations within SBCL64 
   reservations. It is not an instantaneous free-memory measurement.
 
 These are trusted, consistent controller-supplied estimates: the function neither
-measures OS, reserves RAM, nor demonstrates an estimate is conservative.
+measures the OS nor reserves RAM, and it does not demonstrate that an estimate is conservative.
 Future measurement must include retired pages and objects still retained
 by GC. The coordinator must ensure simultaneous quotas fit the
 global budget, leaving headroom for OS and other components.

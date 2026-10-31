@@ -7,9 +7,9 @@
 (declaim (ftype (function (control-recuperato file-io index octets index index index u32 index) null)
                 verifica-lettura-active))
 (defun verifica-lettura-active (control input size scratch chunk bytes batches batch-records batch-bytes)
-  "Pre: EOF fisico SIZE autorevole e stabile, scratch esclusivo. Post: preflight senza syscall/mutazioni.
-Alias con l'identità rifiutato prima del range; budget, capacità e backend controllati.
-CORRUPTION-DETECTED per header assente; argomenti/budget/capacità con condizioni tipizzate."
+  "Pre: authoritative stable physical EOF SIZE, exclusive scratch. Post: preflight without syscall/mutations.
+Alias with identity rejected before range; budgets, capabilities, and backend checked.
+CORRUPTION-DETECTED for missing header; typed conditions for arguments/budgets/capabilities."
   (let* ((previous (arcdocdb.control::control-recuperato-input control))
          (view (arcdocdb.control::control-recuperato-view control)))
     (arcdocdb.io::esigi-aperto previous :input)
@@ -35,9 +35,9 @@ CORRUPTION-DETECTED per header assente; argomenti/budget/capacità con condizion
 ;;; REQ: REQ-REC-001 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (file-io index octets index) null) leggi-corpo-active))
 (defun leggi-corpo-active (input size scratch chunk)
-  "Pre: header già letto nello scratch, preflight conclusa, EOF stabile nel pool I/O.
-Post: corpo fino a EOF letto dallo stesso FD e capacità ancora aperta; nessun header riletto.
-Ciclo CEILING((size-64)/chunk); errori I/O originali propagati, nessuna chiusura/troncatura."
+  "Pre: header already read into scratch, preflight complete, stable EOF in the I/O pool.
+Post: body through EOF read from the same FD and capability still open; no header reread.
+CEILING((size-64)/chunk) loop; original I/O errors propagated, no close/truncation."
   (unless (and (plusp chunk) (>= size +segment-header-bytes+))
     (error 'invalid-argument :reason :active-recovery-read-range))
   (check-range scratch 0 size)

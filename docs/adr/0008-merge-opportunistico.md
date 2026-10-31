@@ -13,7 +13,7 @@
 
 ## Context
 
-MERGE is a structural optimization: it improves locality and segment count, but it is
+MERGE is a structural optimization: it improves locality and reduces segment count, but it is
 not required for correctness or space reclamation. Running it at the wrong time competes
 with user traffic for CPU, device, memory, and cache resources.
 
@@ -30,7 +30,7 @@ A segment is a MERGE candidate only if **all** conditions hold:
 5. the engine is under **low load**.
 
 The Compaction Scheduler evaluates load before starting a MERGE (CPU, P95/P99, queues,
-throughput, WAL and flushes, NVMe and I/O queue, backlog, active workers). Under high load it does not start
+throughput, WAL and flushes, NVMe and I/O queue, backlog, active workers). Under high load, it does not start
 MERGE, reduces its concurrency, and prioritizes requests and WAL. If load rises during
 a MERGE, it starts no additional MERGEs and may slow or suspend noncritical work.
 

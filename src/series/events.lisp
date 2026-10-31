@@ -6,8 +6,8 @@
 ;;; REQ: REQ-CON-002 REQ-AFF-004
 (declaim (ftype (function (controllore-serie t t) commit-serie) %check-event))
 (defun %check-event (controller event generation)
-  "Pre: capacità/numero catturati nel messaggio. Post: oggetto del controller ed epoch esatti.
-INVALID-ARGUMENT per evento obsoleto/estraneo; invarianti per indice/slot corrotti."
+  "Pre: capability/number captured in the message. Post: exact controller object and epoch.
+INVALID-ARGUMENT for a stale/foreign event; invariants for corrupted index/slot."
   (unless (typep event 'commit-serie) (error 'invalid-argument :reason :serie-event))
   (unless (and (eq (commit-serie-controller event) controller)
                (typep generation 'index) (plusp generation)
@@ -22,8 +22,8 @@ INVALID-ARGUMENT per evento obsoleto/estraneo; invarianti per indice/slot corrot
 ;;; REQ: REQ-CON-002 REQ-AFF-004
 (declaim (ftype (function (controllore-serie t t) commit-serie) %live-event))
 (defun %live-event (controller event generation)
-  "Pre: evento catturato. Post: identità corrente e lotto ancora conservato.
-INVALID-ARGUMENT per slot libero; INVARIANT-VIOLATION per perdita del riferimento."
+  "Pre: captured event. Post: current identity and batch still retained.
+INVALID-ARGUMENT for a free slot; INVARIANT-VIOLATION for a lost reference."
   (%check-event controller event generation)
   (when (eq (commit-serie-phase event) :libero)
     (error 'invalid-argument :reason :serie-event-state))
@@ -33,15 +33,15 @@ INVALID-ARGUMENT per slot libero; INVARIANT-VIOLATION per perdita del riferiment
 ;;; REQ: REQ-MVC-008 REQ-CON-002
 (declaim (ftype (function (u32 u32 u32 u32) boolean) %csn-after-p))
 (defun %csn-after-p (high low previous-high previous-low)
-  "Pre: due coppie u32. Post: ordine lessicografico esatto, nessun boxing u64.
-Non modifica stato né consulta il registro."
+  "Pre: two u32 pairs. Post: exact lexicographic order, no u64 boxing.
+Does not modify state or query the registry."
   (or (> high previous-high) (and (= high previous-high) (> low previous-low))))
 
 ;;; REQ: REQ-WAL-005 REQ-MVC-008 REQ-AFF-008
 (declaim (ftype (function (controllore-serie lotto t t) null) %check-admission))
 (defun %check-admission (controller lotto expected-root level)
-  "Pre: owner/ring sani. Post: budget, ordine radice/byte e forma del lotto validati.
-Rifiuti tipizzati prima dell'adozione; il caller mantiene lotto e CSN."
+  "Pre: healthy owner/ring. Post: budgets, root/byte order, and batch shape validated.
+Typed rejections before adoption; the caller retains batch and CSN."
   (when (= (controllore-serie-count controller) (length (controllore-serie-slots controller)))
     (error 'resource-exhausted :reason :serie-full))
   (when (= (controllore-serie-event-generation controller) most-positive-fixnum)
@@ -60,8 +60,8 @@ Rifiuti tipizzati prima dell'adozione; il caller mantiene lotto e CSN."
 ;;; REQ: REQ-WAL-005 REQ-MVC-008 REQ-AFF-008
 (declaim (ftype (function (controllore-serie commit-serie u32 u32) null) %check-new-slot))
 (defun %check-new-slot (controller event high low)
-  "Pre: slot di tail e parole CSN verificate. Post: slot libero e ordine CSN crescente.
-Invariante per slot occupato; INVALID-ARGUMENT per duplicato/ordine CSN del caller."
+  "Pre: tail slot and verified CSN words. Post: free slot and increasing CSN order.
+Invariant for an occupied slot; INVALID-ARGUMENT for the caller's duplicate/CSN order."
   (unless (eq (commit-serie-phase event) :libero) (%serie-invariant controller :serie-tail))
   (when (commit-serie-lotto event) (%serie-invariant controller :serie-tail))
   ;; Il controller conserva le parole dell'ultimo CSN ammesso, indipendentemente dal riuso.
@@ -73,8 +73,8 @@ Invariante per slot occupato; INVALID-ARGUMENT per duplicato/ordine CSN del call
 ;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-MVC-008 REQ-CON-002
 (declaim (ftype (function (controllore-serie lotto) (values index u32 u32 &optional)) %capture-token))
 (defun %capture-token (controller lotto)
-  "Pre: lotto sealed fornito al controller. Post: token esatto senza mutazione.
-Rifiuti ordinari propagati; invariante WAL rende FAULTED Archivio prima dell'adozione."
+  "Pre: sealed batch supplied to the controller. Post: exact token without mutation.
+Ordinary rejections propagate; a WAL invariant makes the Archivio FAULTED before adoption."
   (handler-case
       (multiple-value-bind (slot high low) (leggi-csn-lotto lotto)
         (verifica-token-lotto lotto (controllore-serie-registry controller)
@@ -85,8 +85,8 @@ Rifiuti ordinari propagati; invariante WAL rende FAULTED Archivio prima dell'ado
 ;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie lotto (member :riuso :ritiro)) null) %check-lotto-release))
 (defun %check-lotto-release (controller lotto kind)
-  "Pre: evento corrente e ritiro/riuso richiesto. Post: preflight WAL superata senza mutare.
-Rifiuti ordinari propagati; invariante nel validatore rende FAULTED Archivio."
+  "Pre: current event and requested retirement/reuse. Post: WAL preflight passed without mutation.
+Ordinary rejections propagate; an invariant in the validator makes the Archivio FAULTED."
   (handler-case
       (case kind
         (:riuso (verifica-riuso-lotto lotto))
@@ -98,9 +98,9 @@ Rifiuti ordinari propagati; invariante nel validatore rende FAULTED Archivio."
 (declaim (ftype (function (controllore-serie t lotto t t t)
                          (values commit-serie index &optional)) registra-commit-serie))
 (defun registra-commit-serie (controller lease lotto expected-root root level)
-  "Pre: lotto sigillato, radice immutabile pronta, PRIMA di qualsiasi dispatch I/O.
-Post: evento preallocato con token catturato e generation, ordine pianificato avanzato.
-Full/rifiuti lasciano il lotto al caller; uscita durante l'adozione richiede fail-stop Archivio."
+  "Pre: sealed batch, immutable root ready, BEFORE any I/O dispatch.
+Post: preallocated event with captured token and generation, planned order advanced.
+Full/rejections leave the batch with the caller; an exit during adoption requires Archivio fail-stop."
   (%check-owner controller lease) (%require-healthy controller)
   (%check-admission controller lotto expected-root level)
   (multiple-value-bind (slot high low) (%capture-token controller lotto)
@@ -130,8 +130,8 @@ Full/rifiuti lasciano il lotto al caller; uscita durante l'adozione richiede fai
 ;;; REQ: REQ-MVC-008 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (controllore-serie commit-serie) null) %check-captured-token))
 (defun %check-captured-token (controller event)
-  "Pre: evento vivo valido. Post: token catturato ancora esatto nel lotto.
-Un token perso/cambiato è difetto interno: FAULTED Archivio, condizione originale propagata."
+  "Pre: valid live event. Post: captured token still exact in the batch.
+A lost/changed token is an internal defect: Archivio FAULTED, original condition propagated."
   (handler-case
       (verifica-token-lotto (the lotto (commit-serie-lotto event))
                             (controllore-serie-registry controller) (controllore-serie-log controller)
@@ -142,8 +142,8 @@ Un token perso/cambiato è difetto interno: FAULTED Archivio, condizione origina
 ;;; REQ: REQ-CON-002 REQ-MVC-008
 (declaim (ftype (function (controllore-serie commit-serie) null) %check-publish-head))
 (defun %check-publish-head (controller event)
-  "Pre: evento vivo. Post: lavoro è il primo CSN non risolto della Serie.
-INVALID-ARGUMENT per ordine o fase; INVARIANT-VIOLATION per contatore perso."
+  "Pre: live event. Post: work is the Serie's first unresolved CSN.
+INVALID-ARGUMENT for order or phase; INVARIANT-VIOLATION for a lost counter."
   (unless (eq event (svref (controllore-serie-slots controller) (controllore-serie-publish-head controller)))
     (error 'invalid-argument :reason :serie-publish-order))
   (unless (member (commit-serie-phase event) '(:preparato :pubblicato))

@@ -81,7 +81,7 @@ These campaigns also remain preregistered and unexecuted until freeze.
 
 ## Contract and scope
 
-The bounded controller for one Serie is observed, with dedicated CSN register and
+The bounded controller for one Serie is observed, with a dedicated CSN register and
 segment log. The root is an immutable opaque reference: two alternating
 preexisting symbols, without hash index, snapshot, or engine pool.
 The controller adopts an already `:sealed` batch before starting I/O.
@@ -138,7 +138,7 @@ Each explicit invocation, including `--self-test`, loads ASD before
 installing recursive ASDF translation `**/*.* → fasl/**/*.*` in the
 run's exclusive directory. Before compilation, destinations of all
 product sources are checked, including nested modules.
-Product build is forced and C4 source also compiled in the
+The product build is forced and the C4 source is also compiled in the
 private cache, with warnings and style-warnings treated as errors, safety 3.
 The C4 FASL is preserved as compilation evidence, without reloading
 the driver or making a second invocation. The function table is resolved only after build;
@@ -148,7 +148,7 @@ or fixture construction enters the windows.
 Each fixture preallocates file/backend, log, 256-slot register, 512-byte
 single-record batch, single-batch group, and controller with the
 default capacity of 64 events. A 16-byte key, 64-byte value,
-and maximum u64 file-id preboxed before measurement. Token descriptor,
+and maximum u64 file-id are preboxed before measurement. Token descriptor,
 event identity and generation history, counters, and raw records
 are also preallocated. The sensor requires SBCL where every u32
 is representable as a fixnum.
@@ -168,10 +168,10 @@ resolution, and retirement inside the clock and under the same lease.
 
 After write/flush, expected end, backend bytes, and written/durable
 frontiers must match; batch and group must be durable and log healthy. After
-publication the root is the other symbol, event/token are resolved,
+publication, the root is the other symbol, event/token are resolved,
 `H = ultimo-CSN = CSN atteso`. After group release and retirement the batch
-is open and empty, token/event free, group building, controller
-counts `(count, unresolved, active-io) = (0, 0, 0)`, and root still
+is open and empty, token/event free, the group is building, controller
+counts are `(count, unresolved, active-io) = (0, 0, 0)`, and root still
 published. Final observations also preserve write/flush
 counts, bytes, adoptions/publications/retirements, and observed generation/events.
 
@@ -179,20 +179,20 @@ counts, bytes, adoptions/publications/retirements, and observed generation/event
 
 ## Serial and parallel campaigns
 
-Warmup of 1024 cycles on a separate fixture, followed by full GC outside
-measurement. Fresh measured fixture for every attempt. All serial runs
-come first: five replicas with CSN base `(0, 0)`, then five with base
+Warm up for 1024 cycles on a separate fixture, followed by full GC outside
+measurement. Use a fresh measured fixture for every attempt. All serial runs
+come first: five replicates with CSN base `(0, 0)`, then five with base
 `(#x80000000, #xfffffff0)`. The second base's sixteenth iteration
 crosses carry in the measured window without reconstructing a u64.
 
 Each sample starts at 20000 cycles, minimum 20 timer ticks. Only a
 correct but below-resolution window permits doubling. At most
 five attempts: 20000, 40000, 80000, 160000, 320000; all are
-preserved, without discarding anomalies or choosing the best replica.
+preserved, without discarding anomalies or choosing the best replicate.
 The serial gate requires exactly zero heap bytes on success for
 the entire window with oracles. No throughput threshold.
 
-Then 1, 2, and 4 real workers, three replicas per count, high base with
+Then 1, 2, and 4 real workers, three replicates per count, high base with
 carry. Each worker owns an independent simulated Archivio: register,
 file, log, batch, group, controller, and event history. Fixtures are
 warmed separately; thread construction, ready gate, and GC precede
@@ -208,7 +208,7 @@ from first start to last end. SBCL's heap counter is process-global:
 worker observations overlap, are not summed,
 and are not attributed to individual threads. Process heap between start
 gate and join, including runtime coordination, is observational.
-Replicas and attempts follow one another without other sensor activity
+Replicates and attempts follow one another without other sensor activity
 inside a window.
 
 <a id="autoverifica-c4-e-persistenza"></a>
@@ -232,7 +232,7 @@ and validated again; persistence is a gate, not a diagnostic note.
 Schema 1 reports: argv, SBCL/OS/CPU/memory/CPU count, commit and checkout
 state, before/after source SHA-256, verified FASL mapping,
 raw windows (ticks and heap before/after, sink, completed work), all
-replicas and attempts, final oracles, reasons, and failure diagnostics.
+replicates and attempts, final oracles, reasons, and failure diagnostics.
 A change to files or their list prevents success. The initial report
 is written before build; an error preserves the final report
 and produces nonzero exit with tool name and rule.
@@ -286,7 +286,7 @@ Without an explicit directory, the tool chooses an exclusive name. Output:
 `report.lisp`, `self-test-metrics.lisp`, `build.log`, private `fasl/` cache;
 the final report is also emitted to stdout. The outer record preserves
 the full command, stdout/stderr, and exit code. `--bench` includes
-self-test. Maximum budget: 10 serial samples and 9 parallel replicas,
+self-test. Maximum budget: 10 serial samples and 9 parallel replicates,
 each with five windows; maximum sum 620000 cycles per sample/worker.
 
 The backend performs no real data I/O. Cycles/s and bytes/s measure the

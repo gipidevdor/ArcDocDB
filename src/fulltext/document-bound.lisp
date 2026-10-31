@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text index) boolean) termine-documento-ripetuto-p))
 (defun termine-documento-ripetuto-p (task token)
-  "Pre: run SEALED e token >0 valido. Post: stessa coppia campo/termine del precedente.
-Confronto bytewise con costo esplicito, senza hash o allocazione per termine."
+  "Pre: SEALED run and valid token >0. Post: same field/term pair as the previous token.
+Bytewise comparison with explicit cost, without hash or per-term allocation."
   (let* ((run (preparazione-full-text-run task)) (data (r::indice-posizionale-tokens run))
          (p (* token r::+token-width+)) (q (- p r::+token-width+))
          (size (aref data (+ p r::+length+))))
@@ -20,9 +20,9 @@ Confronto bytewise con costo esplicito, senza hash o allocazione per termine."
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) misura-passo-documento))
 (defun misura-passo-documento (task)
-  "Pre: run SEALED privato. Post: una occorrenza misurata o DONE con U conservativo.
-U=16*campi + somma_distinti(32+term-bytes+16) +4*token; costo fisso una volta per file.
-Un budget file insufficiente rifiuta prima di rendere disponibile qualsiasi risultato."
+  "Pre: private SEALED run. Post: one occurrence measured or DONE with conservative U.
+U=16*fields + sum_distinct(32+term-bytes+16) +4*tokens; fixed cost once per file.
+Insufficient file budget rejects before making any result available."
   (let* ((run (preparazione-full-text-run task)) (token (preparazione-full-text-measure task)))
     (lavoro-documento task)
     (when (< token (r::indice-posizionale-count run))

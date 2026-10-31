@@ -4,7 +4,7 @@
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) index) residuo-documento))
 (defun residuo-documento (task)
-  "Pre: contatore valido. Post: lavoro disponibile strettamente positivo, oppure rifiuto."
+  "Pre: valid counter. Post: strictly positive available work, or rejection."
   (let ((remaining (- (preparazione-full-text-work-limit task) (preparazione-full-text-work task))))
     (unless (plusp remaining) (error 'resource-exhausted :reason :fulltext-document-work))
     remaining))
@@ -12,8 +12,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) prossimo-campo-documento))
 (defun prossimo-campo-documento (task)
-  "Pre: FIELD, input ancora posseduto. Post: un assente saltato, analisi avviata o SEAL.
-Il limite token e complessivo, incluse le stringhe vuote dopo esaurimento dei token."
+  "Pre: FIELD, input still owned. Post: one absent field skipped, analysis started, or SEAL.
+The token limit is cumulative, including empty strings after token exhaustion."
   (let* ((field (preparazione-full-text-field task)) (run (preparazione-full-text-run task))
          (limits (configurazione-full-text-effective (preparazione-full-text-config task)))
          (analysis (preparazione-full-text-analysis task)))
@@ -36,8 +36,8 @@ Il limite token e complessivo, incluse le stringhe vuote dopo esaurimento dei to
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) prepara-copia-documento))
 (defun prepara-copia-documento (task)
-  "Pre: analisi DONE. Post: copia avviata dopo controllo cumulativo di token e staging.
-Rifiuti nel solo contesto privato, prima di qualsiasi append o riserva del writer."
+  "Pre: analysis DONE. Post: copying started after cumulative token and staging checks.
+Rejections only in the private context, before any append or writer reservation."
   (let* ((run (preparazione-full-text-run task)) (analysis (preparazione-full-text-analysis task))
          (config (preparazione-full-text-config task)) (limits (configurazione-full-text-effective config))
          (count (+ (r::indice-posizionale-count run) (a::spazio-full-text-token-count analysis)))
@@ -54,8 +54,8 @@ Rifiuti nel solo contesto privato, prima di qualsiasi append o riserva del write
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) analizza-passo-documento))
 (defun analizza-passo-documento (task)
-  "Pre: ANALYSIS esclusiva. Post: un passo analitico, costo reale addebitato globalmente.
-Il sotto-budget dell'analizzatore impedisce di produrre risultati oltre il residuo."
+  "Pre: exclusive ANALYSIS. Post: one analysis step, actual cost charged globally.
+The analyzer sub-budget prevents producing results beyond the remaining budget."
   (let* ((analysis (preparazione-full-text-analysis task)) (before (a::spazio-full-text-work analysis))
          (status (a:passo-analisi-full-text analysis 1)))
     (lavoro-documento task (- (a::spazio-full-text-work analysis) before))
@@ -65,8 +65,8 @@ Il sotto-budget dell'analizzatore impedisce di produrre risultati oltre il resid
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) run-passo-documento))
 (defun run-passo-documento (task)
-  "Pre: COPY o SORT. Post: un passo del run e budget cumulativo comprendente i confronti.
-Fine COPY rilascia l'analisi, fine SORT abilita la misura, senza pubblicazione."
+  "Pre: COPY or SORT. Post: one run step and cumulative budget including comparisons.
+End of COPY releases analysis, end of SORT enables measurement, without publication."
   (let* ((run (preparazione-full-text-run task)) (before (r::indice-posizionale-work run)))
     (setf (r::indice-posizionale-work-limit run) (+ before (residuo-documento task)))
     (let ((status (r:passo-indice-posizionale run 1)))

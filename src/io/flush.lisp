@@ -6,10 +6,10 @@
 ;;; REQ: REQ-AFF-001 REQ-STO-003
 (declaim (ftype (function (file-io) file-offset) durable-flush))
 (defun durable-flush (file)
-  "Pre: file append/directory esclusivo; tutti i byte da coprire già scritti.
-Post: una sincronizzazione riuscita, capacità aperta, frontiera osservata aggiornata.
-Uscita incompleta => OPEN diventa FAULTED, CLOSED resta chiusa; condizione originale propagata.
-Nessun retry o conferma al client; directory usa fsync, file flush forte."
+  "Pre: exclusive append/directory file; all bytes to cover already written.
+Post: one successful synchronization, open capability, observed frontier updated.
+Incomplete exit => OPEN becomes FAULTED, CLOSED stays closed; original condition propagated.
+No retry or client confirmation; directory uses fsync, file uses strong flush."
   (let ((mode (file-mode file)) (backend (file-backend file))
         (written (file-written file)) (complete nil))
     (unless (member mode '(:append :directory))

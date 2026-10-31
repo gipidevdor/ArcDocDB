@@ -20,8 +20,8 @@
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-004 REQ-SEC-010
 (defstruct (indice-posizionale (:constructor %crea-indice-posizionale (tokens bytes lengths)) (:copier nil))
-  "Preallocato, un solo builder; dopo SEALED solo letture condivise.
-Row e l'identita locale della versione, non una chiave logica o uno snapshot."
+  "Preallocated, one builder only; after SEALED, shared reads only.
+Row is local version identity, not a logical key or snapshot."
   (tokens (make-array 0 :element-type 'u32) :type parole-u32 :read-only t)
   (bytes (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   (lengths (make-array 0 :element-type 'u32) :type parole-u32 :read-only t)
@@ -37,8 +37,8 @@ Row e l'identita locale della versione, non una chiave logica o uno snapshot."
                          indice-posizionale) crea-indice-posizionale))
 (defun crea-indice-posizionale (&key (max-tokens 65536) (max-bytes 4194304)
                                    (max-fields 4096) (max-memory 67108864))
-  "Pre: configurazione fredda. Post: run esclusivo con capacita fisse.
-INVALID-ARGUMENT per capacita; RESOURCE-EXHAUSTED prima di allocare oltre MAX-MEMORY."
+  "Pre: cold configuration. Post: exclusive run with fixed capacities.
+INVALID-ARGUMENT for capacities; RESOURCE-EXHAUSTED before allocation beyond MAX-MEMORY."
   (unless (and (typep max-tokens '(integer 1 4294967295))
                (typep max-bytes '(integer 1 4294967295)) (typep max-fields '(integer 1 4294967295))
                (typep max-memory 'index))
@@ -53,7 +53,7 @@ INVALID-ARGUMENT per capacita; RESOURCE-EXHAUSTED prima di allocare oltre MAX-ME
 ;;; REQ: REQ-SEC-010
 (declaim (ftype (function (indice-posizionale &optional index) null) consuma-lavoro-indice))
 (defun consuma-lavoro-indice (run &optional (units 1))
-  "Pre: builder esclusivo. Post: lavoro incrementato entro limite, altrimenti errore."
+  "Pre: exclusive builder. Post: work incremented within limit, otherwise error."
   (when (> units (- (indice-posizionale-work-limit run) (indice-posizionale-work run)))
     (error 'resource-exhausted :reason :fulltext-index-work))
   (incf (indice-posizionale-work run) units) nil)

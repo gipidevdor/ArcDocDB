@@ -48,7 +48,7 @@ Consumption precedes close; failures are preserved and fault the maintenance bou
 ;;; REQ: REQ-CMP-007 REQ-MVC-007 REQ-AFF-008
 (declaim (ftype (function (motore) null) compaction-require-quiescent))
 (defun compaction-require-quiescent (engine)
-  "Pre: READY M1 owner before resources. Post: one reader slot, no active pin/snapshot or retirement obligation.
+  "Pre: READY M1 owner before acquiring resources. Post: one reader slot, no active pin/snapshot or retirement obligation.
 This current-only algorithm never silently reclaims historical versions when a borrowed snapshot exists."
   (let* ((runtime (motore-runtime engine)) (epochs (rt:epoche-runtime-archivio runtime))
          (snapshots (rt:snapshot-runtime-archivio runtime)))
@@ -63,9 +63,9 @@ This current-only algorithm never silently reclaims historical versions when a b
 ;;; REQ: REQ-CMP-001 REQ-REC-001 REQ-LIM-003 REQ-AFF-018
 (declaim (ftype (function (motore compaction-plan u64) null) compaction-reserve-recovery))
 (defun compaction-reserve-recovery (engine plan first)
-  "Pre: accepted verified geometry, no output effects. Post: replacement/prune and one recovery fit all counters.
-A crash after replacement needs a recovery checkpoint AND prune; normal completion needs a later checkpoint.
-The fresh ACTIVE must leave an unused u32 ID for recovery. Refuse before creating any output or ACTIVE."
+  "Pre: accepted, verified geometry, no output effects. Post: replacement, pruning and one recovery fit within all counters.
+A crash after replacement requires a recovery checkpoint AND pruning; normal completion requires a later checkpoint.
+The fresh ACTIVE must leave an unused u32 ID for recovery. Reject before creating any output or ACTIVE."
   (unless (<= (+ first (compaction-plan-output-count plan)) (1- #xffffffff))
     (error 'resource-exhausted :reason :engine-compaction-id-reserve))
   (let* ((buffer (motore-scratch engine)) (header (+ f:+log-header-bytes+ arcdocdb.record:+header-bytes+))

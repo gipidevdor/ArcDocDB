@@ -3,7 +3,7 @@
 # Sealed images and adoption of the paged root
 
 Increment authorized on 2026-10-28: [ADR-0063](../adr/0063-immagini-sigillate-indice-primario.md),
-REQ-IDX-010, REQ-REC-001, INV-I8, INV-A2, INV-A8, INV-P6. Connects
+REQ-IDX-010, REQ-REC-001, INV-I8, INV-A2, INV-A8, INV-P6. It connects
 [builder](costruzione-indice-paginato.md), codec, cache, and
 [reader](lettura-indice-paginato.md) to read-only verification and an adoptable
 serial view. **M1 continues using the resident index.** Canonical inventory/name,
@@ -76,11 +76,11 @@ attacker and creates no new source of truth.
 
 `sigilla-immagine-pagine(builder, root-proof, append-file, source,
 :observer nil)` requires the builder's exact file, start at SIZE,
-last root, and consistent count. Preflight before effects; footer
-prepared in a private buffer. Then exact append and durable flush to expected
+last root, and consistent count. Preflight precedes effects; the footer is
+prepared in a private buffer. Then an exact append and durable flush reach the expected
 EOF. Only then does the builder enter SEALED and return a seal.
 A seal **is not** proof of an adoptable image: complete reading
-remains mandatory. No pages added after SEALED. Error/nonlocal
+remains mandatory. No pages are added after SEALED. Error/nonlocal
 exit after admission causes FAULTED; ambiguous offsets are not reused.
 
 Injectable observer at boundaries `:before-footer`, `:after-footer`,
@@ -122,14 +122,14 @@ entries are also rejected. Comparing payloads alone is insufficient.
 Callback `validator(key, start, end, words)` receives read-only scratch,
 retains/modifies none of it, and is non-reentrant. T certifies exact membership
 in source; NIL rejects derivative; non-Boolean returns are contract
-errors. Finally exact count is checked. Uniqueness, membership, and
+errors. Finally, the exact count is checked. Uniqueness, membership, and
 source cardinality give **entry** coverage. Unused pages without entries
 may remain; not every physical page is certified reachable
 from root. The file is rechecked open even after the last
 callback: no valid proof is returned on a closed capability.
 
 Footer, prefix, scan, edge, reconstruction, and lookup visits are
-charged to the cumulative budget. Cache hits included. Budget measures derivative visits; the
+charged to the cumulative budget. Cache hits are included. Budget measures derivative visits; the
 source validator retains its own controller-supplied limits. No derivative I/O after
 exhaustion;
 a limit is not an ABSENT result. Every lookup also has local
@@ -147,16 +147,16 @@ reservation: no measured RSS limit or qualification beyond RAM.
 `crea-vista-indice-paginato(source)` starts without a root. Only
 `pubblica-immagine-verificata(view, image)` accepts the opaque proof produced
 above, checking owner, complete source, and open file before swap.
-Rejection preserves previous root. Swap is only a reference
+Rejection preserves the previous root. Swap is only a reference
 in the actor's private view, without new commit, catalog, close/reclamation,
 or concurrency guarantee.
 
 `leggi-vista-indice-paginato(view, key, start, end, words)` calculates digest
 with verified seed and returns a LIVE/ABSENT candidate. It does not yet authorize
 a document: pinning, MVCC, and record CRC/key verification remain with existing
-GET. Borrowed file is checked open even on cache hit.
+GET. The borrowed file is checked open even on cache hit.
 
-`invalida-vista-indice-paginato(view, new-source)` retires root before the
+`invalida-vista-indice-paginato(view, new-source)` retires root before installing the
 new binding. Different UUIDs or regressive CSN are rejected without effects;
 same CSN with different token is allowed for a physical source change.
 A rootless view rejects reads with `resource-exhausted`, without false

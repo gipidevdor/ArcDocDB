@@ -5,7 +5,7 @@
 Inventory of compound decisions in `src/codec/utf8.lisp`. Public-data
 oracles are declared before product reading in the
 [method](utf8-metodo.md). Internal guards defend the contract between helpers;
-public caller cannot falsify them after correct preflight.
+a public caller cannot falsify them after correct preflight.
 
 | Function and decision | Conditions and independent cases |
 |---|---|
@@ -20,8 +20,8 @@ E0 A0/ED 9F/F0 90/F4 8F, and four excluded prefixes. After valid lead,
 truncation precedes content; after verified width, invalid
 continuation precedes scalar restriction.
 
-No `or` decision present in product. Final `cond` branch
-classifies an expected malformed initial byte; signals `corruption-detected`,
+No `or` decision is present in the product. Final `cond` branch
+classifies an expected malformed initial byte; it signals `corruption-detected`,
 not internal inconsistency. Other internal guards signal
 `invariant-violation`; future worker boundary must apply fail-stop.
 

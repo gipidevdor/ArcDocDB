@@ -32,7 +32,7 @@ The pool and transaction engine remain modules to integrate.
 | `posizione-scritta`, `posizione-durevole` | new-file frontiers observed by owner |
 
 `file-io` is a capability with a private descriptor. The caller owns
-namespace, prevents external modifications, and keeps descriptor live until
+the namespace, prevents external modifications, and keeps descriptor live until
 all readers finish. Append and flush on the same file have one owning
 task. There is no global lock, thread per Serie, or mutable state across
 files/Serie. A successful or failed reader does not write capability state.
@@ -113,7 +113,7 @@ inline alien calls; no C/C++/Rust or project library outside Lisp.
 18 new tests include short I/O, one byte per step, partial EOF, EIO,
 ENOSPC, EINTR, frontiers, budgets, ambiguous close, cleanup errno, file types,
 symlink with trailing separator, CLOEXEC, concurrent preads, and two v1/v2 SEAL batches
-written with one flush. All 10 targeted mutations detected; no warnings
+written with one flush. All 10 targeted mutations were detected; no warnings
 or style-warnings in product compilation, lint without violations.
 
 ```sh
@@ -157,7 +157,7 @@ inline copies, and defensive guards in denominator; it does not equal MC/DC.
 Successful flush still requires OS, filesystem, and medium to honor
 the declared guarantee: it is not proof against a lying device.
 
-Native constants compared with installed headers and primary sources:
+Native constants were compared with installed headers and primary sources:
 [Apple XNU fcntl.h](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/fcntl.h),
 [Linux UAPI fcntl.h](https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h).
 

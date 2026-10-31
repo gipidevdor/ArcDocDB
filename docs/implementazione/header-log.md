@@ -2,26 +2,26 @@
 
 # Control-log headers
 
-Module [log-header.lisp](../../src/storage/log-header.lisp) prepares and verifies
+The module [log-header.lisp](../../src/storage/log-header.lisp) prepares and verifies
 headers of `control.log` and `multiserie.log` under
 [ADR-0052](../adr/0052-header-dei-log-di-controllo.md).
-Operates on stable exclusive buffers, without I/O or shared state.
+It operates on stable exclusive buffers, without I/O or shared state.
 
 <a id="contratto"></a>
 
 ## Contract
 
 `scrivi-header-log(buffer, start, log-kind, identity, :version)` returns
-end of 64-byte header. `verifica-header-log(buffer, start, end, log-kind,
-identity)` returns header end and actual version. `log-kind` required:
+the end of the 64-byte header. `verifica-header-log(buffer, start, end, log-kind,
+identity)` returns header end and actual version. `log-kind` is required:
 `:control` or `:multiserie`; expected identity is a specialized
 16-byte vector supplied by authoritative source. Default written version is 2;
-only 1 and 2 recognized. Buffer may contain further bytes afterward.
+only 1 and 2 are recognized. Buffer may contain further bytes afterward.
 
 Every encoder preflight precedes first write. Destination and identity
 cannot be the same vector. Verifier neither writes nor returns
-identity views: compares all 16 bytes and returns only two integers.
-Work bounded by 64 header bytes; no locks or writes between Serie.
+identity views: it compares all 16 bytes and returns only two integers.
+Work is bounded by 64 header bytes; no locks or writes between Serie.
 
 | Error | Condition |
 |---|---|
@@ -60,15 +60,15 @@ error classification, and unchanged buffers. Strict build and lint
 pass; earlier tests remain included.
 
 [Eight mutations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-header-log/mutazioni.lisp)
-detected after successful unchanged baseline: CRC, each magic half,
+were detected after successful unchanged baseline: CRC, each magic half,
 identity, truncation bound, and each reserved area. Full logs and
 campaign report [preserved as data](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-header-log/mutazioni-dati.lisp).
 Self-tests verify allocation counter, missing branch, missing/ambiguous
 target, and distinction between detected defect and failed compilation.
 
 [Coverage](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-header-log/copertura-dati-finali.lisp)
-reports 218/224 forms (97.3%) and 22/22 branches for new codec. Full
-denominator preserved. Five declarative forms and default form
+reports 218/224 forms (97.3%) and 22/22 branches for new codec. The full
+denominator is preserved. Five declarative forms and default form
 `(version 2)` appear unexecuted to SB-COVER; public test without
 `:version` nevertheless runs and compares v2 oracle. Instrumentation is not
 modified to increase count. Branch coverage does not
@@ -87,7 +87,7 @@ database performance inferred from in-memory codecs.
 
 First reading: format, boundaries, and errors. Second: oracles, buffer
 ownership, bounds, and integration; default-version test rechecked.
-No codec defect detected. Tool audit corrected benchmark
+No codec defect was detected. Tool audit corrected benchmark
 package-loading order and added mandatory unchanged mutation baseline
 before campaigns.
 

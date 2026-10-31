@@ -12,19 +12,19 @@
 
 ;;; REQ: REQ-CMP-007 REQ-MVC-005 REQ-CON-004 REQ-AFF-008
 (defstruct (ambito-get (:constructor crea-ambito-get (epochs snapshots)) (:copier nil))
-  "Pre: controller associa una sola volta EBR e registro snapshot dello stesso Archivio.
-Post: identità canonica immutabile condivisa dalle viste e dai worker dell'Archivio.
-TYPE-ERROR per tipi invalidi; la correttezza dell'associazione iniziale è del controller."
+  "Pre: controller binds EBR and snapshot registry of the same Archivio once only.
+Post: immutable canonical identity shared by Archivio views and workers.
+TYPE-ERROR for invalid types; correctness of the initial binding belongs to the controller."
   (epochs nil :type registro-epoche :read-only t)
   (snapshots nil :type registro-snapshot :read-only t))
 (declaim (ftype (function (registro-epoche registro-snapshot) ambito-get) crea-ambito-get))
 
 ;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001 REQ-CMP-007
 (defstruct (vista-get-serie (:constructor %make-vista-get-serie (scope primary cache identity lookup)) (:copier nil))
-  "Pre: controller associa indice, cache e identità della stessa Serie.
-Post: legami immutabili, identità copiata; nessun accessor di array esportato.
-LOOKUP opzionale appartiene al controller: stato e ownership devono restare coerenti con questa vista.
-Non certifica la pubblicazione dei commit o la salute del controller."
+  "Pre: controller binds index, cache, and identity of the same Serie.
+Post: immutable bindings, copied identity; no array accessor exported.
+Optional LOOKUP belongs to the controller: state and ownership must remain consistent with this view.
+Does not certify commit publication or controller health."
   (scope nil :type ambito-get :read-only t)
   (primary nil :type (or null indice-primario) :read-only t)
   (lookup nil :type (or null function) :read-only t)
@@ -34,9 +34,9 @@ Non certifica la pubblicazione dei commit o la salute del controller."
 ;;; REQ: REQ-FOR-001 REQ-FOR-002 REQ-AFF-002 REQ-CMP-007
 (defstruct (segmento-get (:constructor %make-segmento-get
                          (owner file high low version origin)) (:copier nil))
-  "Pre: header letto da FILE e verificato contro identità autorevole della Serie/segmento.
-Post: capacità readonly immutabile; file mantenuto aperto dal controller fino al reclaim EBR.
-Non certifica il prefisso committed: la frontiera autorevole è richiesta a ogni accesso."
+  "Pre: header read from FILE and verified against authoritative Serie/segment identity.
+Post: immutable read-only capability; file kept open by the controller until EBR reclamation.
+Does not certify the committed prefix: the authoritative frontier is required on every access."
   (owner nil :type vista-get-serie :read-only t)
   (file nil :type file-io :read-only t)
   (high 0 :type u32 :read-only t)
@@ -47,9 +47,9 @@ Non certifica il prefisso committed: la frontiera autorevole è richiesta a ogni
 ;;; REQ: REQ-CON-004 REQ-CCH-002 REQ-MVC-004 REQ-AFF-008
 (defstruct (contesto-get (:constructor %make-contesto-get (scope reader probe content limit bytes proof))
                         (:copier nil))
-  "Pre: registri dello stesso Archivio, scratch allocato prima dell'avvio del worker.
-Post: IDLE, senza richiesta o location. Solo il worker modifica i campi e i buffer.
-FAULTED terminale; buffer non esportati, nessuna continuazione o risorsa conservata in coda."
+  "Pre: registries of the same Archivio, scratch allocated before worker startup.
+Post: IDLE, without a request or location. Only the worker modifies fields and buffers.
+FAULTED is terminal; buffers not exported, no continuation or resource retained in a queue."
   (scope nil :type ambito-get :read-only t)
   (reader nil :type contesto-lettura :read-only t)
   (probe nil :type contesto-indice :read-only t)
@@ -67,13 +67,13 @@ FAULTED terminale; buffer non esportati, nessuna continuazione o risorsa conserv
 ;;; REQ: REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (contesto-get) index) payload-contesto-get))
 (defun payload-contesto-get (context)
-  "Pre: contesto costruito. Post: payload dei buffer propri e di scratch indice/read.
-Esclude header/oggetti Lisp, EBR, registro snapshot, vista, cache, output e GC; non è RSS."
+  "Pre: constructed context. Post: payload of its own buffers and index/read scratch.
+Excludes Lisp headers/objects, EBR, snapshot registry, view, cache, output, and GC; not RSS."
   (+ (length (contesto-get-bytes context)) +get-fixed-payload+))
 
 ;;; REQ: REQ-CON-004 REQ-AFF-004
 (declaim (ftype (function (contesto-get) get-state) stato-contesto-get))
 (defun stato-contesto-get (context)
-  "Pre: worker proprietario o controller dopo join. Post: stato locale osservato senza attesa.
-Non è un'autorizzazione concorrente a prendere o riusare il worker."
+  "Pre: owning worker or controller after join. Post: local state observed without waiting.
+Not concurrent authorization to take or reuse the worker."
   (contesto-get-state context))

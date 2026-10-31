@@ -91,7 +91,7 @@ Archivio fail-stop, without returning it as an ordinary public state.
 
 Every local effect acquires explicit ownership. Cleanup releases its
 resource; an incomplete exit makes the controller Archivio FAULTED,
-retaining references and original cause. It attempts no rollback of root
+retaining references and the original cause. It attempts no rollback of root
 CAS or the registry. In that situation, the coordinator must stop
 **the entire Archivio**: one Serie's controller does not stop the others.
 Automatic recovery of a task-abandoned lease is not promised.

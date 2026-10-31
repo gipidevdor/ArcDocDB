@@ -14,12 +14,12 @@ use bytes or verified UTF-8 text without an intermediate copy.
 The string must have definite length and a minimal header. MT3 text
 must be valid UTF-8; MT2 bytes are opaque. The function returns
 exactly three fixnums, even for an empty payload. For `61 61 FF`, with
-START0 and END3, the result is `3,1,2`: byte FF stays in the tail.
+START 0 and END 3, the result is `3,1,2`: byte FF stays in the tail.
 
 MAX-BYTES limits the entire authorized window END-START, including the
-tail. The maximum limit is 16MiB. The simple u8 buffer must remain stable
+tail. The maximum limit is 16 MiB. The simple u8 buffer must remain stable
 during the call and while the returned range is in use. Multiple
-workers can read it together; the function owns no scratch.
+workers can read it concurrently; the function owns no scratch.
 
 The [preregistered method](cbor-stringa-lettura-metodo.md) specifies errors,
 precedence, and limits; the [preserved results](cbor-stringa-lettura-risultati.md)

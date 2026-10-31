@@ -30,7 +30,7 @@ CLOSED prefixes are reverified by their canonical visitor; ACTIVE prefix was ful
 ;;; REQ: REQ-CMP-001 REQ-CMP-009 REQ-MVC-006
 (declaim (ftype (function (motore compaction-plan octets index index u64 index) boolean) compaction-selected-p))
 (defun compaction-selected-p (engine plan buffer start end segment offset)
-  "Pre: verified ordinary record. Post: latest global live location, or exact maximum-CSN witness.
+  "Pre: verified ordinary record. Post: returns true exactly when the record is the latest global live location or carries the exact maximum CSN.
 Selecting all sources including ACTIVE makes obsolete tombstones safely discardable in serial current-only M1."
   (let ((csn (b:leggi-u64 buffer (+ start arcdocdb.record::+stamp-offset+))))
     (when (= csn (compaction-plan-maximum plan)) (return-from compaction-selected-p t))

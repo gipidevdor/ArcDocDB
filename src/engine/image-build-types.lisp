@@ -10,8 +10,8 @@
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-AFF-008
 (declaim (ftype (function (opzione-indice-paginato) u64) id-immagine-costruzione))
 (defun id-immagine-costruzione (option)
-  "Pre: nome validato dalla factory. Post: ID esatto dal nome fresco, 1..2^60-1.
-INVALID-ARGUMENT prima dell'I/O per ID non rappresentabile; nessun riuso di un nome esistente."
+  "Pre: factory-validated name. Post: exact ID from the fresh name, 1..2^60-1.
+INVALID-ARGUMENT before I/O for an unrepresentable ID; no reuse of an existing name."
   (let ((id (parse-integer (opzione-indice-paginato-name option) :start 8 :end 24 :radix 16)))
     (unless (<= 1 id arcdocdb.index.page::+page-id-max+)
       (error 'invalid-argument :reason :engine-image-build-id))
@@ -19,8 +19,8 @@ INVALID-ARGUMENT prima dell'I/O per ID non rappresentabile; nessun riuso di un n
 
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-LIM-003
 (defstruct (piano-immagine-motore (:constructor %make-piano-immagine-motore) (:copier nil))
-  "Pre: owner M1 esclusivo, fonte e singolo frammento canonici. Post: metadati senza copie delle chiavi.
-Solo gli ID degli slot vengono riordinati; fonte e indici del motore restano intatti."
+  "Pre: exclusive M1 owner, canonical source and single fragment. Post: metadata without key copies.
+Only slot IDs are reordered; engine source and indexes remain intact."
   (source nil :type arcdocdb.index.page:fonte-indice :read-only t)
   (fragment nil :type p:frammento-indice :read-only t)
   (revision 0 :type index :read-only t)
@@ -34,9 +34,9 @@ Solo gli ID degli slot vengono riordinati; fonte e indici del motore restano int
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (motore opzione-indice-paginato) index) payload-costruzione-immagine))
 (defun payload-costruzione-immagine (engine option)
-  "Pre: indice residente M1, opzione valida. Post: riserva conservativa dei payload array propri.
-Include worst case chiavi del lotto, piano, builder, stack radix e verifica; esclude header/GC/RSS.
-Il controller deve riservare separatamente metadati e transitori del runtime; nessun I/O o allocazione."
+  "Pre: M1 resident index, valid option. Post: conservative reservation of owned array payloads.
+Includes worst-case batch keys, plan, builder, radix stack, and verification; excludes headers/GC/RSS.
+The controller must reserve runtime metadata and transients separately; no I/O or allocation."
   (let* ((size (opzione-indice-paginato-size option))
          (capacity (nth-value 1 (arcdocdb.index.page::geometria-pagina size)))
          (entry-limit (floor (* capacity 7) 8)))

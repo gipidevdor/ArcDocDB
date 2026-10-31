@@ -4,8 +4,8 @@
 
 Preregistered on 2026-10-22 on base `eebd5685`. Author's direction
 focuses development on Serie startup → recovery → admission cycle,
-reusing existing vertical path. New functionality, including
-further full text unnecessary for bootstrap, suspended in this work.
+reusing the existing vertical path. New functionality, including
+further full text unnecessary for bootstrap, is suspended in this work.
 
 <a id="perimetro"></a>
 
@@ -13,17 +13,17 @@ further full text unnecessary for bootstrap, suspended in this work.
 
 One Serie, one serial owner in I/O process, append-only, canonical
 v1/v2 formats, CRC32C, PUT/GET/tombstone, strong commit, reopen, two real SIGKILLs.
-Archivio/Serie identities explicitly configured and checked in headers.
+Archivio/Serie identities are explicitly configured and checked in headers.
 No new authority inferred from directory name. Multiseries
-catalog, 2PC, compaction, historical MVCC, optimizations excluded.
+catalog, 2PC, compaction, historical MVCC, optimizations are excluded.
 No alternative format, append to old segments, or truncation.
 
-Production entry owns FDs, recovery set, writer through close.
-Acquires nonblocking directory exclusion before observing or
+The production entry point owns FDs, recovery set, writer through close.
+It acquires nonblocking directory exclusion before observing or
 modifying storage. Opening/recovery keep admission closed;
 only after complete CONTROL, sources, durable new ACTIVE, CSN gate, index, and GET
-root does engine become READY. Failures propagate typed condition
-and close admission; no partially ready capability returned.
+root does the engine become READY. Failures propagate a typed condition
+and close admission; no partially ready capability is returned.
 
 <a id="ordine"></a>
 
@@ -64,32 +64,32 @@ and close admission; no partially ready capability returned.
 | M1-D11 | Cleanup attempts all capabilities, preserves primary cause and secondary faults |
 | M1-D12 | Real interface reuses same path, without harness in server process |
 
-Sources committed/frozen, two readings and independent review before
+Sources are committed/frozen, with two readings and an independent review before
 executions. Deterministic tests, negatives, FI authorized by author;
 every command through recorder, failures included. Compact lossless
 evidence in repository, source hashes, common collector with parallel
 workers. No benchmark this milestone and no claim of power-loss,
 permanently failed file-system, unexecuted Linux, or MC/DC qualification
 without corresponding campaigns. Milestone remains open until real scenario
-and criteria demonstrated; static checks do not close it.
+and criteria are demonstrated; static checks do not close it.
 
 <a id="integrazione-preregistrata-capienza-dellindice"></a>
 
 ## Preregistered integration: index capacity
 
 After full verification of variant `b5f09b96`, an additional
-M1-D08/D09 boundary closed: load, key arena, slot credit, and revision must
+M1-D08/D09 boundary was closed: load, key arena, slot credit, and revision must
 be checked before CSN/append with same canonical mutator checks.
-No concurrent reservation: M1 owner remains sole owner through application.
+No concurrent reservation: the M1 owner remains sole owner through application.
 
 Both v1/v2 regressions saturate load 28/32 and 64-byte arena
-with four 16-byte keys respectively. Additional request must produce
+with four 16-byte keys respectively. An additional request must produce
 RESOURCE-EXHAUSTED leaving READY, CSN, all bytes unchanged. Checks
-include allowed update, DELETE, reopening with same budgets, arena not
+include allowed update, DELETE, reopening with the same budgets, arena not
 implicitly reclaimed by tombstone. Isolated negative process loads
 only previous writer from immutable commit `b5f09b96` and must detect
 exactly FAULTED in place of READY. No mutated-process result
-qualifies product; replaced source and negative storage preserved.
+qualifies product; replaced source and negative storage are preserved.
 
 Final full verification may run independent checks in parallel:
 product tests; lint/trace and self-checks/experiments; historical preservation.

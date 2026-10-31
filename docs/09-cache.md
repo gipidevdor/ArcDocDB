@@ -38,8 +38,8 @@ version incompatible with its snapshot (INV-M3).
 > is guaranteed by construction, because every reader reaches the cache with the location
 > of the version its snapshot must see. CLEAN/MERGE relocation changes locations:
 > relocated records reenter the cache on the first read
-> ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); loss of warmth is measured, rather than
-> offset by a mechanism (RSK-10). The cache participates in no protocol and the
+> ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); loss of cache warmth is measured rather than
+> compensated for by another mechanism (RSK-10). The cache participates in no protocol and the
 > system gives the same answers with the cache disabled (INV-A12).
 
 <a id="questioni-decise-e-rischi"></a>
@@ -49,7 +49,7 @@ version incompatible with its snapshot (INV-M3).
 - **QA-17** ([ADR-0025](adr/0025-cache-per-location.md)) — Granularity (document or block), key, per-Serie budget, and criteria for
   allocation between Serie.
 - **RSK-10** — Double caching with the operating system's page cache if segments are read
-  through buffered I/O or `mmap`; loss of warmth after compaction.
+  through buffered I/O or `mmap`; loss of cache warmth after compaction.
 - Cache memory is subject to the same GC considerations as indexes: payloads must not
   live as collector-managed objects (QA-18).
 

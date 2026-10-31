@@ -27,7 +27,7 @@ zero. It does not reconstruct a u64. The corpus includes transitions between SHI
 31, 32, and larger shifts, as well as unaligned neighbors.
 
 Cold checks cover arguments, forms, and the full result, including
-selection64→32→16, shorten-able/non-shorten-able NaNs, and the physical tail beyond
+selection64→32→16, shortenable/nonshortenable NaNs, and the physical tail beyond
 END. Internal guards and unexpected defaults remain in the coverage
 denominator even when unreachable from the valid public domain.
 The [preregistration](cbor-float-scrittura-metodo.md) defines the method;

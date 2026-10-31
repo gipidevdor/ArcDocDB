@@ -10,8 +10,8 @@
 (declaim (ftype (function (frammento-indice octets fixnum fixnum u32 contenuto-slot)
                          (values fixnum boolean &optional)) sonda-ricostruzione))
 (defun sonda-ricostruzione (fragment key start end low work)
-  "Pre: writer esclusivo e span sorgente verificato. Post: lookup controllato nel dominio dell'indice.
-Un guasto del banco in qualsiasi candidato del probe rende terminale anche l'indice, senza cambiare causa."
+  "Pre: exclusive writer and verified source span. Post: checked lookup in the index domain.
+A bank fault in any probe candidate also makes the index terminal, without changing the cause."
   (let ((index (frammento-indice-owner fragment)))
     (esigi-frammento-sano index fragment)
     (multiple-value-bind (slot found)
@@ -23,8 +23,8 @@ Un guasto del banco in qualsiasi candidato del probe rende terminale anche l'ind
 ;;; REQ: REQ-IDX-003 REQ-IDX-005 REQ-AFF-004
 (declaim (ftype (function (frammento-indice fixnum contenuto-slot) boolean) campiona-ricostruzione))
 (defun campiona-ricostruzione (fragment slot words)
-  "Pre: writer esclusivo, slot entro C, buffer privato. Post: T vivo, NIL libero/deleted.
-Controllo e payload devono concordare: transitori impossibili nel writer sono guasti terminali."
+  "Pre: exclusive writer, slot within C, private buffer. Post: T live, NIL free/deleted.
+Control and payload must agree: transients impossible in the writer are terminal faults."
   (let* ((index (frammento-indice-owner fragment))
          (control (aref (frammento-indice-controls fragment) slot))
          (bank (frammento-indice-bank fragment)))
@@ -48,9 +48,9 @@ Controllo e payload devono concordare: transitori impossibili nel writer sono gu
 (declaim (ftype (function (frammento-indice fixnum u32 u32 contenuto-slot contenuto-slot) null)
                 verifica-digest-ricostruzione))
 (defun verifica-digest-ricostruzione (source slot high low words work)
-  "Pre: payload vivo campionato, digest fidato della chiave allo slot originale.
-Post: prefisso, fingerprint e lookup originale concordano; INVALID-ARGUMENT altrimenti.
-Non calcola l'hash: i bit alti non discriminati dal sorgente restano un contratto del chiamante."
+  "Pre: sampled live payload, trusted key digest at the original slot.
+Post: prefix, fingerprint, and original lookup agree; INVALID-ARGUMENT otherwise.
+Does not calculate the hash: high bits not distinguished by the source remain a caller contract."
   (let* ((index (frammento-indice-owner source)) (arena (frammento-indice-arena source))
          (offset (ldb (byte 32 0) (aref words 2))) (size (ldb (byte 16 32) (aref words 2))))
     (esigi-frammento-writer index source high)
@@ -66,9 +66,9 @@ Non calcola l'hash: i bit alti non discriminati dal sorgente restano un contratt
                                           contenuto-slot contenuto-slot)
                          (values fixnum fixnum &optional)) misura-ricostruzione))
 (defun misura-ricostruzione (source highs lows split words work)
-  "Pre: writer, array digest privati di C elementi. Post: byte vivi dei due candidati.
-Visita C slot; verifica conteggio vivo e discoverability prima di allocare i candidati.
-Ogni verifica digest sonda al massimo C slot; collisioni non hanno costo costante."
+  "Pre: writer, private digest arrays of C elements. Post: live bytes of both candidates.
+Visits C slots; verifies live count and discoverability before allocating candidates.
+Every digest check probes at most C slots; collisions do not have constant cost."
   (let ((first 0) (second 0) (live 0)
         (depth (+ (frammento-indice-depth source) (if split 1 0))))
     (dotimes (slot (banco-slot-capacity (frammento-indice-bank source)))

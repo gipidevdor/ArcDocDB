@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-MVC-006 REQ-IDX-001 REQ-AFF-008 REQ-IDX-010
 (declaim (ftype (function (motore) null) avvia-recovery-motore))
 (defun avvia-recovery-motore (engine)
-  "Pre: directory lock esclusivo, file canonici presenti e admission chiusa. Post: motore READY completo.
-Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; errori al confine startup."
+  "Pre: exclusive directory lock, canonical files present, admission closed. Post: complete READY engine.
+Gate before effects, checkpoint and names before index/runtime/root; errors handled at startup boundary."
   (setf (motore-state engine) :recovering)
   (osserva-motore engine :before-recovery)
   (let* ((archive (dar:crea-archivio-recovery (motore-scope engine) (motore-archive-id engine)))
@@ -51,12 +51,12 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
                         (index-capacity 4096) (key-arena-bytes 1048576) (hash-seed-high #x243f6a88)
                         (hash-seed-low #x85a308d3) index-image index-discovery
                         (index-policy (if (or index-image index-discovery) :legacy :automatic)))
-  "Pre: directory esistente privata, UUID espliciti, clock monotono iniettabile, nessuna cancellazione thread.
-Post: unico writer fisico e motore READY; init esplicito o recovery automatico senza harness.
-INDEX-IMAGE seleziona un derivato; INDEX-DISCOVERY cerca footer coerenti con il canonico.
-Entrambe le scelte richiedono verifica completa prima di READY, sono esclusive e incompatibili con CREATE.
-Punti durevoli nei preparatori/publisher esistenti; nessuna admission prima di indice e fonti completi.
-Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, nessun retry/rollback."
+  "Pre: existing private directory, explicit UUIDs, injectable monotonic clock, no thread cancellation.
+Post: unique physical writer and READY engine; explicit init or automatic recovery without harness.
+INDEX-IMAGE selects a derivative; INDEX-DISCOVERY searches for footers consistent with canonical source.
+Both choices require complete verification before READY, are mutually exclusive, and incompatible with CREATE.
+Durable points in existing preparers/publishers; no admission before complete index and sources.
+Typed errors, all resource cleanup attempted; primary and cleanup causes preserved, no retry/rollback."
   (unless (or (member index-policy '(:legacy :automatic)) (typep index-policy 'politica-indice-automatico))
     (error 'invalid-argument :reason :engine-index-policy))
   (when (and (not (eq index-policy :legacy)) (or index-image index-discovery))

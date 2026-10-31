@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text simple-vector) null) cattura-sorgenti-riserva))
 (defun cattura-sorgenti-riserva (pool slot sources)
-  "Pre: tutti i preflight completati, effetto esclusivo. Post: prestiti e U posseduti dal pool.
-Nessuna copia/allocazione di run; i task rimangono DONE ma non si possono riavviare."
+  "Pre: all preflights complete, exclusive effect. Post: loans and U owned by pool.
+No run copy/allocation; tasks remain DONE but cannot restart."
   (dotimes (i (length sources))
     (let* ((source (svref sources i)) (cost (d::preparazione-full-text-bound source))
            (run (svref (riserva-full-text-runs slot) i)))
@@ -20,10 +20,10 @@ Nessuna copia/allocazione di run; i task rimangono DONE ma non si possono riavvi
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t) (values riserva-full-text index &optional)) prenota-full-text))
 (defun prenota-full-text (pool lease sources)
-  "Pre: lease della coda canonica, tutti i task DONE consegnati esclusivamente dal worker.
-Post: slot/generation preallocati e riserva atomica per tutti gli indici; copia ancora privata.
-Rifiuti ordinari prima degli effetti. Interruzione/invariante durante adozione => pool FAULTED.
-Prima di append/SEAL/PREPARE: non assegna CSN, non lega byte PUT o autorizza commit."
+  "Pre: canonical queue lease, all DONE tasks delivered exclusively by worker.
+Post: preallocated slot/generation and atomic reservation for all indexes; copy still private.
+Ordinary rejections before effects. Interruption/invariant failure during adoption => pool FAULTED.
+Before append/SEAL/PREPARE: neither assigns CSN, binds PUT bytes, nor authorizes commit."
   (verifica-writer-riserve pool lease)
   (let ((slot (trova-slot-libero-riserva pool)))
     (multiple-value-bind (bytes row position) (preflight-riserva pool slot sources)

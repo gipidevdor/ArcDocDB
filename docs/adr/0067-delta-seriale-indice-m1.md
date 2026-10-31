@@ -12,9 +12,9 @@
 ## Decision
 
 Serial activation can reserve an exact set of touched keys
-with `:delta-keys` and `:delta-key-bytes`. Both zero retain the previous
-contract: the first admitted write retires the image. Both positive
-enable the delta, without changing startup or adding automatic selection.
+with `:delta-keys` and `:delta-key-bytes`. Setting both to zero retains the previous
+contract: the first admitted write retires the image. Setting both to positive values
+enables the delta, without changing startup or adding automatic selection.
 
 The delta retains membership only: digest, range, and key copy.
 For every touched key, GET consults the current canonical resident index, including
@@ -26,7 +26,7 @@ require full-byte comparison. No fallback on I/O error.
 An open-addressing table at most half full, linear probing bounded by
 capacity, an append-only arena, and arrays are reserved at activation.
 Preflight accounts for old and new deltas as well as readers/cache.
-Exhausting keys or bytes is an ordinary rejection before CSN and WAL:
+Exhausting either the key budget or the byte budget is an ordinary rejection before CSN and WAL:
 READY, image, and file remain unchanged. Updating a key already
 registered consumes no additional space, even after DELETE and resurrection.
 No entry deletion or reuse until the next publication.

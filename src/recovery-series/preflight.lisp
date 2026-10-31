@@ -7,8 +7,8 @@
 (declaim (ftype (function (control-recuperato recovery-sources limiti-recovery-serie)
                          (values index index &optional)) verifica-capienza-fonti-serie))
 (defun verifica-capienza-fonti-serie (control sources limits)
-  "Pre: set stabile, CONTROL autorevole e limiti validi. Post: count fonti/CLOSED ammessi prima della scansione.
-INVALID-ARGUMENT per cardinalità, RESOURCE-EXHAUSTED per segmenti/riferimenti; nessun I/O o array nuovo."
+  "Pre: stable set, authoritative CONTROL, and valid limits. Post: source/CLOSED counts admitted before scanning.
+INVALID-ARGUMENT for cardinality, RESOURCE-EXHAUSTED for segments/references; no I/O or new array."
   (let* ((count (numero-fonti-recovery sources))
          (closed (numero-segmenti-chiusi (manifest-control-recuperato control))))
     (when (> count (limits-segments limits))
@@ -22,10 +22,10 @@ INVALID-ARGUMENT per cardinalità, RESOURCE-EXHAUSTED per segmenti/riferimenti; 
 (declaim (ftype (function (control-recuperato recovery-sources decisioni-recuperate octets
                           limiti-recovery-serie) (values index index index &optional)) verifica-fonti-serie))
 (defun verifica-fonti-serie (control sources decisions scratch limits)
-  "Pre: recovery esclusivo, fonti complete e namespace congelato. Post: indice ACTIVE, count CLOSED e byte totali.
-Count, budget riferimenti/byte, ordine u64, appartenenza e preflight di OGNI fonte prima di leggere dati.
-Ordine stretto più cardinalità e appartenenza provano completezza senza un'altra tabella dei duplicati.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED o condizioni canoniche; nessuna allocazione del vettore risultato."
+  "Pre: exclusive recovery, complete sources, and frozen namespace. Post: ACTIVE index, CLOSED count, and total bytes.
+Counts, reference/byte budgets, u64 order, membership, and preflight of EVERY source before reading data.
+Strict order plus cardinality and membership prove completeness without another duplicate table.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED or canonical conditions; no result vector allocation."
   (multiple-value-bind (count closed) (verifica-capienza-fonti-serie control sources limits)
     (arcdocdb.recovery.archive::verifica-archivio-active control decisions scratch)
     (let ((active nil) (previous nil) (total 0))

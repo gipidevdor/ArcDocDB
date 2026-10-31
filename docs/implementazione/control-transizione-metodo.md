@@ -4,7 +4,7 @@
 
 Draft for the 2026-10-14 freeze. This document records the method,
 without results. The subtask writes only this file and
-`tools/control-transition-bench.lisp` in worktree
+`tools/control-transition-bench.lisp` in the worktree
 `/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB`.
 Compilation, self-test, and benchmark belong to the coordinator after freeze,
 in processes recorded by `tools/record-command.lisp`. The first error,
@@ -37,7 +37,7 @@ fixtures; it invokes neither `test-op` nor any `run`. The only test helper
 called by the driver is `manifest-log-fixture`, from
 `tests/recovery/manifest-support.lisp`, only during build, before the
 clock. Its bytewise packing and bitwise CRC build complete EDIT and
-SEAL in memory. Reconstruction directly calls public API
+SEAL in memory. Reconstruction directly calls the public API
 `ricostruisci-manifest`, with explicit version, EOF, and budgets: it requires
 exact prefix consumption and `:complete` state. It constructs neither private
 product structures nor guard mocks.
@@ -63,12 +63,12 @@ the high regime exercises bignum IDs and outcomes. Valid-bytes remain small.
 Each pair is decoded separately; objects are not shared
 across workers, replicates, or windows. Serie here means a logical ownership
 context identified by S: the guard receives no Serie controller object.
-No product workers are started. Main builds and warms inputs,
+No product workers are started. The main thread builds and warms inputs,
 then transfers them read-only to the worker; it resumes raw-data ownership
-only after quiescence. No shared counter across workers.
+only after quiescence. There is no shared counter across workers.
 
-Before and after measurement, public queries compare ACTIVE, next-id, counts,
-states, and every outcome with declared lists. Also check absent
+Before and after measurement, use public queries to compare ACTIVE, next-id, counts,
+states, and every outcome with the declared lists. Also check the absent
 TXID 42, distinguishing it from present CSN zero, and unknown segment 0.
 The list oracle checks cardinality, preservation, and ACTIVE+1. The new snapshot's
 maximum payload is 21,644 bytes; with EDIT and SEAL the fixture is
@@ -89,7 +89,7 @@ N = W*n                               guards required in the window
 10000 <= N*L < 10000 + W*L
 ```
 
-Maximum repetitions per worker is 5,000. n is not adapted to
+The maximum number of repetitions per worker is 5,000. n is not adapted to
 observed duration. `attempted` increases immediately before the call;
 `completed` only after return. `verify0` counts NIL returns,
 `nonempty` non-NIL returns. The sink sums completed-call ordinals:
@@ -126,7 +126,7 @@ CPU is that of the current thread, not the entire process, and worker CPUs
 must not be summed as wall duration. The two record versions affect
 only decoding excluded from the clock: the guard receives no version.
 
-With W=1, main executes the worker directly. With W>1, aggregate wall time
+With W=1, the main thread executes the worker directly. With W>1, aggregate wall time
 includes thread creation, ready/start gate, calls, and joins. Gates,
 stop semaphores, and entry points are prepared before the clock; the worker's
 internal measurement excludes startup and join. `sb-ext:get-bytes-consed` records
@@ -144,7 +144,7 @@ retry. Reads, compiler, and SHA processes may block beyond a
 checkpoint: the coordinator must supervise the process externally;
 the cooperative budget is not a hard OS limit.
 
-If all threads are quiescent, main may read raw data and finalize
+If all threads are quiescent, the main thread may read raw data and finalize
 the report. Otherwise it preserves only observations it already owns, without
 reading live raw data or releasing fixtures. It emits main status and diagnostics
 on stdout, with `:unavailable` counters, without persisting a concurrent
@@ -171,11 +171,11 @@ Before compiling the helper, the driver copies bytes of
 root, with verified EOF and size. It loads only this copy once under a handler: SBCL
 compiles definitions during LOAD. This avoids double macro definitions
 caused by COMPILE-FILE followed by LOAD in the same process; product FASLs
-remain in private cache. After loading, it uses the same canonical
+remain in the private cache. After loading, it uses the same canonical
 `arcdocdb.evidence:file-sha256` to certify the copy SHA equals
 the original SHA in the snapshot before ASDF load. After the campaign,
 it again compares copy and original in the final snapshot, and copy SHA
-before/after. No new hash algorithm or reader. The helper's first snapshot
+before/after. No new hash algorithm or reader is introduced. The helper's first snapshot
 is thus the copy made before compilation; its SHA
 identification occurs after loading. The external recorder's normal blob
 snapshot precedes the entire command, including this copy and
@@ -221,8 +221,8 @@ serialization; actual limit checking remains binding after freeze.
 ## Pure suite and invocations after freeze
 
 `--self-test` loads neither product, ASDF/tests, nor helper, creates no workers,
-filesystem fixtures, or benchmark. It uses only its own data for exact
-matrix 216, target and formulas, list oracle, mutations of CSN zero and
+filesystem fixtures, or benchmark. It uses only its own data for the exact
+216-window matrix, target and formulas, list oracle, mutations of CSN zero and
 REMOVED, counters/sinks, partial samples, errors before timeouts,
 nonquiescence with known main error, duplicate workers/Serie, missing fields,
 argv and literal namespace, and in-memory PLIST roundtrip. It emits one
@@ -245,5 +245,5 @@ serialized size, and completion within budgets.
 The sample does not cover REMOVED=4 with CLOSED=0 or REMOVED=0 with CLOSED>0,
 invalid transitions/ID exhaustion, mutable concurrent manifests, more than
 four workers, latency distributions, p99, storage pipeline, or crash
-recovery. Cache and external load are uncontrolled. No performance
+recovery. Cache and external load are uncontrolled. There is no performance
 threshold and no promotion of partial prefixes to complete campaigns.

@@ -13,7 +13,7 @@ A context has a single owner and is neither reentrant nor migratable.
 | `crea-contesto-worker-writer ready :start` | Once at startup of the current worker; starts idle, default cursor 0. |
 | `prendi-writer-worker ctx` | Idle; bounded scan returns writer/claimed/cursor, or NIL/empty or busy/cursor. |
 | `inizia-tratto-worker ctx` | Claimed; acquires the lease and enters running. Begin is separate from popping payloads. |
-| `preleva-lavori-worker ctx target start end` | Running; returns count/status/token. Messages creates batch; empty/yield leaves token 0 and running. |
+| `preleva-lavori-worker ctx target start end` | Running; returns count/status/token. Messages create a batch; empty/yield leaves token 0 and running. |
 | `conferma-lavori-worker ctx token` | Batch fully processed by the caller; current ack returns to running, with the same slice/quantum/lease. |
 | `termina-tratto-worker ctx` | Running after ack, or finishing; latches finishing before end, then idle or reschedule. |
 | `ricircola-worker ctx` | Reschedule; room→NIL/published/count and idle, full→head/claimed/unchanged count. |

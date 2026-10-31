@@ -19,7 +19,7 @@ on an already verified, authoritative old control log.
 |---|---|
 | `crea-checkpoint-control(active, payload, stamp, :limiti…)` | builds the private file in memory and reconstructs its manifest |
 | `lunghezza-checkpoint-control(plan)` | exact file size, for configuring capacity and scratch |
-| `manifest-checkpoint-control(plan)` | owned manifest, consultable through existing scalar queries |
+| `manifest-checkpoint-control(plan)` | owned manifest, available through existing scalar queries |
 | `prepara-checkpoint-control(plan, input, append, directory, scratch, :chunk-bytes)` | write, flush, full reread, comparison, and parent fsync |
 | `log-control-preparato(prepared)` | canonical `:control` log, file-id zero, for its sole owner |
 | `manifest-control-preparato(prepared)` | manifest of the prepared and identically reread checkpoint |
@@ -29,9 +29,9 @@ The new ACTIVE must be the result of
 [`prepara-segmento-attivo`](inizializzazione-active.md), still containing only the
 header: open capabilities, healthy log, and written/durable frontiers both 64.
 The check repeats before and after construction and preparation.
-The controller prevents concurrent writes and closes throughout the cycle.
+The controller prevents concurrent writes and close operations throughout the cycle.
 
-Payload is a complete state, encoded with `scrivi-valore-edit` from the
+The payload is a complete state, encoded with `scrivi-valore-edit` from the
 authoritative source: next ID, new ACTIVE, CLOSED with lengths/outcomes, and
 removed segments still to reconcile. The module copies it into the private plan;
 the caller may reuse it after construction. It exposes no plan buffer.
@@ -59,7 +59,7 @@ It creates no files, reads no clocks, reserves no IDs, takes no CSN, and publish
 The in-memory scanner does not certify CLOSED presence: inventory, verification
 of their data, and allocator correctness remain controller obligations.
 
-The [recovery builder](checkpoint-recovery.md) derives complete payload
+The [recovery builder](checkpoint-recovery.md) derives a complete payload
 from recovered CONTROL and ACTIVE, retaining CLOSED, REMOVED, and outcomes and
 verifying the transition before returning this same plan.
 
@@ -67,7 +67,7 @@ verifying the transition before returning this same plan.
 
 ## Preparation in the I/O pool
 
-The controller creates the new `control.log.tmp` with **O_EXCL**, opens read-only and
+The controller creates the new `control.log.tmp` with **O_EXCL**, opens a read-only capability for it and opens
 the authoritative parent directory, and reserves the namespace. The actual parent is a
 controller precondition; the module does not infer it from file inodes.
 Read-only, append, directory, and new ACTIVE use the same backend, including
@@ -99,7 +99,7 @@ Typed codec, recovery, and I/O errors propagate without a generic handler,
 error retry, rollback, truncation, close, or implicit deletion.
 The caller retains resource ownership and handles quarantine/cleanup.
 No partial result is delivered. After progress, another preparation
-on the same append is rejected; failed write/flush applies `FAULTED`.
+on the same append capability is rejected; a failed write/flush triggers `FAULTED`.
 The temporary file must be reconciled against the authoritative source before deletion.
 
 | Local rejection | Reason |
@@ -123,10 +123,10 @@ and 56 SEAL. P is at most 16 MiB, with the v1 record limit checked
 separately. Manifest budgets are existing ones: 65,536 segment mentions
 and cumulative outcomes by default, configurable through the API.
 
-Default chunk 64 KiB; any positive chunk is bounded by plan
+The default chunk is 64 KiB; any positive chunk is bounded by plan
 bytes and I/O capabilities. Scratch requires `min(file-size, chunk)` bytes.
 There are `ceiling(file-size/chunk)` exact transfers in each direction;
-positive short I/O has the existing primitives' bound. At most
+positive short I/O has the existing primitives' bound. There are at most
 four fstats and two flushes. Rereading does not rebuild the manifest. The plan
 retains the private file and manifest; the intermediate batch may be
 collected after construction. These are static bounds, not latency,

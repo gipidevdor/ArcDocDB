@@ -2,10 +2,10 @@
 
 # Full-text row directory
 
-The private directory connects posting row u32 to the pool's canonical reservation
+The private directory connects a u32 posting row to the pool's canonical reservation
 and the [physical PUT reference](full-text-riferimenti.md). For the first NNTP
 use, it traces a full-text result back to the article record without
-depending on the WAL buffer's reusable incarnation. Row is not a newsgroup
+depending on the WAL buffer's reusable incarnation. A row is not a newsgroup
 article number, a Message-ID, or a hint ordinal.
 
 <a id="proprietario-e-limiti"></a>
@@ -18,8 +18,8 @@ generations of a document instead share a single local entry.
 `0` and `UINT32_MAX` are valid keys: occupancy is determined by count.
 
 Binary search performs at most 11 key comparisons with capacity 1..1024.
-Insertion and removal move at most 1024 metadata pairs under writer
-lease without reading the document. This is not engine-latency measurement.
+Insertion and removal move at most 1024 metadata pairs under the writer
+lease without reading the document. This is not an engine-latency measurement.
 The conservative C0 [reservation](full-text-riserve.md) limit grows by 8 bytes
 per slot; the base also covers both array headers. Capacity belongs to the pool,
 not an overall limit on articles storable by the future database.

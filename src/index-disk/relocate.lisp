@@ -34,7 +34,7 @@ No nodes staged until the matching version is found; depth remains bounded by th
 (declaim (ftype (function (disk-index octets index index (simple-array (unsigned-byte 64) (5)) u64) boolean)
                 relocate-disk-index))
 (defun relocate-disk-index (tree key start end expected location)
-  "Pre: serial owner, identical canonical record durable and expected descriptor private. Post: location-only relocation or NIL stale.
+  "Pre: serial owner, identical canonical record durable and expected descriptor private. Post: location-only relocation or NIL if stale.
 Normal PUT/DELETE CSN guards remain unchanged; unchanged or stale requests do not append. Incomplete effects fault the index."
   (reserve-disk-index tree) (b:check-range key start end)
   (unless (and (<= 1 (- end start) 65535) (= (- end start) (ldb (byte 16 32) (aref expected 2)))

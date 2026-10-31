@@ -17,6 +17,6 @@
 (asdf:load-system :3bmd-ext-tables)
 (asdf:load-system :3bmd-ext-code-blocks)
 (asdf:load-system :yason)
-(dolist (name '("model" "publication" "markdown" "theme" "editorial" "check" "generate"))
+(dolist (name '("model" "publication" "markdown" "code-source" "code-reference" "theme" "editorial" "check" "generate"))
   (load (merge-pathnames (format nil "tools/pages/~A.lisp" name) *pages-root*)))
 (arcdocdb.pages:build *pages-root* (uiop:command-line-arguments))

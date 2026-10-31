@@ -87,7 +87,7 @@ report `invariant-violation`. `ftype` types are checked with
 safety3 and report `type-error`. No error exports a partial plan.
 
 Calls own separate workspaces; queries on a published
-plan are read-only. Planner creates no threads,
+plan are read-only. The planner creates no threads,
 modifies no inputs, and introduces neither locks nor shared writes across Serie.
 
 <a id="verifica"></a>
@@ -177,9 +177,9 @@ These campaign runners impose no automatic timeout.
 
 The 100 unobserved forms and 17 alternatives remain in the denominator,
 including private guards. No exclusion is approved and MC/DC is not
-demonstrated. Catalog preserves original `sb-cover` state, index, and
+demonstrated. The catalog preserves the original `sb-cover` state, index, and
 HTML for three files. It also preserves both C1 readings, the initial
-finding on guards, and first build failed due to a missing parenthesis, later
+finding on guards, and the first build, which failed due to a missing parenthesis that was later
 corrected. Evidence-reading diagnostics remain distinct from
 product failures. `make check` and campaigns preserve hashes,
 environment, commands, and original output.

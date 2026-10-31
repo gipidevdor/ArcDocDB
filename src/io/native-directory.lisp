@@ -19,9 +19,9 @@
                                               :io-directory-total-name-bytes) &optional))
                 native-directory-read))
 (defun native-directory-read (stream max-names max-total-name-bytes max-name-bytes)
-  "Pre: DIR* esclusivo e namespace stabile. Post: nomi copiati o reason di budget, mai prefisso valido.
-READDIR azzera errno e segnala syscall-error; EOF e' un alien NULL, non NIL.
-Latin1 conserva ciascun byte del nome; . e .. sono gli unici nomi esclusi dai budget."
+  "Pre: exclusive DIR* and stable namespace. Post: copied names or budget reason, never a valid prefix.
+READDIR clears errno and signals syscall-error; EOF is an alien NULL, not NIL.
+Latin1 preserves each name byte; . and .. are the only names excluded from budgets."
   (let ((names nil) (count 0) (bytes 0)
         (sb-alien::*default-c-string-external-format* :latin-1))
     (loop repeat (+ max-names 3)
@@ -45,8 +45,8 @@ Latin1 conserva ciascun byte del nome; . e .. sono gli unici nomi esclusi dai bu
 (declaim (ftype (function (t (integer -1 2147483647))
                           (values (or null fixnum) boolean &optional)) native-directory-cleanup))
 (defun native-directory-cleanup (stream descriptor)
-  "Pre: o DIR* possiede il FD, o il FD non trasferito e' locale. Post: una sola chiusura.
-Non ritenta EINTR; restituisce errno/fallimento senza mascherare il motivo primario."
+  "Pre: either DIR* owns the FD, or the untransferred FD is local. Post: exactly one close.
+Does not retry EINTR; returns errno/failure without masking the primary reason."
   (handler-case
       (values nil (not (eql 0 (if stream (sb-posix:closedir stream)
                                  (if (minusp descriptor) 0 (sb-posix:close descriptor))))))
@@ -59,8 +59,8 @@ Non ritenta EINTR; restituisce errno/fallimento senza mascherare il motivo prima
                           (or null fixnum) (or null fixnum) boolean) null)
                 native-directory-outcome))
 (defun native-directory-outcome (reason errno cleanup-errno cleanup-failed)
-  "Pre: cursore gia' chiuso/tentato una volta. Post: solo successo completo, o causa tipizzata.
-Budget e chiusura fallita producono IO-FAULT con stesso reason e cleanup-errno."
+  "Pre: cursor already closed/close attempted once. Post: only complete success or a typed cause.
+Budget and failed close produce IO-FAULT with the same reason and cleanup-errno."
   (cond ((eq reason :io-syscall)
          (error 'io-fault :reason reason :operation :directory-entries
                 :errno errno :cleanup-errno cleanup-errno))
@@ -79,12 +79,12 @@ Budget e chiusura fallita producono IO-FAULT con stesso reason e cleanup-errno."
 (declaim (ftype (function (fd index index index) (values simple-vector (eql t) &optional))
                 native-directory-entries))
 (defun native-directory-entries (directory max-names max-total-name-bytes max-name-bytes)
-  "Pre: parent posseduto e stabile. Post: cursore openat(.) indipendente, elenco completo privato.
-FDOPENDIR trasferisce ownership solo se riuscita; parent, frontiere e namespace restano intatti.
-Solo pool I/O, senza lock esterni: le syscall possono bloccare, nessuna deadline wall implicita.
-Le finestre senza interrupt proteggono handoff e chiusura; cancellazione asincrona non supportata.
-Su uscite nonlocali estranee: un cleanup tentato, causa originale senza allegare il cleanup-errno.
-Nessun retry, risultato parziale o successo precedente alla chiusura del cursore."
+  "Pre: owned stable parent. Post: independent openat(.) cursor, complete private list.
+FDOPENDIR transfers ownership only on success; parent, frontiers, and namespace remain intact.
+I/O pool only, without external locks: syscalls may block, no implicit wall-clock deadline.
+Interrupt-free windows protect handoff and close; asynchronous cancellation unsupported.
+On unrelated nonlocal exits: one cleanup attempted, original cause without attaching cleanup-errno.
+No retry, partial result, or success before cursor close."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)

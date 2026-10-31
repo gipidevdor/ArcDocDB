@@ -6,8 +6,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-WAL-005
 (defstruct (preparazione-put-full-text
              (:constructor %preparazione-put-full-text (tasks frame version document-limit key-limit)) (:copier nil))
-  "Contesto privato riutilizzabile; frame e task non esportati. Tutte le generazioni
-analizzano gli stessi byte posseduti; la generation catturata impedisce risultati ABA."
+  "Reusable private context; frame and tasks not exported. All generations
+analyze the same owned bytes; captured generation prevents ABA results."
   (tasks #() :type simple-vector :read-only t) (frame #() :type octets :read-only t)
   (version 2 :type (integer 1 2) :read-only t) (document-limit 1 :type index :read-only t)
   (key-limit 1 :type index :read-only t)
@@ -21,8 +21,8 @@ analizzano gli stessi byte posseduti; la generation catturata impedisce risultat
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (t t) preparazione-put-full-text) verifica-token-put))
 (defun verifica-token-put (request generation)
-  "Pre: oggetto e generation catturati dal chiamante. Post: identita corrente senza effetti.
-INVALID-ARGUMENT per tipo/stale; token zero non e mai una preparazione valida."
+  "Pre: object and generation captured by caller. Post: current identity without effects.
+INVALID-ARGUMENT for type/staleness; zero token is never a valid preparation."
   (unless (and (typep request 'preparazione-put-full-text) (typep generation 'index) (plusp generation)
                (= generation (preparazione-put-full-text-generation request)))
     (error 'invalid-argument :reason :fulltext-put-token))
@@ -31,16 +31,16 @@ INVALID-ARGUMENT per tipo/stale; token zero non e mai una preparazione valida."
 ;;; REQ: REQ-SEC-006
 (declaim (ftype (function (t t) keyword) stato-put-full-text))
 (defun stato-put-full-text (request generation)
-  "Pre: token corrente, accesso dal proprietario. Post: stato senza frame, task o parziali."
+  "Pre: current token, owner access. Post: state without frame, tasks, or partial results."
   (verifica-token-put request generation)
   (preparazione-put-full-text-state request))
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005
 (declaim (ftype (function (preparazione-put-full-text) null) esigi-cornice-put-validata))
 (defun esigi-cornice-put-validata (request)
-  "Pre: request esclusivo, frame/task mai esposti. Post: attestazione del worker corrente.
-Il frame non cambia fra verifica CRC/analisi e append; solo inizia puo invalidarlo.
-Rifiuta attestazione assente/stale senza rileggere il body sotto la lease del writer."
+  "Pre: exclusive request, frame/tasks never exposed. Post: current worker attestation.
+Frame does not change between CRC verification/analysis and append; only inizia can invalidate it.
+Rejects missing/stale attestation without rereading body under writer lease."
   (unless (and (plusp (preparazione-put-full-text-validated-generation request))
                (= (preparazione-put-full-text-generation request) (preparazione-put-full-text-validated-generation request)))
     (error 'invalid-argument :reason :fulltext-put-unvalidated))

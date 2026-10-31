@@ -7,9 +7,9 @@
 (declaim (ftype (function (decisioni-recuperate) (values boolean u64 &optional))
                 massimo-csn-decisioni-recuperate))
 (defun massimo-csn-decisioni-recuperate (recovered)
-  "Pre: decision log completo legato all'Archivio; controller mantiene il FD aperto.
-Post: presenza e massimo CSN di ogni DECISION, anche senza prepared nelle Serie aperte.
-Propaga condizioni tipizzate; controlla lifetime, senza I/O, mutazioni o ammissione del traffico."
+  "Pre: complete decision log bound to Archivio; controller keeps FD open.
+Post: presence and maximum CSN of every DECISION, even without prepared records in open Serie.
+Propagates typed conditions; checks lifetime, without I/O, mutations, or traffic admission."
   (arcdocdb.io::esigi-aperto (decisioni-recuperate-input recovered) :input)
   (arcdocdb.recovery.decisions:massimo-csn-decisioni (decisioni-recuperate-table recovered)))
 
@@ -18,30 +18,30 @@ Propaga condizioni tipizzate; controlla lifetime, senza I/O, mutazioni o ammissi
                          (values index index (member :complete :tail) (member 1 2) &optional))
                 frontiere-decisioni-recuperate))
 (defun frontiere-decisioni-recuperate (recovered)
-  "Pre: risultato completo. Post: EOF attestato, prefisso assoluto, stato e formato letti.
-Nessun buffer o FD numerico esportato; TYPE-ERROR per tipi invalidi, nessuna prova di salute futura."
+  "Pre: complete result. Post: attested EOF, absolute prefix, state, and format read.
+No buffer or numeric FD exported; TYPE-ERROR for invalid types, no proof of future health."
   (values (decisioni-recuperate-size recovered) (decisioni-recuperate-prefix recovered)
           (decisioni-recuperate-status recovered) (decisioni-recuperate-version recovered)))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (decisioni-recuperate) (values index &optional)) numero-decisioni-recuperate))
 (defun numero-decisioni-recuperate (recovered)
-  "Pre: risultato completo. Post: numero dei TXID unici dopo coalescenza dei duplicati identici.
-TYPE-ERROR per tipi invalidi; nessuna mutazione o syscall."
+  "Pre: complete result. Post: unique TXID count after coalescing identical duplicates.
+TYPE-ERROR for invalid types; no mutation or syscall."
   (numero-decisioni (decisioni-recuperate-table recovered)))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-TXM-001 REQ-AFF-008
 (declaim (ftype (function (decisioni-recuperate u64) (values boolean u64 u16 &optional))
                 trova-decisione-recuperata))
 (defun trova-decisione-recuperata (recovered txid)
-  "Pre: risultato completo e TXID u64 opaco. Post: presenza, CSN e count; NIL/0/0 se assente.
-Zero presente resta distinto dall'assenza; errori tipizzati del replay/query propagati."
+  "Pre: complete result and opaque u64 TXID. Post: presence, CSN, and count; NIL/0/0 if absent.
+Present zero remains distinct from absence; typed replay/query errors propagated."
   (trova-decisione (decisioni-recuperate-table recovered) txid))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-TXM-001 REQ-AFF-008
 (declaim (ftype (function (decisioni-recuperate u64 octets integer integer) boolean)
                 partecipante-decisione-recuperata-p))
 (defun partecipante-decisione-recuperata-p (recovered txid identity start end)
-  "Pre: risultato completo, ID stabile del caller. Post: presenza esatta del partecipante ID16.
-Range e lunghezza verificati anche per TXID assente; condizioni originali propagate, nessun alias esportato."
+  "Pre: complete result, stable caller ID. Post: exact ID16 participant presence.
+Range and length checked even for absent TXID; original conditions propagated, no alias exported."
   (partecipante-decisione-p (decisioni-recuperate-table recovered) txid identity start end))

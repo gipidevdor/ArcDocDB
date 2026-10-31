@@ -7,8 +7,8 @@
 (declaim (ftype (function (indice-primario frammento-indice digests-frammento digests-frammento
                                          boolean integer) root-indice) esigi-ricostruzione))
 (defun esigi-ricostruzione (index source highs lows split budget)
-  "Pre: writer esclusivo, digest stabili indicizzati per slot originale. Post: sorgente corrente valido.
-Rifiuta forma/budget/profondità prima della scansione; nessuna mutazione o pubblicazione."
+  "Pre: exclusive writer, stable digests indexed by original slot. Post: valid current source.
+Rejects shape/budget/depth before scanning; no mutation or publication."
   (esigi-indice-sano index)
   (let ((root (acquisisci-root index)) (capacity (indice-primario-capacity index)))
     (esigi-sorgente-directory index root source)
@@ -24,8 +24,8 @@ Rifiuta forma/budget/profondità prima della scansione; nessuna mutazione o pubb
 ;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-AFF-008
 (declaim (ftype (function (indice-primario root-indice frammento-indice) null) credito-ricostruzione))
 (defun credito-ricostruzione (index root source)
-  "Pre: writer senza mutazioni concorrenti. Post: credito per tutte le copie e preparazione/pubblicazione.
-Generazione e revisione non fanno wrap; esaurimento rifiutato prima dei candidati."
+  "Pre: writer without concurrent mutations. Post: credit for all copies and preparation/publication.
+Generation and revision do not wrap; exhaustion rejected before candidates."
   (when (>= (root-indice-generation root) (1- +revision-limit+))
     (error 'resource-exhausted :reason :primary-directory-generation-exhausted))
   (when (>= (+ (indice-primario-revision index) (frammento-indice-live source))
@@ -37,9 +37,9 @@ Generazione e revisione non fanno wrap; esaurimento rifiutato prima dei candidat
 (declaim (ftype (function (indice-primario root-indice frammento-indice boolean fixnum fixnum integer)
                          (values fixnum fixnum &optional)) budget-ricostruzione))
 (defun budget-ricostruzione (index root source split first second budget)
-  "Pre: scansione completa senza mutazioni. Post: profondità globale e payload transitorio prenotabile.
-Controlla vecchia root + candidati + nuova directory PRIMA dei grandi array. Non è RSS.
-Buffer fissi, digests del chiamante, root pregresse e runtime spettano al controller superiore."
+  "Pre: complete scan without mutations. Post: global depth and reservable transient payload.
+Checks old root + candidates + new directory BEFORE large arrays. Not RSS.
+Fixed buffers, caller digests, previous roots, and runtime belong to higher controller."
   (let* ((depth (max (root-indice-depth root) (+ (frammento-indice-depth source) (if split 1 0))))
          (directory (* 8 (ash 1 depth))) (slots (* 41 (indice-primario-capacity index)))
          (payload (+ (payload-root root) directory slots first (if split (+ slots second) 0))))

@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-008 REQ-AFF-008
 (declaim (ftype (function (t fixnum keyword) byte-indice) verifica-byte-indice))
 (defun verifica-byte-indice (value minimum reason)
-  "Pre: MINIMUM e' 0 o 1, motivo canonico. Post: fixnum entro il dominio dei byte.
-INVALID-ARGUMENT prima di qualsiasi effetto; nessuna conversione o allocazione."
+  "Pre: MINIMUM is 0 or 1, canonical reason. Post: fixnum within byte domain.
+INVALID-ARGUMENT before any effects; no conversion or allocation."
   (unless (and (typep value 'fixnum) (<= minimum value +max-byte-indice+))
     (error 'invalid-argument :reason reason))
   value)
@@ -15,8 +15,8 @@ INVALID-ARGUMENT prima di qualsiasi effetto; nessuna conversione o allocazione."
 ;;; REQ: REQ-IDX-008 REQ-AFF-008
 (declaim (ftype (function (politica-indice byte-indice) byte-indice) soglia-rientro-indice))
 (defun soglia-rientro-indice (policy budget)
-  "Pre: budget verificato e politica canonica. Post: floor(budget*percent/100).
-Intermedi entro fixnum; nessuna moltiplicazione del budget intero, errore o allocazione."
+  "Pre: verified budget and canonical policy. Post: floor(budget*percent/100).
+Intermediates within fixnum; no multiplication of the entire budget, error, or allocation."
   (multiple-value-bind (whole remainder) (floor budget 100)
     (+ (* whole (politica-indice-rientro policy))
        (floor (* remainder (politica-indice-rientro policy)) 100))))
@@ -25,8 +25,8 @@ Intermedi entro fixnum; nessuna moltiplicazione del budget intero, errore o allo
 (declaim (ftype (function (politica-indice modo-indice byte-indice byte-indice)
                          destinazione-indice) destinazione-automatica))
 (defun destinazione-automatica (policy current budget resident)
-  "Pre: campione valido. Post: residente preferito all'avvio e mantenuto se entra.
-Dal paginato rientro alla soglia bassa; nessuna pubblicazione, errore o mutazione."
+  "Pre: valid sample. Post: resident preferred at startup and retained if it fits.
+Returns from paged at low threshold; no publication, error, or mutation."
   (let ((limit (if (eq current :paginato) (soglia-rientro-indice policy budget) budget)))
     (if (<= resident limit) :residente :paginato)))
 
@@ -34,11 +34,11 @@ Dal paginato rientro alla soglia bassa; nessuna pubblicazione, errore o mutazion
 (declaim (ftype (function (politica-indice t t t t t)
                          (values destinazione-indice azione-indice &optional)) valuta-modo-indice))
 (defun valuta-modo-indice (policy current budget resident paged migration)
-  "Pre: stime conservative del prossimo lavoro; nessun eccesso gia' ammesso.
-Post: destinazione e azione; PREPARA non cambia la root e richiede attuatore verificato.
-MIGRATION copre la sorgente attuale, destinazione e staging, senza il lavoro rinviato.
-INVALID-ARGUMENT per domini/stima incoerente; RESOURCE-EXHAUSTED all'avvio senza modo capiente.
-Nessuna allocazione, attesa, rilevazione OS, prenotazione o mutazione sui percorsi validi."
+  "Pre: conservative estimates of next work; no excess already admitted.
+Post: destination and action; PREPARA does not change root and requires verified actuator.
+MIGRATION covers current source, destination, and staging, excluding deferred work.
+INVALID-ARGUMENT for domains/inconsistent estimate; RESOURCE-EXHAUSTED at startup without a mode that fits.
+No allocation, waiting, OS measurement, reservation, or mutation on valid paths."
   (unless (member current '(:iniziale :residente :paginato))
     (error 'invalid-argument :reason :index-mode-current))
   (let* ((grant (verifica-byte-indice budget 0 :index-mode-budget))

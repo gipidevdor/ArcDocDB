@@ -164,7 +164,7 @@ The predicate and risk matrix is in
 The root is immutable and prepared outside the controller. The caller performs a
 reliable I/O completion handoff. Adoption precedes dispatch. A caller
 boundary must apply Archivio fail-stop for nonlocal interruptions in the
-uncertain root/stage or register/token window. Controller/log uniqueness and
+uncertain root/stage or registry/token window. Controller/log uniqueness and
 group release before reuse are ownership disciplines. Static reading
 can check that these preconditions are explicit and respected by local
 paths; it does not certify engine scheduler, index, or recovery.
@@ -186,7 +186,7 @@ actual closure and D identities appear in the subsequent addendum.
 has passed, but a direct call to `verifica-token-lotto` can propagate
 a WAL bridge invariant without `%mark-fault`. One corrupt-state example
 is `csn-pending=t` with `csn-high=csn-low=0` or absent log: the bridge signals
-the invariant without mutating the register, while the controller remains healthy.
+the invariant without mutating the registry, while the controller remains healthy.
 This is not ordinary stale/full rejection and must not be normalized to pending.
 The same function already uses `%check-captured-token` to convert adopted-event
 defects to Archivio fault, but initial adoption bypasses that boundary.
@@ -230,7 +230,7 @@ unavailable for continued operation. It is not merely a pretext for recovery in
 cleanup.
 
 The concrete reason is that `handler-case` for typed conditions does not
-catch every nonlocal exit, while the uncertain CAS/stage or register/event window
+catch every nonlocal exit, while the uncertain CAS/stage or registry/event window
 must block new operations and automatic abort. Removing fault
 from cleanup would leave that obligation without a local safeguard. The conclusion's
 scope includes only terminal Archivio marking on incomplete exit

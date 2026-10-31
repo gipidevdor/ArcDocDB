@@ -5,7 +5,7 @@
 Registered on 2026-10-09 before campaigns, base `673987a`.
 C1 component integrates [ready list](writer-ready.md) with
 [writer](writer-handoff.md) obligation transfer without creating
-threads or pool. REQ-CON-001/002/004/005, REQ-AFF-008;
+threads or a pool. REQ-CON-001/002/004/005, REQ-AFF-008;
 INV-P1/P2/P5/P6, INV-A8, INV-V4; ADR-0005 and ADR-0045 §§6/8.
 
 <a id="contratto"></a>
@@ -13,8 +13,8 @@ INV-P1/P2/P5/P6, INV-A8, INV-V4; ADR-0005 and ADR-0045 §§6/8.
 ## Contract
 
 `ricircola-writer-pronto(ready, shard, writer)` receives caller-owned unique
-`:schedule` obligation. Requires caller able to take
-another writer. Reads no writer state, detects neither duplicates
+`:schedule` obligation. It requires a caller able to take
+another writer. It reads no writer state, detects neither duplicates
 nor eligibility: existing preconditions apply.
 One local-guard CAS acquisition, no wait or retry.
 
@@ -45,8 +45,8 @@ nobody consumes ready references. Model preserves
 counterexample. Recycling instead directly hands new head
 to consumer without second queue or variable capacity.
 
-Resolves ring-capacity-only blocking in modeled
-protocol. Does not qualify general pool liveness: perpetually contended
+This resolves ring-capacity-only blocking in the modeled
+protocol. It does not qualify general pool liveness: perpetually contended
 guards, abandoned/duplicate obligations, Serie faults, admission require
 controller. Full chain stays same shard; proves neither partition
 fairness nor no starvation for new producers. Caller must
@@ -55,7 +55,7 @@ never parking, shutdown, worker-retirement proof. No writer cleanup
 after end: new wave may already be published.
 
 Cost O(1), one acquire/release CAS, no new global state
-or shared per-message write. Factory, ready, handoff unchanged.
+or shared per-message write. Factory, ready, and handoff are unchanged.
 
 <a id="prove-preregistrate"></a>
 
@@ -97,7 +97,7 @@ losslessly compressed, validated by evidence reader.
 
 ## Preregistered oracles and exact changes
 
-Eleven unique replacements fixed in
+Eleven unique replacements were fixed in
 [`tools/writer-recycle-mutation.lisp`](../../tools/writer-recycle-mutation.lisp)
 before execution. FIFO reads next slot; head/tail separately advance
 by two; full count decrements; slot retains OLD using
@@ -105,7 +105,7 @@ by two; full count decrements; slot retains OLD using
 threshold uses `>`; returned reference becomes WRITER; room returns
 WRITER instead of NIL; full status becomes `:published`, also in ftype;
 cleanup becomes NIL; NEXT becomes HEAD retaining full shape but
-violating FIFO rotation. Each mutant changes new source only.
+violating FIFO rotation. Each mutant changes the new source only.
 
 Independent benchmark derivation: M=K(C+1), enqueue contributes 12M,
 consume 45M+5Σid, identity transfer 17M+5Σid, IDs 1 through M.

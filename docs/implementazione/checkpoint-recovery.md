@@ -16,7 +16,7 @@ without changing formats or architectural decisions.
 
 Returns an existing `checkpoint-control`: consult its queries,
 prepare it with `prepara-checkpoint-control`, and publish it with
-`pubblica-control-da-active(prepared, recovered)`. Complete EDIT payload
+`pubblica-control-da-active(prepared, recovered)`. The complete EDIT payload
 is derived from sources, without manual caller reconstruction.
 No I/O, ID reservation, new CSN, or second publication token.
 The u64 stamp is the ordinal supplied by the controller.
@@ -29,12 +29,12 @@ Decision authority remains in the contract of the ACTIVE reader used;
 the [Archivio-bound reader](decisioni-recuperate.md) is available.
 
 The new ID comes from its verified header: it must be at least the
-previous high-water and `next-id = id + 1` must be u64. No wrap,
+previous high-water mark and `next-id = id + 1` must be u64. No wrap,
 reuse, or new on-disk sentinel. The controller reserves and prepares the ID.
 
 State retains every CLOSED with length and outcomes, every REMOVED, the
 old ACTIVE closed at **exact P** with all and only derived outcomes,
-the new prepared ACTIVE, and the next high-water. CLOSED/REMOVED are
+the new prepared ACTIVE, and the next high-water mark. CLOSED/REMOVED are
 sorted by unsigned u64 ID, outcomes by TXID. Present zero and high bits
 remain meaningful; source tables remain immutable.
 
@@ -68,7 +68,7 @@ do not remain in the returned plan.
 
 Sizes, `1 + C + R` mentions, outcomes, v1/v2 capacity, and workspace are
 checked before arrays. No metadata is discarded to fit
-budgets. Zero outcomes is valid if none exist; new
+budgets. Having zero outcomes is valid if none exist; new
 CLOSED and new ACTIVE are still required. These are task budgets, not new database limits.
 Loops over known cardinalities and finite arrays; `SORT` on local copies in the opening
 path. No new lock or shared write across Serie. No heap,

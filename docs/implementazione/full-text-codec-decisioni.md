@@ -29,32 +29,32 @@ nor complete C1 qualification. Diagnostic coverage and allocation tests are sepa
 
 ## Reading 1: format and failures
 
-All widths and offsets reread against ADR-0054 and independent fixture.
-Frame remains separate from full validator. Multiplications use counts
-already bounded by sections/capacities; no external u64 reference used as
-index before comparison with remainder. Frequency causes no allocation.
-LENGTHS fixes bitmap prefixes: every position marked once; final
-check verifies all required bits. CRC does not substitute for checks.
+All widths and offsets were reread against ADR-0054 and an independent fixture.
+The frame remains separate from the full validator. Multiplications use counts
+already bounded by sections/capacities; no external u64 reference is used as
+an index before comparison with remainder. Frequency causes no allocation.
+LENGTHS fixes bitmap prefixes: every position is marked once; final
+check verifies all required bits. CRC does not substitute for these checks.
 
-Errors and ownership reread: preflight rejections before bytes, internal failures without
-rollback, reusable scratch, and analysis input released even on error. Descriptor
-constructor copies supplied authority and cannot itself prove caller
-replayed and verified hint. Type is not promoted to readiness proof.
+Errors and ownership were reread: preflight rejections before bytes, internal failures without
+rollback, reusable scratch, and analysis input released even on error. The descriptor
+constructor copies the supplied authority and cannot itself prove that the caller
+replayed and verified the hint. Type is not promoted to readiness proof.
 
 <a id="lettura-2-concorrenza-lavoro-e-ambito"></a>
 
 ## Reading 2: concurrency, work, and scope
 
-Dependencies reread: SEALED runs and immutable descriptors, one scratch
-owner, views created only after verification; a view's buffer never rewritten. Queries
+Dependencies were reread: SEALED runs and immutable descriptors, one scratch
+owner, views created only after verification; a view's buffer is never rewritten. Queries
 mutate only their private budget. No counter, lock, callback, or I/O between Serie.
-Constructors and views allocate only on cold path; measurements exclude those openings.
-Writer completion work reserved before first modification.
+Constructors and views allocate only on the cold path; measurements exclude those openings.
+Writer completion work is reserved before first modification.
 C4 test child waits have bounds and cleanup of owned processes only.
 
-INV-I5 supported by binding to hint bytes and local ordinal verification,
+INV-I5 is supported by binding to hint bytes and local ordinal verification,
 but its overall proof requires verified hints/records and reanalysis.
-INV-I4 and INV-I6 not closed by codec: publication, MVCC, inventory,
-predecision reservations, and generation lifecycle missing. Complete MC/DC, fault injection
-at worker boundaries, and load campaign remain open; negative tests and
+INV-I4 and INV-I6 are not closed by the codec: publication, MVCC, inventory,
+predecision reservations, and generation lifecycle are missing. Complete MC/DC, fault injection
+at worker boundaries, and a load campaign remain open; negative tests and
 local coverage are not presented as full engine qualification.

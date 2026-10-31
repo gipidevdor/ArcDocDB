@@ -6,16 +6,16 @@
 ;;; REQ: REQ-AFF-004 REQ-CMP-007
 (declaim (ftype (function (contesto-get keyword) nil) guasto-get))
 (defun guasto-get (context reason)
-  "Pre: incoerenza interna del compito. Post: FAULTED terminale prima della condizione.
-Il cleanup rilascia EBR; il confine del worker deve isolare Serie/Archivio secondo la causa."
+  "Pre: internal task inconsistency. Post: terminal FAULTED before the condition.
+Cleanup releases EBR; the worker boundary must isolate Serie/Archivio according to the cause."
   (setf (contesto-get-state context) :faulted)
   (error 'invariant-violation :reason reason))
 
 ;;; REQ: REQ-CON-004 REQ-AFF-004 REQ-CMP-007
 (declaim (ftype (function (contesto-get get-state) null) esigi-stato-get))
 (defun esigi-stato-get (context state)
-  "Pre: worker esclusivo. Post: stato richiesto ed EBR coerente; nessun accesso fisico qui.
-INVALID-ARGUMENT per ordine/riuso; incoerenza interna rende FAULTED prima di segnalare."
+  "Pre: exclusive worker. Post: required state and consistent EBR; no physical access here.
+INVALID-ARGUMENT for order/reuse; internal inconsistency makes it FAULTED before signaling."
   (unless (eq (contesto-get-state context) state)
     (error 'invalid-argument :reason :get-worker-state))
   (unless (eq (stato-contesto-lettura (contesto-get-reader context))
@@ -26,9 +26,9 @@ INVALID-ARGUMENT per ordine/riuso; incoerenza interna rende FAULTED prima di seg
 ;;; REQ: REQ-CON-004 REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (contesto-get) null) abbandona-get))
 (defun abbandona-get (context)
-  "Pre: stesso worker, ultimo accesso concluso; cleanup esterno installato prima di AVVIA-GET.
-Post: pin e riferimenti fisici scartati, scratch logico zero; nessun risultato autorizzato.
-IDLE idempotente; FAULTED permanente. Interruzione del cleanup lascia FAULTED."
+  "Pre: same worker, final access complete; external cleanup installed before AVVIA-GET.
+Post: pin and physical references discarded, logical scratch zero; no result authorized.
+IDLE is idempotent; FAULTED permanent. Cleanup interruption leaves FAULTED."
   (let ((faulted (or (eq (contesto-get-state context) :faulted)
                      (eq (stato-contesto-lettura (contesto-get-reader context)) :faulted))))
     (setf (contesto-get-state context) :faulted)
@@ -44,9 +44,9 @@ IDLE idempotente; FAULTED permanente. Interruzione del cleanup lascia FAULTED."
 ;;; REQ: REQ-CCH-002 REQ-MVC-004 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (contesto-get octets index) index) copia-valore-get))
 (defun copia-valore-get (context destination start)
-  "Pre: VERIFIED, destinazione esclusiva, distinta da buffer del compito e chiave.
-Post: copia provvisoria del valore, stato COPIED, fine output; nessun dato ancora consegnabile.
-Concludere con tempo fresco dopo la copia; su errore/uscita non locale scartare l'output."
+  "Pre: VERIFIED, exclusive destination distinct from task buffers and key.
+Post: provisional value copy, COPIED state, output end; no data may yet be delivered.
+Complete with fresh time after copying; discard output on error/nonlocal exit."
   (esigi-stato-get context :verified)
   (let ((completed nil))
     (unwind-protect
@@ -73,9 +73,9 @@ Concludere con tempo fresco dopo la copia; su errore/uscita non locale scartare 
                          (values (member :found :absent :history-required :retry) index &optional))
                 concludi-get))
 (defun concludi-get (context now)
-  "Pre: COPIED, ABSENT, HISTORY-REQUIRED o RETRY ammesso; NOW fresco dopo ogni copia/accesso.
-Post: verifica snapshot finale e rilascio EBR prima del ritorno; FOUND autorizza la copia privata.
-ABSENT solo GET corrente. Ogni condizione/uscita non locale invalida il risultato e libera il pin."
+  "Pre: admitted COPIED, ABSENT, HISTORY-REQUIRED, or RETRY; fresh NOW after every copy/access.
+Post: final snapshot check and EBR release before return; FOUND authorizes the private copy.
+ABSENT only for current GET. Every condition/nonlocal exit invalidates the result and releases the pin."
   (let* ((state (contesto-get-state context))
          (result (case state
                    (:copied :found) (:absent :absent) (:history-required :history-required)

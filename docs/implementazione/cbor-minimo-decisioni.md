@@ -2,12 +2,12 @@
 
 # Decisions for minimal CBOR headers
 
-Author's inventory, against the method fixed before campaigns. Ten new
+This is the author's inventory against the method fixed before campaigns. Ten new
 compound decisions are listed below; the unchanged syntactic reader
 retains its own inventory. The author did not read the new tests
 before product delivery. Listed fixtures are those of the
 [method](cbor-minimo-metodo.md), not observed outcomes. No guard or declarative
-form is excluded from the denominator; no MC/DC qualification.
+form is excluded from the denominator; no MC/DC qualification is claimed.
 
 | ID | File, function, and line | Conditions | Planned verification / limit |
 |---|---|---|---|
@@ -61,7 +61,7 @@ Delivery includes five helpers and the public reader. All have FTYPEs,
 docstrings with pre/post/conditions, safety3, and at least two meaningful invariant
 guards for their fields, alignments, widths, or progress. No
 function exceeds 60 lines; separating float dispatch keeps the public
-reader's path count low. No loops,
+reader's path count low. There are no loops,
 recursion, constructors, handlers, mutable global state, copies, I/O, or waits.
 Words remain u32; the largest mask produced by a shift is 2^32-1,
 immediate on the method's 64-bit SBCL target. This does not replace heap

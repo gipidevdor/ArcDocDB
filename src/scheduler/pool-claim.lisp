@@ -12,10 +12,10 @@
                                  (member :unchanged :activated :retired :busy :faulted)
                                  &optional)) prendi-writer-pool))
 (defun prendi-writer-pool (port)
-  "Pre: owner corrente, IDLE senza epoca o risorse esterne; nessuna rientranza.
-Post: un claim C1 se attivo, oppure INACTIVE senza mutare ready/cursore.
-INVALID-ARGUMENT owner, RESOURCE-EXHAUSTED fase; invarianti prima del gate.
-Comandi tardivi restano pendenti fino al prossimo IDLE; nessun rollback o attesa."
+  "Pre: current owner, IDLE without epoch or external resources; no reentry.
+Post: one C1 claim if active, or INACTIVE without ready/cursor mutation.
+INVALID-ARGUMENT for owner, RESOURCE-EXHAUSTED for phase; invariants before the gate.
+Late commands remain pending until the next IDLE; no rollback or waiting."
   (unless (eq (porta-worker-pool-owner port) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :pool-worker-owner))
   (let ((context (porta-worker-pool-context port)))

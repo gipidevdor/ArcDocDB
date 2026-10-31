@@ -29,5 +29,5 @@ exhaustive mutations of every compound condition: no MC/DC claim.
 Actual compilability and detection are verified in preserved logs,
 without counting them from the static reading's result alone.
 
-No open static findings in the drivers. Coverage scope and collection
+There are no open static findings in the drivers. Coverage scope and collection
 utility receive a [separate reading](cbor-minimo-strumenti-review.md).

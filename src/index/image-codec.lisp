@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-010 REQ-AFF-002
 (declaim (ftype (function (octets sigillo-immagine) null) scrivi-sigillo-immagine))
 (defun scrivi-sigillo-immagine (buffer seal)
-  "Pre: descrittore interno canonico, buffer esclusivo di una pagina. Post: footer completo con CRC.
-INVALID-ARGUMENT prima degli effetti per taglia; non implica append/flush o commit."
+  "Pre: canonical internal descriptor, exclusive one-page buffer. Post: complete footer with CRC.
+INVALID-ARGUMENT for size before effects; does not imply append/flush or commit."
   (unless (= (length buffer) (sigillo-immagine-size seal)) (error 'invalid-argument :reason :index-image-size))
   (let ((source (sigillo-immagine-source seal)) (root (sigillo-immagine-root seal)))
     (fill buffer 0)
@@ -31,8 +31,8 @@ INVALID-ARGUMENT prima degli effetti per taglia; non implica append/flush o comm
 ;;; REQ: REQ-IDX-010 REQ-AFF-002
 (declaim (ftype (function (octets fonte-indice u32 u32) null) verifica-fonte-sigillo))
 (defun verifica-fonte-sigillo (buffer source seed-high seed-low)
-  "Pre: checksum footer gia' verificato. Post: fonte, CSN, conteggio e seme esatti prima delle pagine.
-CORRUPTION-DETECTED per immagine incompatibile; nessuna deduzione di autorita' dal footer."
+  "Pre: footer checksum already verified. Post: exact source, CSN, count, and seed before pages.
+CORRUPTION-DETECTED for incompatible image; no authority inferred from footer."
   (unless (and (equalp (subseq buffer +image-off-archive+ +image-off-series+) (fonte-indice-archive source))
                (equalp (subseq buffer +image-off-series+ +image-off-image+) (fonte-indice-series source))
                (equalp (subseq buffer +image-off-token+ +image-used+) (fonte-indice-token source))
@@ -45,8 +45,8 @@ CORRUPTION-DETECTED per immagine incompatibile; nessuna deduzione di autorita' d
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (octets index fonte-indice u32 u32) sigillo-immagine) leggi-sigillo-immagine))
 (defun leggi-sigillo-immagine (buffer eof source seed-high seed-low)
-  "Pre: una pagina footer stabile, EOF esatto osservato dal controller. Post: metadati solo dopo il gate completo.
-CORRUPTION-DETECTED per geometria/CRC/campi; UNSUPPORTED-FORMAT per versione integra ignota."
+  "Pre: one stable footer page, exact EOF observed by controller. Post: metadata only after complete gate.
+CORRUPTION-DETECTED for geometry/CRC/fields; UNSUPPORTED-FORMAT for intact unknown version."
   (let* ((size (length buffer)) (crc-offset (- size 4)))
     (unless (and (member size '(4096 16384 65536)) (>= eof (* 3 size)) (zerop (mod eof size)))
       (error 'corruption-detected :reason :index-image-size))

@@ -22,11 +22,11 @@ the 18 tests. They identify contents, not Git commits.
 | [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp) | `be292ec655087a229a1630179876da9e302a6121985ec3141a5e35226885a115` |
 | [`tests/recovery/decisions-radix.lisp`](../../tests/recovery/decisions-radix.lisp) | `75296b2de5620afd4f67117445197cb227adb4b9f65203e299ef6a4ee79518c0` |
 
-Comparison with frozen candidate
+Comparison with the frozen candidate
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`
 shows only the updated opening comment, two constants, and two
 added wrappers: the algorithm's eight bodies remain unchanged.
-The builder differs from baseline only in the two sorter calls;
+The builder differs from the baseline only in the two sorter calls;
 the public signature of `ricostruisci-decisioni` and its returned values
 remain unchanged. Recovery registrations observed in
 [`arcdocdb.asd`](../../arcdocdb.asd) follow the order
@@ -37,7 +37,7 @@ registrations, not other concurrent changes to ASD or modules.
 `sort-recovery-participants` chooses merge for `count < 1024` and radix
 for `count >= 1024`: count is the participant count of an individual
 record, not the log total. `sort-recovery-entries` chooses merge
-for fewer than 256 entries and radix from 256 inclusive. This cardinality counts
+for fewer than 256 entries and radix for 256 or more. This cardinality counts
 physical DECISIONs, including duplicates, before `collapse-decisions`;
 it does not count only unique TXIDs. Both wrappers retain full
 types and delegate preconditions and final checks to sorters.
@@ -58,7 +58,7 @@ suffixes, all calibrations reach 100 ms and all three
 samples per algorithm reach at least 50 ms with usability flags:
 16 ID16 scenarios from 1,024 elements have ratios
 `0,131160..0,857956`; 25 TXID scenarios from 256 entries have ratios
-`0,143755..0,759877`. Recalculated ratios match retained
+`0,143755..0,759877`. Recalculated ratios match the retained
 selection within `1e-12`; the recorded process exits zero
 with stable source consistency. The insufficient first matrix
 remains distinct and retained. These findings concern only local
@@ -83,11 +83,11 @@ coverage and mutation campaigns.
 | 3. Errors and handling | Wrappers do not intercept or transform errors. Inconsistent measurements/counts, duplicate participants, and conflicts retain delegated checks; six negative tests also call internal guards for histogram, object, digit, array, and cursors. Runtime type/allocation errors and Serie transition to FAULTED remain external to the sorter. |
 | 4. Loops and waits | Dispatch adds only two comparisons and calls. Bounds of 16/8 passes, 256 classes, and N actual elements remain; no new loop or wait. The six readers' finite waits belong to the fixture, not the product worker. |
 | 5. Allocations and hot path | Wrapper prepares no additional workspace; selected sorter allocates on the build/open path. Scratch and histogram depend on actual data, not unused budgets; even private count 0/1 may allocate. No zero-heap promise or measurement for queries or runtime. |
-| 6. Verified data | DECISION count budget precedes entry allocation; payload and total participant preflight precedes copies. `decode-decisions` passes the wrapper an ID16 copy and absolute offset; the entry wrapper receives the complete private vector before conflict checks and table construction. No partial result published and log buffer unchanged. |
+| 6. Verified data | DECISION count budget precedes entry allocation; payload and total participant preflight precedes copies. `decode-decisions` passes the wrapper an ID16 copy and absolute offset; the entry wrapper receives the complete private vector before conflict checks and table construction. No partial result is published and the log buffer remains unchanged. |
 | 7. Compound decisions | Diff adds two simple count `if` forms, without new compound Boolean predicates. Boundaries are 1023/1024/1025 and 255/256/257; the threshold itself uses radix. Algorithm compound guards remain those inventoried. Raw coverage and final C1 criteria require reports on the adopted diff. |
 | 8. Owner and sharing | Wrappers retain construction ownership and export no vectors. Sorters reorder private copies only; entries and public table retain read-only fields. Boundary tests also compare log before/after; concurrent test queries an already complete table after overwriting the original log. |
 | 9. Trace, compilation, lint, and check | Both new wrappers have `ftype`, pre/post/error docstrings, REQ, and file `safety 3`; within 60 lines. Reviewer's isolated baseline log reread: marker `decision-tests-complete 43` with the last three public tests green; reviewer reports strict compilation without warnings. Author did not rerun heavy processes. Trace, lint, `make check`, final coverage, and mutants are evidence distinct from this reading. |
-| 10. Deviations | No waiver identified in the bounded diff. Thresholds are measured local choices, not format limits; existing budgets and guards remain active. No coverage exclusion or extension of measurements to other systems approved. |
+| 10. Deviations | No waiver identified in the bounded diff. Thresholds are measured local choices, not format limits; existing budgets and guards remain active. No coverage exclusion or extension of measurements to other systems is approved. |
 | 11. Parallelism between Serie | No new lock, parking, pool, or shared store per Serie operation: added work concerns owned recovery workspace. Public queries remain scalar with no table writes. Six real readers check responses/ownership, not engine isolation, scheduler, or scalability against INV-P6. |
 | 12. Atomicity and removals | Diff introduces no I/O, flush, publication, prepared application, deletion, or durable atomicity point. Scanner and durability protocol retain their contracts without requalification by adaptive sorting. |
 

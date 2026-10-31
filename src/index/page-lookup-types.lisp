@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-001 REQ-IDX-009 REQ-LIM-003
 (defstruct (lettore-indice-pagine (:constructor %make-lettore-indice-pagine
                                    (cache root cursor bucket key-page max-pages max-key-bytes)) (:copier nil))
-  "Pre: factory, root dal controller autorevole. Post: scratch privati preallocati.
-Lookup seriale di candidati, senza pubblicazione root, MVCC o modifica durevole."
+  "Pre: factory, root from authoritative controller. Post: preallocated private scratch.
+Serial candidate lookup, without root publication, MVCC, or durable modification."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (cache nil :type cache-pagine :read-only t)
   (root nil :type identita-pagina :read-only t)
@@ -25,9 +25,9 @@ Lookup seriale di candidati, senza pubblicazione root, MVCC o modifica durevole.
 (declaim (ftype (function (cache-pagine identita-pagina &key (:max-pages t) (:max-key-bytes t))
                          lettore-indice-pagine) crea-lettore-indice-pagine))
 (defun crea-lettore-indice-pagine (cache root &key (max-pages 1024) (max-key-bytes 1048576))
-  "Pre: cache dell'owner, immagine stabile, root verificabile dal codec al primo accesso.
-Post: due pagine scratch e un cursore privato; nessuna lettura o allocazione nel lookup.
-INVALID-ARGUMENT per owner, geometria e budget; nessuna nuova autorita' di commit."
+  "Pre: owner's cache, stable image, root verifiable by codec on first access.
+Post: two scratch pages and private cursor; no read or allocation during lookup.
+INVALID-ARGUMENT for owner, geometry, and budget; no new commit authority."
   (unless (eq (cache-pagine-owner cache) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :index-page-cache-owner))
   (unless (and (typep max-pages '(integer 1 65536))
@@ -44,8 +44,8 @@ INVALID-ARGUMENT per owner, geometria e budget; nessuna nuova autorita' di commi
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (lettore-indice-pagine page-number page-number octets) null) leggi-pagina-lookup))
 (defun leggi-pagina-lookup (reader page generation target)
-  "Pre: BUSY owner, riferimento dal codec o root canonica. Post: copia verificata nel target.
-Ogni visita, anche HIT, consuma un credito; RESOURCE-EXHAUSTED non equivale ad ABSENT."
+  "Pre: BUSY owner, reference from codec or canonical root. Post: verified copy in target.
+Every visit, even HIT, consumes one credit; RESOURCE-EXHAUSTED is not ABSENT."
   (unless (lettore-indice-pagine-busy reader)
     (error 'invariant-violation :reason :index-page-lookup-state))
   (when (zerop (lettore-indice-pagine-remaining reader))

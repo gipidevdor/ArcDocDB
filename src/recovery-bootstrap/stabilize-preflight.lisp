@@ -7,9 +7,9 @@
 (declaim (ftype (function (simple-vector simple-vector simple-vector index index index) index)
                 verifica-capienza-stabilizzazione-archivio))
 (defun verifica-capienza-stabilizzazione-archivio (sources active closed count per-series total)
-  "Pre: forma/count/tipi di tutte le righe verificati, vettori stabili. Post: somma segmenti ammessa.
-Cardinalita' canoniche e budget includono ACTIVE, prima delle scansioni delle fonti e degli effetti.
-Condizioni delle guardie canoniche propagate; nessun nuovo contenitore o risultato parziale."
+  "Pre: shape/count/types of all rows verified, stable vectors. Post: segment sum admitted.
+Canonical cardinalities and budgets include ACTIVE, before source scans and effects.
+Canonical guard conditions propagated; no new container or partial result."
   (let ((segments 0))
     (dotimes (i count)
       (multiple-value-bind (control n)
@@ -29,9 +29,9 @@ Condizioni delle guardie canoniche propagate; nessun nuovo contenitore o risulta
 (declaim (ftype (function (simple-vector simple-vector simple-vector index index) null)
                 verifica-metadata-stabilizzazione-archivio))
 (defun verifica-metadata-stabilizzazione-archivio (sources active closed count per-series)
-  "Pre: tutti i count ammessi prima delle scansioni, token/vettori/FD stabili. Post: metadata di tutte le fonti.
-Ordine u64, unico ACTIVE, consumo CLOSED e CONTROL/FD/EOF/P riusano le guardie per Serie.
-Nessun nome osservato o effetto; condizioni originali propagate senza close o retry."
+  "Pre: all counts admitted before scans, stable tokens/vectors/FDs. Post: metadata for all sources.
+u64 order, unique ACTIVE, CLOSED consumption, and CONTROL/FD/EOF/P reuse per-Serie guards.
+No name observed or effect; original conditions propagated without close or retry."
   (dotimes (i count)
     (let ((source (the recovery-sources (svref sources i)))
           (a (the arcdocdb.recovery.active:active-recuperato (svref active i)))
@@ -44,9 +44,9 @@ Nessun nome osservato o effetto; condizioni originali propagate senza close o re
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-REC-004 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (simple-vector simple-vector index) null) verifica-nomi-stabilizzazione-archivio))
 (defun verifica-nomi-stabilizzazione-archivio (directories sources count)
-  "Pre: metadata di tutte le Serie e gate canonico Archivio conclusi, namespace esclusivi/stabili.
-Post: ogni nome/FD di tutte le Serie ammesso prima della prima rinomina o fsync.
-Il risultato non prenota il namespace; nessun effetto o gestione implicita delle capacita'."
+  "Pre: metadata for all Serie and canonical Archivio gate complete, exclusive/stable namespaces.
+Post: every name/FD for all Serie admitted before the first rename or fsync.
+The result does not reserve the namespace; no effect or implicit capability management."
   (dotimes (i count)
     (let ((source (the recovery-sources (svref sources i))))
       (arcdocdb.recovery.series::verifica-nomi-fonti-stabilizzabili

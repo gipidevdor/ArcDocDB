@@ -4,6 +4,12 @@ The manual presents ArcDocDB's implemented behavior, intended architecture and
 verification records as distinct kinds of material. Its source is the repository;
 publication adds navigation and typography without creating a competing specification.
 
+The code reference derives its contracts from source docstrings and declarations.
+Editing that prose must preserve argument names, types, preconditions,
+postconditions, condition semantics, ownership and progress limits. Generated
+reference pages do not establish guarantees beyond those declared and verified
+in the implementation.
+
 ## Language and terminology
 
 Use American English, active sentences and descriptive headings. Prefer direct
@@ -56,6 +62,9 @@ to numerical presentation preserve the value, precision and provenance.
 The generated manifest identifies source hashes. Local previews with uncommitted
 changes are labeled as previews; a Git revision alone does not certify a review.
 No generated date is presented as a human review date.
+
+The [code and language review](editorial-review.md) records this edition's review
+scope, preservation checks and source-based clarifications.
 
 ## Publication checks
 

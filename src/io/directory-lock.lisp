@@ -21,10 +21,10 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (fd) integer) native-directory-lock))
 (defun native-directory-lock (descriptor)
-  "Pre: FD di directory posseduto e stabile nel pool I/O, ABI 64 bit Darwin/Linux.
-Post: una flock(LOCK_EX|LOCK_NB); il lock advisory resta sul FD fino a close.
-SYSCALL-ERROR con errno catturato subito; UNSUPPORTED-FORMAT per ABI/piattaforma.
-Nessun nuovo FD, nome, unlock, flush, attesa di rilascio o retry, nemmeno per EINTR."
+  "Pre: directory FD owned and stable in the I/O pool, 64-bit Darwin/Linux ABI.
+Post: one flock(LOCK_EX|LOCK_NB); advisory lock remains on the FD until close.
+SYSCALL-ERROR with errno captured immediately; UNSUPPORTED-FORMAT for ABI/platform.
+No new FD, name, unlock, flush, wait for release, or retry, even for EINTR."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)
@@ -37,13 +37,13 @@ Nessun nuovo FD, nome, unlock, flush, attesa di rilascio o retry, nemmeno per EI
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io) null) esigi-esclusiva-directory))
 (defun esigi-esclusiva-directory (directory)
-  "Pre: capacita' directory aperta, FD stabile posseduto dal caller nel pool I/O.
-Invocare prima di osservare o modificare lo storage M1 e trattenere la capacita' fino a close.
-Post: esclusiva advisory acquisita sul FD esatto; NIL solo dopo ritorno intero zero e postcheck.
-INVALID-ARGUMENT per modo, IO-FAULT per stato/syscall/ritorno invalido, INVARIANT-VIOLATION per FD invalido.
-Callback assente UNSUPPORTED-FORMAT, senza fallback nativo; errno in operation :directory-lock.
-Rifiuti/guasti non mutano stato o frontiere, incluso busy; il caller decide il fallimento startup.
-Nessun lockfile, formato, unlink, unlock anticipato, flush, attesa di rilascio o retry."
+  "Pre: open directory capability, stable FD owned by the caller in the I/O pool.
+Call before observing or modifying M1 storage and retain the capability until close.
+Post: advisory exclusive lock acquired on the exact FD; NIL only after integer zero return and postcheck.
+INVALID-ARGUMENT for mode, IO-FAULT for state/syscall/invalid return, INVARIANT-VIOLATION for invalid FD.
+Absent callback means UNSUPPORTED-FORMAT, without native fallback; errno in operation :directory-lock.
+Rejections/faults do not mutate state or frontiers, including busy; the caller decides startup failure.
+No lockfile, format, unlink, early unlock, flush, wait for release, or retry."
   (esigi-aperto directory :directory)
   (let* ((backend (file-backend directory))
          (callback (and backend (backend-directory-lock backend))))

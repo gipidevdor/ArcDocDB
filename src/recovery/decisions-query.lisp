@@ -5,17 +5,17 @@
 ;;; REQ: REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (decision-table) (values index &optional)) numero-decisioni))
 (defun numero-decisioni (table)
-  "Pre: TABLE ricostruita interamente. Post: numero dei TXID unici, nessuna modifica.
-Violazioni dei tipi del contratto segnalano TYPE-ERROR con safety 3."
+  "Pre: TABLE fully reconstructed. Post: number of unique TXIDs, no modification.
+Contract type violations signal TYPE-ERROR with safety 3."
   (length (%table-entries table)))
 
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (decision-table) (values boolean u64 &optional)) massimo-csn-decisioni))
 (defun massimo-csn-decisioni (table)
-  "Pre: tabella completa posseduta dal replay canonico. Post: presenza e massimo CSN di tutte le DECISION.
-NIL/0 sul vuoto; TXID, stamp SEAL del log di controllo e coda non contribuiscono.
-Ciclo limitato alla cardinalità verificata; forma entry e consumo ricontrollati senza nuovi contenitori.
-TYPE-ERROR per tipi invalidi, INVARIANT-VIOLATION per forma o risultato interno incoerente."
+  "Pre: complete table owned by canonical replay. Post: presence and maximum CSN of all DECISIONs.
+NIL/0 when empty; TXID, control-log SEAL stamp, and tail do not contribute.
+Loop bounded by verified cardinality; entry shape and consumption rechecked without new containers.
+TYPE-ERROR for invalid types, INVARIANT-VIOLATION for inconsistent internal shape or result."
   (let* ((entries (%table-entries table)) (count (length entries)) (used 0) (maximum 0))
     (declare (type u64 maximum))
     (loop for entry across entries
@@ -29,9 +29,9 @@ TYPE-ERROR per tipi invalidi, INVARIANT-VIOLATION per forma o risultato interno 
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (decision-table u64) (values boolean index &optional)) find-decision-index))
 (defun find-decision-index (table txid)
-  "Pre: tabella privata ordinata con TXID unici. Post: presenza e indice, zero se assente.
-Ricerca limitata a integer-length(N) passi; INVARIANT-VIOLATION se il limite non basta.
-Nessuna modifica, I/O o allocazione dipendente da dati non verificati."
+  "Pre: sorted private table with unique TXIDs. Post: presence and index, zero if absent.
+Search bounded to integer-length(N) steps; INVARIANT-VIOLATION if the bound is insufficient.
+No modification, I/O, or allocation dependent on unverified data."
   (let* ((entries (%table-entries table)) (count (length entries)) (left 0) (right count))
     (loop repeat (integer-length count)
           while (< left right)
@@ -50,8 +50,8 @@ Nessuna modifica, I/O o allocazione dipendente da dati non verificati."
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008
 (declaim (ftype (function (decision-table u64) (values boolean u64 u16 &optional)) trova-decisione))
 (defun trova-decisione (table txid)
-  "Pre: TABLE completa, TXID u64 opaco. Post: presenza, CSN e count, entrambi zero se assente.
-Propaga errori tipizzati degli invarianti; nessun riferimento interno viene esposto."
+  "Pre: complete TABLE, opaque u64 TXID. Post: presence, CSN, and count, both zero if absent.
+Propagates typed invariant errors; no internal reference exposed."
   (multiple-value-bind (found position) (find-decision-index table txid)
     (if found
         (let ((entry (the decision-entry (aref (%table-entries table) position))))
@@ -62,9 +62,9 @@ Propaga errori tipizzati degli invarianti; nessun riferimento interno viene espo
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (decision-entry octets index) boolean) participant-present-p))
 (defun participant-present-p (entry serie-id start)
-  "Pre: entry privata canonica, ID16 del chiamante disponibile e stabile.
-Post: presenza esatta; ricerca limitata a integer-length(COUNT) passi.
-INVALID-ARGUMENT per range, INVARIANT-VIOLATION per forma o limite interno errato."
+  "Pre: canonical private entry, caller's ID16 available and stable.
+Post: exact presence; search bounded to integer-length(COUNT) steps.
+INVALID-ARGUMENT for range, INVARIANT-VIOLATION for incorrect internal shape or bound."
   (check-entry-shape entry)
   (check-range serie-id start (+ start +participant-id-bytes+))
   (let ((participants (%entry-participants entry)) (left 0) (right (%entry-count entry)))
@@ -84,9 +84,9 @@ INVALID-ARGUMENT per range, INVARIANT-VIOLATION per forma o limite interno errat
 (declaim (ftype (function (decision-table u64 octets integer integer) boolean)
                 partecipante-decisione-p))
 (defun partecipante-decisione-p (table txid serie-id start end)
-  "Pre: TABLE completa e buffer ID della Serie stabile. Post: presenza per TXID e ID16 esatti.
-Verifica il range e la lunghezza anche se TXID assente; nessuna modifica o riferimento interno.
-INVALID-ARGUMENT per range o span diverso da 16 byte, con offset relativo al buffer ID."
+  "Pre: complete TABLE and stable Serie ID buffer. Post: presence for exact TXID and ID16.
+Checks range and length even if TXID absent; no modification or internal reference.
+INVALID-ARGUMENT for range or span other than 16 bytes, with offset relative to ID buffer."
   (check-range serie-id start end)
   (unless (= (- end start) +participant-id-bytes+)
     (error 'invalid-argument :reason :serie-id-length :offset start))

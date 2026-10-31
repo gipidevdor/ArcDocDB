@@ -6,19 +6,19 @@
 
 ## Preregistered scope
 
-Campaign checks existing `arcdocdb.mvcc` APIs using same
+The campaign checks existing `arcdocdb.mvcc` APIs using the same
 Archivio's canonical `arcdocdb.csn` register. Planning began
 October 9 on main `edb043b`; October 11 resumption integrates
 main `5768e02` without snapshot/CSN changes.
 [Method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/metodo.lisp)
 frozen before recorded executions, unchanged:
 `:planned`/`:not-collected` describe that moment before tests.
-Observed October 11 outcomes below/in
+The October 11 outcomes are reported below and in
 [campaign evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/README.md).
 No product API/format/protocol changes.
 
 Scope includes registration, frontier capture, activation,
-verification, termination, bounded expiration, retention threshold. Depends on
+verification, termination, bounded expiration, and the retention threshold. It depends on
 [snapshot-register](registro-snapshot.md)/
 [CSN-connection](snapshot-csn.md) contracts. Existing CSN-register tests
 alone do not demonstrate connection.
@@ -51,7 +51,7 @@ activation; pin retains threshold until termination/expiry
 removes it. Oracle checks public values/rejections without replicating
 product code.
 
-Fixtures use explicit time/small capacities. Private states
+Fixtures use explicit time/small capacities. Private states are
 prepared only for boundaries unreachable through short sequence,
 such as u64 generation exhaustion, or declared fault.
 Frozen method lists 28 lifecycle cases, 15 capture cases, 10
@@ -91,10 +91,10 @@ cleanup releases semaphores, joins workers or terminates them on
 fixture failure, propagates errors. No case may leave
 blocked thread or hide failure.
 
-Capture injections confined to isolated test process.
-Every temporary adapter replacement restored through
-`unwind-protect`. No callback/new API introduced in
-product; original functions retained for noninjected cases.
+Capture injections are confined to isolated test process.
+Every temporary adapter replacement is restored through
+`unwind-protect`. No callback/new API is introduced in
+the product; original functions are retained for noninjected cases.
 
 Mutants alter specific snapshot guards/transitions in
 isolated copies. Baseline first must complete unchanged suite,
@@ -106,20 +106,20 @@ fixtures/negative CLI check verify COD-60/COD-61.
 Target `snapshot-mutation-selftest` included in `make check-core`,
 thus Linux/macOS CI jobs too. Mutation campaign remains
 explicit local execution;
-self-test child runners/logs/reports preserved.
+self-test child runners/logs/reports are preserved.
 
 Partial coverage reuses `tools/foundation-coverage.lisp`, scope
 `mvcc`. Driver instruments product sources but runs only
 `arcdocdb.mvcc.tests:run`; report selects eight
 `src/mvcc/` files. Self-test/final report run; SB-COVER
-state/HTML preserved with denominators/gaps. Partial observation:
+state/HTML are preserved with denominators/gaps. Partial observation:
 not MC/DC measurement or release-gate closure.
 
 Before execution, readings on actual sources completed,
 authors/independent reviewers/hashes/findings/explicit C1 checklist in
 [review record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/revisione.lisp).
 Command records preserve arguments,
-environment, outputs, exits, before/after hashes. Sources/docs/Git index
+environment, outputs, exits, before/after hashes. Sources/docs/Git index are
 frozen during each recorded command.
 
 <a id="esiti-osservati-l11-ottobre-2026"></a>
@@ -141,8 +141,8 @@ variable in lifecycle fixture.
 [Recorded correction](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/correzione-fixture.lisp)
 adds assertion on context's public register identity.
 Fixture blob `4e9a15f` → `2cc481d`; test counts/
-product sources unchanged. Difference from original
-freeze explicit; method/initial outcomes preserved.
+product sources are unchanged. The difference from the original
+freeze is explicit; the method/initial outcomes are preserved.
 
 In [mutazioni-finale.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/mutazioni-finale.lisp),
 baseline completes exactly 43 expected tests, `:complete` phase,
@@ -163,32 +163,32 @@ so values do not demonstrate corresponding paths were
 unexecuted. Independent reading reconstructed all eight
 HTML files/checked annotated-source identity.
 
-Before push also integrated main `f16e978`, adding index
+Before push, integration also incorporated main `f16e978`, adding index
 campaign without snapshot/CSN changes.
 [Integrated verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/integrazione.lisp)
 at commit `ac52376` passes 620 tests plus smoke, including 64 slot/55
 primary-index cases. Unified coverage-driver self-test
 succeeded; independent review confirms both suites and
-`mvcc`/`index` scopes. Previous evidence original.
+`mvcc`/`index` scopes. Previous evidence remains original.
 
 <a id="criteri-di-chiusura-e-limiti"></a>
 
 ## Closure criteria and limits
 
-Campaign closes when agreed mapping exercised by
-dedicated suite, runner distinguishes fixture faults,
-target mutants detected/analyzed, integrated checks pass,
-CI concerns exact published commit. At publication of
-results, commit's CI **pending**; local outcomes do not
+The campaign closes when the agreed mapping is exercised by the
+dedicated suite, the runner distinguishes fixture faults,
+target mutants are detected/analyzed, integrated checks pass,
+and CI concerns the exact published commit. At publication of
+results, the commit's CI was **pending**; local outcomes do not
 anticipate result. [Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/catalogo.lisp) preserves schema-1
 records with LEAF names, original bytes/failed-attempt states.
-Any unexercised cases explicit gaps.
+Any unexercised cases are explicit gaps.
 
-Preregistration separate from results. Expression/branch
+Preregistration is separate from results. Expression/branch
 measurement retains denominator, does not measure MC/DC.
 Coordinated sequences prove neither ARM64/x86-64 weak memory nor
 benchmark performance. Remaining: EBR/reclaim, primary index, retained versions,
 GET, engine timer/scheduler, durability, crash recovery. No
 zero heap, measured latency, complete C1 qualification, phase
-closure claimed. Runtime evidence separate from previous
+closure is claimed. Runtime evidence is separate from previous
 static inspections.

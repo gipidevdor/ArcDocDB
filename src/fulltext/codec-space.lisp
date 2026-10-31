@@ -5,8 +5,8 @@
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (defstruct (spazio-codec-full-text
              (:constructor %spazio-codec-full-text (lengths starts prefix marks analysis term-capacity)) (:copier nil))
-  "Scratch preallocato per pianificazione/validazione; nessun oggetto per entry.
-Un errore lascia solo scratch privato parziale; riuso dopo reset all'ingresso."
+  "Preallocated scratch for planning/validation; no per-entry object.
+An error leaves only partial private scratch; reuse after reset at entry."
   (lengths (make-array 6 :element-type 'u64) :type (simple-array (unsigned-byte 64) (6)) :read-only t)
   (starts (make-array 6 :element-type 'u64) :type (simple-array (unsigned-byte 64) (6)) :read-only t)
   (prefix (make-array 0 :element-type 'u32) :type vettore-u32 :read-only t)
@@ -20,9 +20,9 @@ Un errore lascia solo scratch privato parziale; riuso dopo reset all'ingresso."
                          spazio-codec-full-text) crea-spazio-codec-full-text))
 (defun crea-spazio-codec-full-text (&key (max-lengths 65536) (max-positions 1048576)
                                        (max-term-bytes 1024) (max-memory 67108864))
-  "Pre: configurazione fredda, capacita positive u32; termini fino a 16MiB per il decoder.
-Post: scratch esclusivo entro payload+8192 byte conservativi, oppure rifiuto prima di allocare.
-RESOURCE-EXHAUSTED non rende il formato corrotto: il chiamante puo fornire piu scratch."
+  "Pre: cold configuration, positive u32 capacities; terms through 16MiB for the decoder.
+Post: exclusive scratch within payload+8192 conservative bytes, or rejection before allocation.
+RESOURCE-EXHAUSTED does not make the format corrupt: the caller may supply more scratch."
   (unless (and (typep max-lengths '(integer 1 4294967295))
                (typep max-positions '(integer 1 4294967295))
                (typep max-term-bytes '(integer 1 16777216)) (typep max-memory 'index))
@@ -41,8 +41,8 @@ RESOURCE-EXHAUSTED non rende il formato corrotto: il chiamante puo fornire piu s
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (spazio-codec-full-text &optional index) null) lavoro-codec))
 (defun lavoro-codec (space &optional (units 1))
-  "Pre: scratch esclusivo e contatori validi. Post: lavoro entro limite, senza overflow.
-RESOURCE-EXHAUSTED prima di oltrepassarlo; nessun risultato parziale certificato."
+  "Pre: exclusive scratch and valid counters. Post: work within limit, without overflow.
+RESOURCE-EXHAUSTED before exceeding it; no partial result certified."
   (unless (<= (spazio-codec-full-text-work space) (spazio-codec-full-text-work-limit space))
     (error 'invariant-violation :reason :fulltext-codec-work-state))
   (when (> units (- (spazio-codec-full-text-work-limit space) (spazio-codec-full-text-work space)))
@@ -53,8 +53,8 @@ RESOURCE-EXHAUSTED prima di oltrepassarlo; nessun risultato parziale certificato
 (declaim (ftype (function (octets index index octets index index spazio-codec-full-text)
                          (member -1 0 1)) confronta-span-codec))
 (defun confronta-span-codec (x a b y c d space)
-  "Pre: span validi. Post: confronto lessicografico a byte, lavoro addebitato.
-Nessun buffer modificato; al piu la minore lunghezza piu un confronto."
+  "Pre: valid spans. Post: bytewise lexicographic comparison, work charged.
+No buffer modified; at most the shorter length plus one comparison."
   (unless (and (<= a b (length x)) (<= c d (length y)))
     (error 'invariant-violation :reason :fulltext-codec-compare-span))
   (loop for i below (min (- b a) (- d c)) do

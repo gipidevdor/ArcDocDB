@@ -21,8 +21,8 @@ Acceptance from idle returns `:schedule`; further messages return
 `:queued`. Begin acquires the lease and moves from ready to running.
 Termination observes count, releases the lease, and moves to ready if
 work remains, idle if empty, holding the guard through the entire transition.
-Quota is cumulative per segment. Termination may be early: remaining
-messages still require another segment.
+Quota is cumulative per slice. Termination may be early: remaining
+messages still require another slice.
 
 `:schedule` transfers an obligation to the caller to execute only once.
 A failed notification requires retaining and retrying that obligation;
@@ -54,7 +54,7 @@ its own tests. CAS and ordering are those of
   without wrap and ready retained. Internal guards tested with private FI.
 - Real threads reused over multiple waves; producers open during consumption,
   writer handoff to different threads, and one Serie progressing while another
-  retains its guard. Semaphores and joins have timeouts; worker errors rethrown.
+  retains its guard. Semaphores and joins have timeouts; worker errors are rethrown.
   This harness is neither the product adaptive pool nor a scalability measurement.
 
 <a id="verifica-c1-e-strumenti"></a>
@@ -64,7 +64,7 @@ its own tests. CAS and ordering are those of
 Two readings, author and separate reviewer, with the standard's twelve points.
 Decision and defensive-branch inventory; raw `sb-cover` for all four execution
 files, without subtracting declarations or unmarked branches. Raw data, counts,
-denominators, and limits retained; no implicit waiver or complete MC/DC.
+denominators, and limits are retained; no implicit waiver or complete MC/DC.
 
 Mutation testing on isolated copies, compiled and successful baseline;
 semantic mutants for notification, state transition, quota, and count.
@@ -81,6 +81,6 @@ proof. No throughput/P99 measurement or algorithm selection from this
 campaign. Uncontrolled external load, local macOS ARM64/SBCL platform.
 
 All tests go through the structured recorder, with stable sources,
-argv/environment, complete stdout/stderr, and failures. Evidence published
+argv/environment, complete stdout/stderr, and failures. Evidence is published
 in `spikes/results/2026-10-09-writer-handoff/`; final check `make check`.
 Engine gates and integrated targets remain open.

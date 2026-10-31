@@ -8,7 +8,7 @@
         (destructuring-bind (source label) entry
           (format out "<li><a href=\"~A\"~A>~A</a></li>"
                   (h (page-url source))
-                  (if (equal source (page-source *current-page*)) " aria-current=\"page\"" "")
+                  (if (equal source (or (page-source *current-page*) (page-route *current-page*))) " aria-current=\"page\"" "")
                   (h label))))
       (write-string "</ul></div>" out))
     (format out "<a class=\"library-link\" href=\"~A\">All documents <span aria-hidden=\"true\">↗</span></a>"
@@ -31,7 +31,7 @@
 
 (defun footer ()
   (with-output-to-string (out)
-    (format out "<footer class=\"site-footer\"><div><span>© 2026 Giacomo Picchiarelli · <a href=\"~A\">BSD 2-Clause</a></span><span>Built with <a href=\"https://github.com/CommonDoc/codex\">Codex</a> · ~A</span></div><nav aria-label=\"Publication\">"
+    (format out "<footer class=\"site-footer\"><div><span>© 2026 Giacomo Picchiarelli · <a href=\"~A\">BSD 2-Clause</a></span><span>Built with <a href=\"https://github.com/CommonDoc/codex\">CommonDoc Codex</a> · ~A</span></div><nav aria-label=\"Publication\">"
             (h (relative-url "licenses/ArcDocDB-BSD-2-Clause.txt"))
             (if *local-build* "Local preview · uncommitted changes"
                 (format nil "Edition ~A" (h (subseq *revision* 0 7)))))
@@ -88,7 +88,7 @@
 (defun shell (page content)
   (let* ((*current-page* page)
          (home (equal (page-route page) "index.html"))
-         (article (page-source page))
+         (article (or (page-source page) (eq (page-kind page) :code)))
          (canonical (concatenate 'string *site-url* (page-route page))))
     (with-output-to-string (out)
       (format out "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
@@ -112,7 +112,7 @@
       (when article
         (format out "<div class=\"breadcrumb\"><a href=\"~A#~A\">~A</a><span aria-hidden=\"true\">/</span><span>~A</span></div>"
                 (h (relative-url "library.html")) (h (page-group page)) (h (group-title (page-group page)))
-                (h (file-namestring (page-source page)))))
+                (h (if (page-source page) (file-namestring (page-source page)) (page-title page)))))
       (when article
         (format out "<p class=\"document-kind\">~A~A</p>"
                 (h (page-classification page))
@@ -120,7 +120,7 @@
                     (format nil " · ~A" (page-link "docs/implementazione/README.md" "Current capabilities")) "")))
       (when article (write-string (or (mobile-toc page) "") out))
       (format out "<article class=\"~A\">~A</article>" (if article "prose" "editorial") content)
-      (when article (write-string (article-footer page) out))
+      (when (page-source page) (write-string (article-footer page) out))
       (write-string "</main>" out)
       (when article (write-string (or (toc page) "") out))
       (write-string (footer) out)
@@ -137,7 +137,7 @@
     ((template arc-template) (document common-doc:document) (section common-doc:section) content)
   (declare (ignore template document))
   (let ((page (or (find (common-doc:reference section) *pages* :key #'page-reference :test #'equal)
-                  (error "Codex emitted an unknown section."))))
+                  (error "CommonDoc Codex emitted an unknown section."))))
     (shell page content)))
 
 (setf (gethash :arc codex.tmpl:*template-database*) (find-class 'arc-template))

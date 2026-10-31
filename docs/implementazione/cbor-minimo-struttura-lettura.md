@@ -12,7 +12,7 @@ frozen before campaigns. Reference: package `9c9edc4`, scanner
 | 2. Invariants | INV-F1/A8/P6: immutable input, budget before admission, exclusive scratch; kernel progress and postconditions preserved. |
 | 3. Errors | Unchanged preflight before reset; reader selection before context/nodes; minimality precedes payload/depth. Drain before tail reading; empty fallback from base reader. No new handler. |
 | 4. Limits | Repeat SPAN, drain102, and stack102 unchanged; no new loop, recursion, or wait. Every step advances at least one byte or signals an error. |
-| 5. Heap | No new object, closure, callback, or dynamic keyword parameter; only positional boolean and direct calls. Local measurement and positive sensor still needed. |
+| 5. Heap | No new object, closure, callback, or dynamic keyword parameter; only a positional Boolean and direct calls. Local measurement and positive sensor still needed. |
 | 6. Output | Three values from result function after cursor/nodes/depth/state postconditions; no payload view or copy. |
 | 7. Decisions | Three compound decisions preserved and simple MINIMAL selection; table compared with actual lines. No MC/DC attestation or exclusion. |
 | 8. Ownership | Caller buffer; one worker owns scratch. No global mutation, new sharing, or retained buffer. |

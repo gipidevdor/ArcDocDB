@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-001 REQ-IDX-009
 (declaim (ftype (function (u32 u32 fixnum fixnum) fixnum) radix-digest-pagina))
 (defun radix-digest-pagina (high low bits shift)
-  "Pre: geometria directory verificata, bits <=11, shift+bits <=64. Post: indice radix da due u32.
-Nessun packing u64 temporaneo, inclusi campi che attraversano il bit 32."
+  "Pre: verified directory geometry, bits <=11, shift+bits <=64. Post: radix index from two u32s.
+No temporary u64 packing, including fields crossing bit 32."
   (unless (and (<= 1 bits 11) (<= 0 shift 63) (<= (+ bits shift) 64))
     (error 'invariant-violation :reason :index-page-lookup-radix))
   (if (>= shift 32) (ldb (byte bits (- shift 32)) high)
@@ -18,8 +18,8 @@ Nessun packing u64 temporaneo, inclusi campi che attraversano il bit 32."
 (declaim (ftype (function (lettore-indice-pagine octets index index u32 u32) (integer -1 65536))
                 cerca-entry-pagina))
 (defun cerca-entry-pagina (reader key start end high low)
-  "Pre: bucket verificato e digest fidato della chiave. Post: offset entry o -1, confronto completo.
-Sonda flat a gruppi da 16, tutti i candidati del gruppo prima di EMPTY; massimo C slot."
+  "Pre: verified bucket and trusted key digest. Post: entry offset or -1, complete comparison.
+Flat probe in groups of 16, all group candidates before EMPTY; at most C slots."
   (let* ((buffer (lettore-indice-pagine-bucket reader)) (capacity (leggi-u32 buffer +off-parameter+))
          (base (logand (ash low -7) (- capacity +page-group+))))
     (dotimes (step (floor capacity +page-group+))
@@ -40,9 +40,9 @@ Sonda flat a gruppi da 16, tutti i candidati del gruppo prima di EMPTY; massimo 
 (declaim (ftype (function (lettore-indice-pagine octets index index u32 u32) (integer -1 65536))
                 attraversa-indice-pagine))
 (defun attraversa-indice-pagine (reader key start end high low)
-  "Pre: BUSY e budget freschi. Post: entry candidata o -1 dopo percorso directory/bucket completo.
-Directory con intervalli radix strettamente discendenti; overflow soltanto bucket.
-Ogni pagina verificata dalla cache, catene limitate dal budget; errori distinti dall'assenza."
+  "Pre: BUSY and fresh budgets. Post: candidate entry or -1 after complete directory/bucket path.
+Directory with strictly descending radix intervals; overflow only for buckets.
+Every page verified by cache, chains bounded by budget; errors distinct from absence."
   (let* ((root (lettore-indice-pagine-root reader)) (page (identita-pagina-page root))
          (generation (identita-pagina-generation root)) (limit 64) (bucket-seen nil)
          (buffer (lettore-indice-pagine-bucket reader)))
@@ -71,8 +71,8 @@ Ogni pagina verificata dalla cache, catene limitate dal budget; errori distinti 
 (declaim (ftype (function (lettore-indice-pagine octets integer integer
                          (simple-array (unsigned-byte 64) (5))) null) preflight-lookup-pagine))
 (defun preflight-lookup-pagine (reader key start end destination)
-  "Pre: input caller stabili. Post: owner, non rientro, span e output separati verificati senza I/O.
-INVALID-ARGUMENT prima di modificare crediti/scratch; nessun coordinamento fra Serie."
+  "Pre: stable caller inputs. Post: owner, non-reentrancy, spans, and separate output verified without I/O.
+INVALID-ARGUMENT before modifying credits/scratch; no coordination across Serie."
   (unless (eq (lettore-indice-pagine-owner reader) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :index-page-lookup-owner))
   (when (lettore-indice-pagine-busy reader)
@@ -90,10 +90,10 @@ INVALID-ARGUMENT prima di modificare crediti/scratch; nessun coordinamento fra S
 (declaim (ftype (function (lettore-indice-pagine octets integer integer u32 u32
                          (simple-array (unsigned-byte 64) (5)) index) (member :live :absent)) leggi-indice-pagine-budget))
 (defun leggi-indice-pagine-budget (reader key start end high low destination page-budget)
-  "Pre: immagine immutabile e digest XXH64 fidato della Serie, come nel primario residente.
-Post: LIVE copia cinque parole nel formato candidato residente; ABSENT non tocca l'output.
-Errori di I/O, corruzione e budget propagati senza output; BUSY rilasciato su ogni uscita.
-Questo e' un candidato: commit, MVCC, pin del segmento e CRC record restano al GET."
+  "Pre: immutable image and trusted Serie XXH64 digest, as in the resident primary.
+Post: LIVE copies five words in resident candidate format; ABSENT leaves output untouched.
+I/O, corruption, and budget errors propagated without output; BUSY released on every exit.
+This is a candidate: commit, MVCC, segment pin, and record CRC remain GET responsibilities."
   (preflight-lookup-pagine reader key start end destination)
   (setf (lettore-indice-pagine-busy reader) t
         (lettore-indice-pagine-found-page reader) 0 (lettore-indice-pagine-found-entry reader) 0
@@ -118,6 +118,6 @@ Questo e' un candidato: commit, MVCC, pin del segmento e CRC record restano al G
 (declaim (ftype (function (lettore-indice-pagine octets integer integer u32 u32
                          (simple-array (unsigned-byte 64) (5))) (member :live :absent)) leggi-indice-pagine))
 (defun leggi-indice-pagine (reader key start end high low destination)
-  "Pre: digest fidato e contesto esclusivo. Post: candidato completo o ABSENT senza toccare output.
-Il budget privato e' massimo per la richiesta; la verifica globale usa un tetto cumulativo minore."
+  "Pre: trusted digest and exclusive context. Post: complete candidate or ABSENT without touching output.
+Private budget is the maximum for the request; global verification uses a lower cumulative ceiling."
   (leggi-indice-pagine-budget reader key start end high low destination (lettore-indice-pagine-max-pages reader)))

@@ -243,7 +243,7 @@ by this addendum; final builder fingerprint identifies R1 closure version.
 
 Current `ristampa-record-parole` count is **1 base + 4 selections/loops + 3
 short circuits = 8** (previously: 6). `esigi-lotto` remains counted in its own function.
-Overall maximum unchanged: **9 ≤ 10**. Both new guards are simple, without
+The overall maximum is unchanged: **9 ≤ 10**. Both new guards are simple, without
 new `and`/`or`: compound inventory D01…D12 and E01…E07 unchanged.
 
 The offset check precedes access to its header, not every batch
@@ -299,7 +299,7 @@ file availability through the subsequent I/O task.
 | `verifica-file-csn` | 1 | 2 | 0 | **3** |
 | `verifica-log-csn` | 1 | 4 | 3 | **8**, previously 9 |
 
-No new `and`/`or`, loop, or retry in helper. Overall maximum still **9 ≤ 10**;
+There is no new `and`/`or`, loop, or retry in the helper. Overall maximum still **9 ≤ 10**;
 delegated validator cost is neither added to local complexity nor reexamined.
 The new helper's docstring and REQ declare frontiers, budgets, conditions, and no
 syscall. Durable check moved without changing predicate.

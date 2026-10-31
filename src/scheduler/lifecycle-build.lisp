@@ -8,9 +8,9 @@
                           &key (:coordinator t) (:active t)) porta-worker-pool)
                 crea-porta-worker-pool))
 (defun crea-porta-worker-pool (context &key (coordinator sb-thread:*current-thread*) (active t))
-  "Pre: worker owner corrente, contesto IDLE verificato; nessun altro compito/epoca.
-Post: porta preallocata, stato iniziale confermato. INVALID-ARGUMENT coordinator/bit;
-propaga barriera C1 read-only. Pubblicazione tra thread a carico dell'handshake di avvio."
+  "Pre: current worker owner, verified IDLE context; no other task/epoch.
+Post: preallocated port, initial state confirmed. INVALID-ARGUMENT for coordinator/bit;
+propagates the read-only C1 barrier. Cross-thread publication handled by the startup handshake."
   (unless (typep coordinator 'sb-thread:thread)
     (error 'invalid-argument :reason :pool-owner))
   (unless (typep active 'boolean) (error 'invalid-argument :reason :pool-active))
@@ -21,8 +21,8 @@ propaga barriera C1 read-only. Pubblicazione tra thread a carico dell'handshake 
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (controllore-pool t fixnum) sb-thread:thread) %pool-startup-owner))
 (defun %pool-startup-owner (controller port position)
-  "Pre: controller owner corrente, indice bounded. Post: porta stabile e owner restituito.
-INVALID-ARGUMENT tipo, coordinatore, binding o stato iniziale non conforme."
+  "Pre: current controller owner, bounded index. Post: stable port and owner returned.
+INVALID-ARGUMENT for nonconforming type, coordinator, binding, or initial state."
   (unless (typep port 'porta-worker-pool) (error 'invalid-argument :reason :pool-ports))
   (unless (eq (porta-worker-pool-coordinator port) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :pool-owner))
@@ -37,9 +37,9 @@ INVALID-ARGUMENT tipo, coordinatore, binding o stato iniziale non conforme."
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (controllore-pool t) simple-vector) %pool-validate-ports))
 (defun %pool-validate-ports (controller ports)
-  "Pre: controller owner verificato. Post: tutte le porte validabili senza binding.
-INVALID-ARGUMENT forma, owner duplicato, coordinatore, pending, prefix o binding.
-Hash EQ solo all'avvio: scansione bounded O(N), nessuna ricerca quadratica."
+  "Pre: controller owner verified. Post: all ports can be validated without binding.
+INVALID-ARGUMENT for shape, duplicate owner, coordinator, pending, prefix, or binding.
+EQ hash only at startup: bounded O(N) scan, no quadratic search."
   (unless (and (typep ports 'simple-vector)
                (= (controllore-pool-maximum controller) (length ports)))
     (error 'invalid-argument :reason :pool-ports))
@@ -54,9 +54,9 @@ Hash EQ solo all'avvio: scansione bounded O(N), nessuna ricerca quadratica."
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008 REQ-AFF-013
 (declaim (ftype (function (controllore-pool t) registro-pool) crea-registro-pool))
 (defun crea-registro-pool (controller ports)
-  "Pre: controller locale, startup stabile con worker distinti; target attivo a prefisso.
-Post: copia privata e binding permanente delle porte, allocazioni solo all'avvio.
-Tutti i rifiuti typed precedono il binding; usare solo wrapper dopo il collegamento."
+  "Pre: local controller, stable startup with distinct workers; active target forms a prefix.
+Post: private copy and permanent port binding, allocations only at startup.
+All typed rejections precede binding; use only wrappers after connection."
   (%check-pool controller)
   (%pool-validate-ports controller ports)
   (let* ((copy (copy-seq ports))

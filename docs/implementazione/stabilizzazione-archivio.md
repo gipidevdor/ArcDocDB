@@ -68,7 +68,7 @@ Equality at the limit is allowed. The CSN gate has a local limit on CLOSED
 only: the new check including ACTIVE is stricter.
 
 Wrong shape, authority, count, or row types produce `invalid-argument`;
-exceeded budgets produce `resource-exhausted`. Scalar types/ranges use safety3,
+exceeded budgets produce `resource-exhausted`. Scalar types/ranges use safety 3,
 guard errors and invariants preserve original conditions. No default is
 automatically adapted to load.
 

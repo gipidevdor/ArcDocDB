@@ -11,7 +11,7 @@
 > with owned copies. The [PUT/WAL bridge](implementazione/full-text-put.md) connects
 > analysis and append of the same bytes; durable publication and MVCC remain to be connected.
 > [Physical references](implementazione/full-text-riferimenti.md) retain position and
-> stamp after WAL-buffer reuse, without bringing forward commit or visibility.
+> stamp after WAL-buffer reuse, without establishing commit or visibility.
 > The [private row directory](implementazione/full-text-righe.md) resolves them under
 > lease; the delta's published immutable map remains to be connected.
 > No complete full-text engine benchmarks.
@@ -290,7 +290,7 @@ a posting-count limit alone is insufficient.
 Durations are logical deadlines, checked at task boundaries and before outcome;
 they are neither a real-time guarantee nor the ability to interrupt any I/O.
 Normalization and tokenization also proceed through bounded tasks with resumable
-private context; a long combining-mark text does not authorize unbounded compute work.
+private context; a long text with combining marks does not authorize unbounded compute work.
 Limits apply jointly: reaching all of them simultaneously on one request is not promised.
 
 Before commit, M06 calculates a conservative serialized-byte upper bound

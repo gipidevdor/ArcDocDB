@@ -15,7 +15,7 @@ and distinguishes an incomplete tail from corruption witnessed by a later SEAL.
 a `[start,end)` interval, the file identifier, and the version already verified
 from the header. `start` identifies the first batch after the header or an
 already verified authoritative boundary; `file-offset` is the file position
-of `buffer[0]`. For control log and multiserie, file-id is zero.
+of `buffer[0]`. For the control log and multiseries log, file-id is zero.
 
 The caller supplies `file-size` from an authoritative source and guarantees
 that the buffer reaches stable physical EOF: `file-offset + end = file-size`.
@@ -127,5 +127,5 @@ promoted to verified solely on the evidence of this scan.
 The limitation stated in ADR-0037 remains: damage in the last flush,
 without a later SEAL witnessing it, may be indistinguishable from a tail.
 CRC32C has collisions and does not authenticate data. In-memory tests do
-not verify I/O, complete recovery, payload semantics, manifest, multiserie
+not verify I/O, complete recovery, payload semantics, manifest, multiseries
 decisions, or health transitions. No release gate is closed here.

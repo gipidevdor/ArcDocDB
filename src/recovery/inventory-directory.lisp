@@ -8,8 +8,8 @@
 (declaim (ftype (function (simple-string simple-string) boolean)
                 inventory-name-suffix-p))
 (defun inventory-name-suffix-p (name suffix)
-  "Pre: nomi stabili con byte rappresentati senza conversioni. Post: suffisso ASCII senza distinzione di case.
-Il ciclo ha length(SUFFIX) passi; nessuna normalizzazione del nome originale."
+  "Pre: stable names with bytes represented without conversion. Post: case-insensitive ASCII suffix match.
+The loop has length(SUFFIX) steps; no normalization of the original name."
   (let ((start (- (length name) (length suffix))))
     (and (not (minusp start))
          (loop for i below (length suffix)
@@ -22,10 +22,10 @@ Il ciclo ha length(SUFFIX) passi; nessuna normalizzazione del nome originale."
                          (values u64 (member nil :temporary :final) &optional))
                 parse-inventory-segment-name))
 (defun parse-inventory-segment-name (name)
-  "Pre: nome foglia posseduto dall'inventario completo. Post: ID u64 e forma, oppure 0/NIL se estraneo.
-Solo 16 cifre ASCII minuscole seguite da .seg/.seg.tmp; zero è ammesso.
-CORRUPTION-DETECTED per suffisso di segmento con case, lunghezza o cifre non canonici.
-Al massimo 16 passi di parsing; nessun reader Lisp, path o restringimento dell'ID."
+  "Pre: leaf name owned by the complete inventory. Post: u64 ID and form, or 0/NIL if unrelated.
+Only 16 lowercase ASCII digits followed by .seg/.seg.tmp; zero allowed.
+CORRUPTION-DETECTED for a segment suffix with noncanonical case, length, or digits.
+At most 16 parsing steps; no Lisp reader, path, or ID narrowing."
   (let* ((form (cond ((inventory-name-suffix-p name ".seg.tmp") :temporary)
                      ((inventory-name-suffix-p name ".seg") :final)
                      (t nil)))
@@ -48,8 +48,8 @@ Al massimo 16 passi di parsing; nessun reader Lisp, path o restringimento dell'I
                 check-directory-inventory-preflight))
 (defun check-directory-inventory-preflight
     (manifest directory max-files max-segments max-names max-total-name-bytes max-name-bytes)
-  "Pre: manifest e capacità del controller. Post: modi, callback e budget verificati senza I/O.
-Propaga errori tipizzati; entry-identity mancante non ricade sul backend nativo."
+  "Pre: manifest and controller capabilities. Post: modes, callbacks, and budgets verified without I/O.
+Propagates typed errors; missing entry-identity does not fall back to the native backend."
   (arcdocdb.io::esigi-aperto directory :directory)
   (let ((backend (arcdocdb.io::file-backend directory)))
     (when (and backend (null (arcdocdb.io::backend-entry-identity backend)))
@@ -62,9 +62,9 @@ Propaga errori tipizzati; entry-identity mancante non ricade sul backend nativo.
 (declaim (ftype (function (arcdocdb.io:file-io simple-vector index)
                          (values simple-vector &optional)) collect-directory-segments))
 (defun collect-directory-segments (directory names max-files)
-  "Pre: inventario completo/stabile, nomi privati validati dall'I/O. Post: descrittori posseduti.
-Una verifica relativa nofollow per candidato entro budget; alias fra nomi distinti è corruzione.
-Nessun FD del segmento aperto, nessun effetto sul namespace; nessun risultato parziale."
+  "Pre: complete/stable inventory, private names validated by I/O. Post: owned descriptors.
+One relative nofollow check per candidate within budget; aliases between distinct names are corruption.
+No segment FD opened, no namespace effects; no partial result."
   (let ((files nil) (count 0) (identities (make-hash-table :test 'equal)))
     (dotimes (i (length names))
       (let ((name (aref names i)))
@@ -90,11 +90,11 @@ Nessun FD del segmento aperto, nessun effetto sul namespace; nessun risultato pa
 (defun pianifica-riconciliazione-directory
     (manifest directory &key (max-files 65536) (max-segmenti 65536) (max-names 65536)
                             (max-total-name-bytes 16777216) (max-name-bytes 255))
-  "Pre: manifest completo, directory segments aperta e namespace esclusivo/stabile fino al ritorno.
-Post: piano posseduto dopo EOF reale, nomi canonici e identità regolari distinte verificate.
-Tutti i nomi consumano i budget I/O; MAX-FILES limita i soli candidati .seg/.seg.tmp.
-Condizioni originarie propagate, nessun piano parziale; nessuna apertura/scrittura dei segmenti.
-Non esegue azioni del piano, non verifica contenuti/CRC e :READY non autorizza traffico."
+  "Pre: complete manifest, open segments directory, and exclusive/stable namespace until return.
+Post: owned plan after actual EOF, with canonical names and distinct regular-file identities verified.
+All names consume I/O budgets; MAX-FILES limits only .seg/.seg.tmp candidates.
+Original conditions propagated, no partial plan; no opening/writing of segments.
+Does not execute plan actions or verify content/CRC, and :READY does not authorize traffic."
   (check-directory-inventory-preflight
    manifest directory max-files max-segmenti max-names max-total-name-bytes max-name-bytes)
   (multiple-value-bind (names complete)

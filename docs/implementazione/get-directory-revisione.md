@@ -22,8 +22,8 @@ requested by the parent, introduces finding GDR-R02 below.
 
 The two initial P2 findings, concerning C4 collection of incomplete raw data and
 classification of private-entry corruption, are closed by static
-reading of corrections reported by the parent. No P0 or P1
-identified in read content. These outcomes are neither C1 qualification,
+reading of corrections reported by the parent. No P0 or P1 was
+identified in the content read. These outcomes are neither C1 qualification,
 proof of defect absence, nor performance/allocation measurements.
 
 <a id="rilievi-concreti"></a>
@@ -39,7 +39,7 @@ Status: **statically closed** on corrected blob
 `publication-raw-roots` selects only the manifest's `:raw-roots`
 specifications. Before collecting each root, `raw-root-metadata` requires
 schema 1, kind command-verification, terminal status OK/FAILED/SOURCE-CHANGED,
-and an integer end timestamp. RUNNING or a missing timestamp stops publish.
+and an integer end timestamp. RUNNING or a missing timestamp stops publication.
 Every raw file in the root and every mutated source receives producer, status,
 source-consistency, and explicit limits on partial raw data from failed producers,
 without promoting the result. Reading of lines 129–201.
@@ -162,10 +162,10 @@ when N>0. After an unsuccessful probe, the left half has at most
 With N=65,536, search for the first element visits indices
 32,768, 16,384, 8,192, …, 2, 1, 0: seventeen probes, with return allowed
 even on the last iteration. The last element requires sixteen probes.
-An ID below minimum follows the first path and ends in failure; above
-maximum it exhausts the interval before another read. Internal misses
+An ID below the minimum follows the first path and ends in failure; above
+the maximum it exhausts the interval before another read. Internal misses
 exhaust within the same bound; an empty array fails
-before AREF. Maximum positive ID `#xffffffff` is compared as exact
+before AREF. The maximum positive ID `#xffffffff` is compared as an exact
 u32 and follows its position's path without wrap or alias.
 The limit concerns pivot probes; COND uses relations `<` and `>`.
 It is not an instruction, latency, or allocation measurement.
@@ -186,7 +186,7 @@ is required before publish; its future presence is not certified here.
 At this reading's close, complete get-directory benchmark/method/mutation files
 are unavailable for assessment. Clocks and temporal regression,
 raw interrupted-window data, global heap and its oracle,
-fixed/nonadaptive counts, positive/negative sensor checks,
+fixed/nonadaptive counts, positive/negative control checks,
 and thread timeouts/joins therefore remain unassessed. Neither a defect nor a positive
 outcome is assigned without code. Any update depends on
 new messages before freeze; after freeze and during verification,
@@ -235,7 +235,7 @@ elsewhere are neither duplicated nor modified by this review.
 ## Author closure before freeze
 
 This section is written by the author, not the independent reviewer.
-The reviewer was closed before executions after two C1 readings and
+The reviewer's assignment ended before execution after two C1 readings and
 static rereading of R01/R02 corrections already preserved above.
 The later request to extend C4 reading produced no conclusive
 handoff: benchmark and mutations do not receive complete independent
@@ -255,5 +255,5 @@ under `io/transfer.lisp`'s contract, rather than
 END−64. The new real-file regression checks return, region,
 sentinels, and I/O observation. It was not run before freeze.
 Subsequent results qualify only content actually
-recorded in respective commands; no overall C1 qualification
+recorded in their respective commands; no overall C1 qualification
 is assigned to this increment.

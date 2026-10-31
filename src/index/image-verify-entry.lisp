@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine page-number index index u32 u32) null) verifica-origine-entry-immagine))
 (defun verifica-origine-entry-immagine (work page entry length high low)
-  "Pre: chiave ricomposta con hash verificato. Post: stessa entry fisica risolta dalla root.
-Questo respinge entry irraggiungibili e duplicati globali, anche con payload identico.
-Visite del lookup incluse nel budget globale; nessuna falsa assenza su esaurimento."
+  "Pre: reconstructed key with verified hash. Post: same physical entry resolved from root.
+Rejects unreachable entries and global duplicates, even with identical payload.
+Lookup visits included in global budget; no false absence on exhaustion."
   (when (zerop (ispezione-immagine-remaining work))
     (error 'arcdocdb.conditions:resource-exhausted :reason :index-image-visit-budget))
   (let* ((reader (ispezione-immagine-reader work))
@@ -24,9 +24,9 @@ Visite del lookup incluse nel budget globale; nessuna falsa assenza su esaurimen
 ;;; REQ: REQ-IDX-010 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine page-number index) null) verifica-entry-immagine))
 (defun verifica-entry-immagine (work page entry)
-  "Pre: bucket verificato; callback fidata attesta appartenenza esatta alla fonte, input readonly.
-Post: hash, origine e candidato canonico verificati; conteggio incrementato solo dopo il gate completo.
-Falso => derivato incompatibile, risultato non booleano => violazione contratto callback."
+  "Pre: verified bucket; trusted callback attests exact source membership, read-only input.
+Post: hash, origin, and canonical candidate verified; count incremented only after complete gate.
+False => incompatible derivative, non-Boolean result => callback contract violation."
   (let* ((length (chiave-entry-immagine work entry)) (seal (ispezione-immagine-seal work))
          (buffer (ispezione-immagine-scan work)))
     (multiple-value-bind (high low)
@@ -47,9 +47,9 @@ Falso => derivato incompatibile, risultato non booleano => violazione contratto 
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine) null) verifica-pagine-immagine))
 (defun verifica-pagine-immagine (work)
-  "Pre: footer e prefisso verificati, file readonly stabile. Post: tutte le pagine e tutte le entry verificate.
-Scansione fisica limitata dal footer, memoria indipendente dal numero pagine, budget cumulativo.
-Unicita' per origine + appartenenza alla fonte + cardinalita' esatta garantiscono copertura delle entry."
+  "Pre: verified footer and prefix, stable read-only file. Post: all pages and entries verified.
+Physical scan bounded by footer, memory independent of page count, cumulative budget.
+Uniqueness by origin + source membership + exact cardinality guarantee entry coverage."
   (let* ((seal (ispezione-immagine-seal work)) (size (sigillo-immagine-size seal))
          (generation (identita-pagina-generation (sigillo-immagine-root seal)))
          (buffer (ispezione-immagine-scan work)))

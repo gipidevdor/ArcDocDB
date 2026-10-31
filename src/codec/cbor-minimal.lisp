@@ -8,9 +8,9 @@
 (declaim (ftype (function ((unsigned-byte 5) u32 u32) (values boolean &optional))
                 argomento-minimo-cbor-p))
 (defun argomento-minimo-cbor-p (ai high low)
-  "Pre: header MT0..6 completo, AI0..27 e parole separate. Post: T se l'argomento
-usa la larghezza minima, senza ricostruire un u64. Nessun payload letto.
-INVARIANT-VIOLATION per AI o HIGH incompatibile con la larghezza dichiarata."
+  "Pre: complete MT0..6 header, AI0..27, and separate words. Post: T if the argument
+uses the minimum width, without reconstructing a u64. No payload read.
+INVARIANT-VIOLATION for AI or HIGH incompatible with the declared width."
   (unless (< ai 28)
     (error 'invariant-violation :reason :cbor-minimal-ai))
   (unless (or (= ai 27) (zerop high))
@@ -27,9 +27,9 @@ INVARIANT-VIOLATION per AI o HIGH incompatibile con la larghezza dichiarata."
 (declaim (ftype (function ((unsigned-byte 5) u32 u32) (values boolean &optional))
                 float-accorciabile-header-cbor-p))
 (defun float-accorciabile-header-cbor-p (ai high low)
-  "Pre: header MT7 completo, AI0..27 e parole raw. Post: T soltanto per un float
-binary32/64 accorciabile; simple e binary16 non sono accorciabili.
-INVARIANT-VIOLATION per AI o HIGH incoerente con larghezza; nessun float costruito."
+  "Pre: complete MT7 header, AI0..27, and raw words. Post: T only for a
+binary32/64 float that can be shortened; simple and binary16 cannot be shortened.
+INVARIANT-VIOLATION for AI or HIGH inconsistent with width; no float constructed."
   (unless (< ai 28)
     (error 'invariant-violation :reason :cbor-minimal-ai))
   (unless (or (= ai 27) (zerop high))
@@ -46,12 +46,12 @@ INVARIANT-VIOLATION per AI o HIGH incoerente con larghezza; nessun float costrui
                                  (member :argument) &optional))
                 leggi-header-cbor-minimo))
 (defun leggi-header-cbor-minimo (buffer start end)
-  "Pre: BUFFER immutabile simple u8, span half-open; verifica fredda del lettore base.
-Post: gli stessi sei valori MAJOR, AI, HIGH, LOW, NEXT, :ARGUMENT, solo per header minimo.
-Propaga prima tutti gli errori sintattici del lettore; poi CORRUPTION-DETECTED
-:cbor-nonminimal a START per indefinito/break, argomento o float accorciabile.
-INVARIANT-VIOLATION per progresso o forma incoerenti. NaN preserva segno/payload;
-nessun u64/float/AST materializzato, nessun payload, stato, attesa o I/O."
+  "Pre: immutable simple u8 BUFFER, half-open span; cold verification by the base reader.
+Post: the same six values MAJOR, AI, HIGH, LOW, NEXT, :ARGUMENT, only for a minimal header.
+First propagates all reader syntax errors; then CORRUPTION-DETECTED
+:cbor-nonminimal at START for indefinite/break, an argument, or a float that can be shortened.
+INVARIANT-VIOLATION for inconsistent progress or shape. NaN preserves sign/payload;
+no u64/float/AST materialized, no payload, state, waiting, or I/O."
   (multiple-value-bind (major ai high low next form) (leggi-header-cbor buffer start end)
     (unless (and (< start next) (<= next end))
       (error 'invariant-violation :reason :cbor-minimal-progress :offset start))

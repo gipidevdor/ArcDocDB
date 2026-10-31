@@ -2,7 +2,7 @@
 
 # ADR-0026 — Segmented secondary indexes: one immutable fixed-format file per segment, in-memory delta for ACTIVE
 
-- **Status:** Accepted; **clarified by [ADR-0039](0039-cornice-unica-dei-record.md) and [ADR-0042](0042-tombstone-e-indice-dei-vivi.md)**: the key Bloom filter is a hint section and serves tombstone disposal; value filters are a section of `.idx` files; there is no `.bloom` file. The `ACTIVE` delta consists only of append-only arrays (no in-memory ART).
+- **Status:** Accepted; **clarified by [ADR-0039](0039-cornice-unica-dei-record.md) and [ADR-0042](0042-tombstone-e-indice-dei-vivi.md)**: the key Bloom filter is a hint section used to decide when tombstones can be discarded; value filters are a section of `.idx` files; there is no `.bloom` file. The `ACTIVE` delta consists only of append-only arrays (no in-memory ART).
 - **Date:** 2026-10-03
 - **Relationship to the specification:** closes QA-25; implements "Secondary index," "Secondary index
   delta," "Index snapshot." Author's decision (2026-10-03): indexes have a predefined

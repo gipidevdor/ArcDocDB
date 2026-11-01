@@ -17,7 +17,8 @@
   (unless (and (typep client 'local-client) (eq (local-client-owner client) sb-thread:*current-thread*))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-owner))
   (let ((socket (local-client-socket client)))
-    (setf (local-client-socket client) nil (local-client-state client) :closed)
+    (setf (local-client-socket client) nil (local-client-state client) :closed
+          (local-client-input-consumed client) 0 (local-client-input-received client) 0)
     (when socket (close-local-socket socket)))
   nil)
 
@@ -46,12 +47,54 @@
   end)
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
+(declaim (ftype (function (local-client (integer 4096 65536)) (values b:index &optional)) compact-local-client-input))
+(defun compact-local-client-input (client limit)
+  "Pre: owner between response views, full reserved input grant. Post: only the unread suffix remains at zero.
+Private offsets must fit the grant; invalid internal state ->INVARIANT-VIOLATION before copying. No allocation."
+  (let ((buffer (local-client-input client)) (consumed (local-client-input-consumed client))
+        (received (local-client-input-received client)))
+    (unless (and (typep buffer 'b:octets) (<= consumed received (+ 4 limit) (length buffer)))
+      (error 'arcdocdb.conditions:invariant-violation :reason :local-client-input-grant))
+    (let ((remaining (- received consumed)))
+      (when (and (plusp consumed) (plusp remaining))
+        (replace buffer buffer :start1 0 :end1 remaining :start2 consumed :end2 received))
+      (setf (local-client-input-consumed client) 0 (local-client-input-received client) remaining)
+      remaining)))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(declaim (ftype (function (local-client b:index b:index b:u64) (values b:index &optional)) fill-local-client-prefix))
+(defun fill-local-client-prefix (client received grant until)
+  "Pre: fewer than four bytes, exclusive full-frame grant. Post: at least a prefix, at most GRANT bytes received.
+At most four positive steps; waits retain the absolute deadline. EOF ->PROTOCOL-ERROR; I/O errors propagate."
+  (loop while (< received 4) do
+    (when (>= (local-now (local-client-clock client)) until)
+      (error 'protocol-error :reason :local-client-deadline))
+    (multiple-value-bind (status count)
+        (local-transfer-step (local-client-socket client) (local-client-input client) received grant :input
+                             (local-client-io-backend client))
+      (case status
+        (:progress (incf received count))
+        (:wait (wait-local-client client :input until))
+        (:eof (error 'protocol-error :reason :local-client-eof))
+        (otherwise (error 'arcdocdb.conditions:invariant-violation :reason :local-client-input-step)))))
+  received)
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (local-client (integer 4096 65536) b:u64) (values envelope &optional)) receive-local-client))
 (defun receive-local-client (client limit until)
-  "Pre: waiting for one frame only. Post: exact envelope; residual coalesced data remain in the kernel."
-  (let ((buffer (local-client-input client)))
-    (transfer-local-client client buffer 0 4 :input until)
+  "Pre: one pending response, exclusive reserved input. Post: exactly one envelope, coalesced suffix retained privately.
+Initial recv may fill the negotiated grant; prefix bounds the exact body before decoding. No suffix is decoded early.
+Buffered completion still checks the absolute deadline; EOF/invalid prefix ->PROTOCOL-ERROR. No new buffer or retry."
+  (when (and (< (local-client-input-consumed client) (local-client-input-received client))
+             (>= (local-now (local-client-clock client)) until))
+    (error 'protocol-error :reason :local-client-deadline))
+  (let ((buffer (local-client-input client)) (received (compact-local-client-input client limit)))
+    (when (< received 4) (setf received (fill-local-client-prefix client received (+ 4 limit) until)))
     (let ((end (+ 4 (local-prefix-size buffer limit))))
-      (transfer-local-client client buffer 4 end :input until)
+      (when (< received end)
+        (transfer-local-client client buffer received end :input until)
+        (setf received end))
+      (setf (local-client-input-consumed client) end (local-client-input-received client) received)
       (decode-local-envelope buffer 4 end :space (local-client-space client)))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002

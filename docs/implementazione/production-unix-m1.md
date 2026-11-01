@@ -137,6 +137,15 @@ Transient allocations are serial within the actor rather than queued.
 The client verifies the document with fixed call-local scratch.
 The profile claims neither nonallocation nor an RSS ceiling.
 
+The synchronous client can receive prefix and body together into its existing
+full-frame grant. It checks the prefix as soon as available and decodes exactly
+one response. Any coalesced suffix stays private until the next request has
+been sent; IDs, document validation and absolute deadlines still apply.
+No receive buffer grows, and close consumes both unread offsets. The server's
+prefix-first admission and one-step actor schedule are unchanged. See the
+[method and qualification](../../spikes/results/2026-11-01-client-receive/report.md).
+
+
 The exported `client-get-into` accepts an exclusive caller-owned simple octet
 buffer with a complete 60,000-byte grant from its optional offset. It returns
 FOUND/byte-count or ABSENT/0 using ordinary GET and the same shared complete

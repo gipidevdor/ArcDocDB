@@ -55,6 +55,8 @@ differ from the key and the client's private input/output arrays. Output shape,
 capacity, key, ID and outgoing-frame refusals precede transmission and ID
 consumption. The ordinary GET wire operation works with the existing server and
 requires no capability negotiation. RAM/paged selection remains transparent.
+The client may retain coalesced wire bytes in its fixed input buffer; each
+response still requires its own request, correlation and fresh deadline checks.
 
 This path validates the complete response and document, then copies into caller
 storage without allocating a document vector. Per-frame protocol allocation

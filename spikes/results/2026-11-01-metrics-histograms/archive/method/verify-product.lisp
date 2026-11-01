@@ -1,0 +1,38 @@
+(require :asdf)
+(require :sb-posix)
+(defparameter *mode* (first (uiop:command-line-arguments)))
+(defparameter *tag* (second (uiop:command-line-arguments)))
+(unless (and (member *mode* '("focused" "full") :test #'equal)
+             (member *tag* '("269-v1" "269-v2" "269-v3" "269-v4" "2610-v1" "2610-v2") :test #'equal))
+  (error "Expected focused/full and a preregistered fresh run tag."))
+(defparameter *out* (merge-pathnames (format nil "spikes/out/metrics-histograms-20261101/runs/~A/" *tag*) (truename "./")))
+(ensure-directories-exist *out*)
+(sb-posix:setenv "ASDF_OUTPUT_TRANSLATIONS"
+                (format nil "(:output-translations ((:root :**/ :*.*.*) (~S :**/ :*.*.*)) :ignore-inherited-configuration)"
+                        (namestring (merge-pathnames "fasl/" *out*))) 1)
+(asdf:initialize-output-translations)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                         (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (let ((*compile-verbose* nil) (*compile-print* nil) (*load-verbose* nil))
+    (asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+    (if (equal *mode* "focused")
+        (progn
+          (asdf:load-system "arcdocdb" :force '("arcdocdb"))
+          (asdf:load-system "arcdocdb/local" :force '("arcdocdb/local"))
+          (asdf:load-system "arcdocdb/tests" :force '("arcdocdb/tests")))
+        (asdf:load-system "arcdocdb/tests")))
+  (if (equal *mode* "focused")
+      (progn
+        (unless (uiop:symbol-call :arcdocdb.metrics.tests :run) (error "Metrics runner did not pass."))
+        (format t "~S~%" (list :kind :metrics-focused-verification :status :passed
+                               :cases (length (symbol-value (find-symbol "*TESTS*" "ARCDOCDB.METRICS.TESTS")))
+                               :strict-compilation t :benchmark nil)))
+      (let ((report (uiop:symbol-call :arcdocdb.ci.tests :run
+                     :report-path (merge-pathnames "tests.lisp" *out*))))
+        (format t "~S~%" (list :kind :metrics-product-verification :status (getf report :status)
+                               :planned (getf report :planned) :passed (getf report :passed)
+                               :failed (getf report :failed) :not-run (getf report :not-run)
+                               :skipped (getf report :skipped) :suites (length (getf report :suites))
+                               :benchmark nil))
+        (unless (eq :passed (getf report :status)) (error "Full product catalog did not pass.")))))

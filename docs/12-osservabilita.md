@@ -9,6 +9,15 @@ Metrics are essential: they are the system controllers' **inputs**. The thread-p
 scheduler and MERGE low-load policy decide based on these values, and choices deferred to
 benchmarks (2Q, SIMD) depend on them.
 
+The first authorized implementation increment provides
+[bounded owner-local latency histograms](implementazione/istogrammi-latenza.md):
+integer bucket geometry, immutable captures, exact percentile ranks with declared
+value intervals, explicit over-range observations and saturation. Engine and
+Unix instrumentation and load diagnosis remain subsequent work. The second
+increment adds [owner-local counters and coherent immutable sums](implementazione/metriche-serie.md),
+including provenance/window checks, explicit incompleteness and merged latency
+distributions. REQ-OBS-001/002 are not closed in their full scope.
+
 <a id="metriche-richieste"></a>
 
 ## Required metrics

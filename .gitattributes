@@ -1,2 +1,5 @@
 # Preserve upstream legal notices byte for byte, including their whitespace.
 tools/pages/third-party-notices.txt -text whitespace=-blank-at-eol
+
+# Retained process output is original evidence, including terminal whitespace.
+spikes/results/**/*.log -text -whitespace

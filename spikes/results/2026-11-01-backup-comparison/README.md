@@ -97,3 +97,24 @@ catalog publication. Its record/sidecar are copied into this parent as
 `final-retention-audit.lisp`. These later self-record copies are outside the closed
 originals; their byte/SHA256 audit does not claim atomic filesystem proof or that
 the earlier check verified its own later copying.
+
+## Integration with published observability
+
+After the initial archive closed, main advanced to `5c0a5a1`. Merge `f96c556`
+preserves that published metrics/counter work and selected-runtime tool fixes.
+The optimized file is unchanged from feature commit `15e150e`: both Git blobs
+are `6f7c5382b58f14ad9dfae3685f95699587a227e4`. Neither backup, verifier nor I/O
+runtime receives any additional merge change. Earlier complete 546-file bindings
+describe the pre-merge phase; the metrics module extends that inventory.
+
+On the merged source, forced warning-as-error compilation and all 28 backup/19
+verifier methods pass again, as does the current CI self-test with 60 suites.
+The manual is regenerated: 567 documents, 1,187 pages, 90,515 local links/anchors;
+all documentation/publication regressions pass. Runtime reference/example and
+lint/trace/link/evidence checks are recorded separately for the merged source.
+
+Post-merge command/retention pairs use the `merged-*-process.lisp` and
+`merged-*-retention.lisp` names in this parent. The nested CI command and its
+tests/summary are retained too. `merged-retention-audit.lisp` binds their exact
+bytes and before/after SHA256 without modifying the closed initial archive.
+Its final metadata command precedes its own later retained copies, as above.

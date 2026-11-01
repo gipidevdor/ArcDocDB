@@ -55,52 +55,64 @@
       (decode-local-envelope buffer 4 end :space (local-client-space client)))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
-(declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t)) local-client) connect-local))
-(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend (write-groups nil))
+(declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t) (:read-groups t)) local-client) connect-local))
+(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend (write-groups nil) (read-groups nil))
   "Pre: explicit Unix path and trusted monotonic clock. Post: owned client after verified WELCOME.
-No data operation during handshake; an error always closes the owned socket."
-  (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock) (typep write-groups 'boolean))
+No data operation during handshake; exact optional capabilities and deadline precede READY. Every incomplete exit closes ownership."
+  (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock)
+               (typep write-groups 'boolean) (typep read-groups 'boolean))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-configuration))
   (%native-check-backend io-backend)
-  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend :write-groups write-groups
-                                    :waiter (make-local-waiter 1 io-backend)))
-         (until (local-until (local-now clock) 5)))
-    (handler-case
+  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend
+                                    :write-groups write-groups :read-groups read-groups :waiter (make-local-waiter 1 io-backend)))
+         (until (local-until (local-now clock) 5)) (complete nil))
+    (unwind-protect
+     (handler-case
         (progn
           (setf (local-client-socket client) (connect-local-socket path until :clock clock))
-          (let ((size (encode-local-hello (local-client-output client) max-frame :write-groups write-groups)))
+          (let ((size (encode-local-hello (local-client-output client) max-frame :write-groups write-groups :read-groups read-groups)))
             (transfer-local-client client (local-client-output client) 0 size :output until))
           (let ((envelope (receive-local-client client 4096 until)))
             (multiple-value-bind (frame inflight)
-                (decode-local-welcome (local-client-input client) envelope :write-groups write-groups)
+                (decode-local-welcome (local-client-input client) envelope :write-groups write-groups :read-groups read-groups)
               (unless (and (<= 4096 frame (min 65536 max-frame)) (= inflight 1))
                 (error 'protocol-error :reason :local-client-negotiation))
               (setf (local-client-limit client) frame)))
-          (setf (local-client-state client) :ready)
+          (when (>= (local-now clock) until) (error 'protocol-error :reason :local-client-deadline))
+          (setf (local-client-state client) :ready complete t)
           client)
-      (error (condition) (fail-local-client client condition nil)))))
+      (error (condition) (fail-local-client client condition nil)))
+      (when (and (not complete) (not (eq :closed (local-client-state client))))
+        (handler-case (close-local client)
+          (error (cleanup) (push cleanup (local-client-cleanup-failures client))))))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64)
                          (values t &optional t)) finish-local-client-response))
 (defun finish-local-client-response (client id opcode count results until)
   "Pre: one owned exchange awaiting its response. Post: fully correlated result, group output copied after complete validation.
-Malformed/rejected responses never expose partially decoded group CSNs; propagates protocol/authoritative rejection."
+Malformed/rejected responses never expose partial group results; propagates protocol/authoritative rejection."
   (let ((envelope (receive-local-client client (local-client-limit client) until)))
     (when (>= (local-now (local-client-clock client)) until)
       (error 'protocol-error :reason :local-client-deadline))
     (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
       (error 'protocol-error :reason :local-client-response-id))
-    (if (and (= opcode +local-write-group-opcode+) (plusp count))
+    (cond
+      ((and (= opcode +local-write-group-opcode+) (plusp count))
         (progn
           (decode-local-group-response (local-client-input client) envelope (local-client-group-csns client) count)
           (when (>= (local-now (local-client-clock client)) until)
             (error 'protocol-error :reason :local-client-deadline))
-          (replace results (local-client-group-csns client) :end1 count :end2 count) count)
-        (multiple-value-prog1
+          (replace results (local-client-group-csns client) :end1 count :end2 count) count))
+      ((and (= opcode +local-read-group-opcode+) (plusp count))
+       (let ((documents (decode-local-read-group-response (local-client-input client) envelope
+                          (local-client-space client) (local-client-read-spans client) count)))
+         (when (>= (local-now (local-client-clock client)) until)
+           (error 'protocol-error :reason :local-client-deadline)) documents))
+      (t (multiple-value-prog1
             (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
           (when (>= (local-now (local-client-clock client)) until)
-            (error 'protocol-error :reason :local-client-deadline))))))
+            (error 'protocol-error :reason :local-client-deadline)))))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns))

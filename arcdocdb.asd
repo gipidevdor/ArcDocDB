@@ -252,7 +252,9 @@
   :serial t
   :components ((:file "package") (:file "wire") (:file "group-types") (:file "native") (:file "state") (:file "readiness")
                (:file "group-read") (:file "group-build") (:file "group-dispatch")
-               (:file "dispatch") (:file "server") (:file "write-group") (:file "client") (:file "client-group") (:file "cli")))
+               (:file "read-group-wire") (:file "read-group-dispatch")
+               (:file "dispatch") (:file "server") (:file "write-group") (:file "client") (:file "client-group")
+               (:file "client-read-group") (:file "cli")))
 
 (defsystem "arcdocdb/tests"
   :description "Test di ArcDocDB."
@@ -418,7 +420,8 @@
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))
                (:module "local" :serial t
-                :components ((:file "wire") (:file "wire-group") (:file "native") (:file "server")
-                             (:file "explicit-group") (:file "client-group") (:file "processes") (:file "group-processes"))))
+                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "native") (:file "server")
+                             (:file "explicit-group") (:file "client-group") (:file "read-group")
+                             (:file "processes") (:file "group-processes") (:file "read-group-processes"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.ci.tests '#:run)))

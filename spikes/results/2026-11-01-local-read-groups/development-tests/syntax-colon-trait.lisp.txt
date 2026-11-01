@@ -1,0 +1,16 @@
+;;;; C4 reader-only syntax check; colons are constituents so packages need not be loaded.
+(require :asdf)
+(let ((*readtable* (copy-readtable nil)) (*read-eval* nil) (failures 0))
+  (set-syntax-from-char #\: #\a)
+  (dolist (name (uiop:command-line-arguments))
+    (with-open-file (in name)
+      (handler-case
+          (let ((eof (gensym)) (forms 0))
+            (loop until (eq eof (read in nil eof)) do (incf forms))
+            (format t "syntax ~A: ~D forms~%" name forms))
+        (error (condition)
+          (incf failures)
+          (let* ((text (uiop:read-file-string name)) (position (min (length text) (file-position in))))
+            (format t "syntax ~A: line ~D: ~A~%" name (1+ (count #\Newline text :end position)) condition))))))
+  (format t "~S~%" (list :kind :read-group-reader-check :status (if (zerop failures) :passed :failed) :failures failures))
+  (unless (zerop failures) (sb-ext:exit :code 1)))

@@ -7,7 +7,7 @@
                    (#:e #:arcdocdb.engine))
   (:export #:serve-local #:connect-local #:close-local
            #:client-put #:client-get #:client-delete #:client-ping
-           #:client-write-group
+           #:client-write-group #:client-get-group
            #:protocol-error #:protocol-error-reason
            #:request-rejected #:rejection-status #:outcome-unknown #:unknown-cause
            #:local-cleanup-error #:local-primary #:local-failures

@@ -52,8 +52,9 @@ One command decoder feeds both immediate dispatch and the same-turn write collec
   "Pre: valid envelope and ID; one owner, private buffers. Post: response or propagated fault.
 Only RESOURCE-EXHAUSTED with engine still READY is a rejection before admission.
 An admitted fault is not translated into busy; the service closes, preserving the cause."
-  (if (= +local-write-group-opcode+ (envelope-code envelope))
-      (local-dispatch-write-group engine connection envelope clock)
-      (multiple-value-bind (status key document)
+  (case (envelope-code envelope)
+    (4 (local-dispatch-write-group engine connection envelope clock))
+    (5 (local-dispatch-read-group engine connection envelope clock))
+    (otherwise (multiple-value-bind (status key document)
           (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
-        (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document))))
+        (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)))))

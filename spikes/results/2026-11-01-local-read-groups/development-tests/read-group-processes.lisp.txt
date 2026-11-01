@@ -1,0 +1,112 @@
+;;;; Real negotiated reads, unchanged data CSNs, response loss and fragmented/coalesced frames.
+(in-package #:arcdocdb.local.process.tests)
+(defun read-process-keys () (map 'simple-vector #'automatic-local-key #(0 1 2 3 4 5 6 7)))
+(defun read-process-check (client keys expected)
+  (let ((result (l:client-get-group client keys))) (check (equalp result expected) "Incorrect complete read group") result))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-REC-001 REQ-CCH-002 REQ-WAL-006
+(deftest test-REQ-IPC-002-read-group-real-Unix-mixed-capabilities-overflow-SIGKILL-and-reopen
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "read-group-runtime/")))
+       (dolist (version '(1 2))
+         (scenario :explicit-read-group version
+           (lambda ()
+             (let ((data (subdirectory (format nil "read-group-v~D/" version)))
+                   (keys (read-process-keys)) (expected (make-array 8 :initial-element (decode-hex "182A"))))
+               (multiple-value-bind (server socket) (start-server data runtime version 310 :create t :record-cache-budget 1048576)
+                 (let ((client (l:connect-local (namestring socket) :write-groups t :read-groups t))
+                       (csns (make-array 8 :element-type '(unsigned-byte 64))))
+                   (unwind-protect
+                        (progn
+                          (check (= 8 (l:client-write-group client (explicit-client-operations) csns)) "Read seed group count")
+                          (read-process-check client keys expected)
+                          (l:client-delete client (svref keys 0)) (setf (svref expected 0) nil)
+                          (read-process-check client keys expected)) (l:close-local client)))
+                 (let ((client (l:connect-local (namestring socket) :max-frame 4096 :read-groups t)))
+                   (unwind-protect
+                        (progn
+                          (read-process-check client keys expected)
+                          (let ((caught nil)) (handler-case (l:client-get client (svref keys 1)) (l:request-rejected () (setf caught t)))
+                            (check caught "Legacy conservative GET budget changed"))
+                          (read-process-check client keys expected)) (l:close-local client)))
+                 (stop-server server sb-posix:sigkill :read-group-verified))
+               (multiple-value-bind (server socket) (start-server data runtime version 311)
+                 (let ((client (l:connect-local (namestring socket) :read-groups t)))
+                   (unwind-protect
+                        (progn
+                          (read-process-check client keys expected)
+                          (check (= 10 (l:client-put client (svref keys 0) (decode-hex "F6")))) "Read consumed a data CSN")
+                          (setf (svref expected 0) (decode-hex "F6")) (read-process-check client keys expected)
+                          ;; Two maximum-sized results overflow one frame; the following small read remains usable.
+                          (let ((large (arcdocdb.local.wire.tests::get-document 60000)))
+                            (l:client-put client (svref keys 0) large) (l:client-put client (svref keys 1) large)
+                            (let ((caught nil))
+                              (handler-case (l:client-get-group client (vector (svref keys 0) (svref keys 1)))
+                                (l:request-rejected (condition) (check (= 5 (l:rejection-status condition))) (setf caught t)))
+                              (check caught "Aggregate response budget did not reject"))
+                            (read-process-check client (vector (svref keys 0)) (vector large)) (l:client-ping client)))
+                     (l:close-local client)))
+                 (stop-server server sb-posix:sigterm :read-group-recovered))))))))))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-004 REQ-CCH-002
+(deftest test-REQ-IPC-002-read-group-real-response-loss-paged-cache-and-subsequent-client
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "read-loss-runtime/")))
+       (dolist (version '(1 2))
+         (scenario :read-response-lost version
+           (lambda ()
+             (let ((data (subdirectory (format nil "read-loss-v~D/" version))) (keys (read-process-keys))
+                   (expected (make-array 8 :initial-element (decode-hex "182A"))))
+               (multiple-value-bind (server socket)
+                   (start-server data runtime version 320 :create t :script "tools/local-read-loss-server.lisp"
+                                  :index-budget 3400000 :record-cache-budget 1048576)
+                 (let ((client (l:connect-local (namestring socket) :read-groups t)) (caught nil) (result :not-delivered))
+                   (unwind-protect
+                        (progn
+                          (dotimes (i 8) (check (= (1+ i) (l:client-put client (svref keys i) (svref expected i))) "Loss seed CSN"))
+                          (handler-case (setf result (l:client-get-group client keys))
+                            (l:protocol-error () (setf caught t)))
+                          (check (and caught (eq :not-delivered result) (eq :closed (l::local-client-state client)))
+                                 "Lost read was falsely completed")) (l:close-local client)))
+                 (check (search "READ-GROUP-RESPONSE-DROPPED" (uiop:read-file-string (child-stderr server))) "Wrong read-loss injection")
+                 (let ((client (l:connect-local (namestring socket) :read-groups t)))
+                   (unwind-protect (progn (read-process-check client keys expected)
+                                          (check (= 9 (l:client-delete client (svref keys 0))) "Lost read changed CSN")) (l:close-local client)))
+                 (stop-server server sb-posix:sigterm :read-loss-verified))))))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-real-partial-peer-and-coalesced-frames
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "read-frame-runtime/")) (data (subdirectory "read-frame-data/"))
+           (keys (read-process-keys)))
+       (multiple-value-bind (server socket) (start-server data runtime 2 330 :create t)
+         (let ((raw (l:connect-local (namestring socket) :read-groups t))
+               (other (l:connect-local (namestring socket) :read-groups t)))
+           (unwind-protect
+                (progn
+                  (l:client-put other (svref keys 0) (decode-hex "182A"))
+                  (let* ((out (l::local-client-output raw)) (selected (vector (svref keys 0) (svref keys 1)))
+                         (end (l::encode-local-read-group out 1 selected 2 65536)))
+                    (l::transfer-local-client raw out 0 2 :output (deadline 30))
+                    (read-process-check other selected (vector (decode-hex "182A") nil))
+                    (l::transfer-local-client raw out 2 end :output (deadline 30))
+                    (let ((env (l::receive-local-client raw 65536 (deadline 30))))
+                      (check (= 1 (l:envelope-id env)) "Fragment response ID")
+                      (check (equalp (vector (decode-hex "182A") nil)
+                        (l::decode-local-read-group-response (l::local-client-input raw) env (l::local-client-space raw)
+                                                           (l::local-client-read-spans raw) 2)) "Fragment response"))
+                    (let* ((first (subseq out 0 (l::encode-local-read-group out 2 selected 2 65536)))
+                           (second (subseq out 0 (l::encode-local-read-group out 3 selected 2 65536)))
+                           (combined (concatenate '(simple-array (unsigned-byte 8) (*)) first second)))
+                      (l::transfer-local-client raw combined 0 (length combined) :output (deadline 30))
+                      (loop for id from 2 to 3 do
+                        (let ((env (l::receive-local-client raw 65536 (deadline 30))))
+                          (check (= id (l:envelope-id env)) "Coalesced read response ID")
+                          (check (equalp (vector (decode-hex "182A") nil)
+                            (l::decode-local-read-group-response (l::local-client-input raw) env (l::local-client-space raw)
+                                                               (l::local-client-read-spans raw) 2)) "Coalesced read response"))))))
+             (l:close-local raw) (l:close-local other)))
+         (stop-server server sb-posix:sigterm :read-frames-verified))))))

@@ -53,6 +53,18 @@ copying. Each operation has an independent SEAL, so an interrupted group can
 recover a prefix. An unknown outcome requires application reconciliation
 before retry. See the [negotiation and limits](adr/0083-explicit-unix-write-groups.md).
 
+For multiple point reads, connect with `:read-groups t` and call
+`(client-get-group client keys :count count)`. `keys` is a stable simple vector
+with a selected prefix of 1..8 binary keys. The returned new simple vector
+contains private document octets or `nil` for absence, in the same order,
+including duplicate keys. A CBOR null document remains an octet vector containing
+`#xf6`, distinct from absence. The complete response must fit the negotiated frame;
+overflow rejects the whole group. No partial result, split or retry is exposed.
+The serial actor drains earlier writes and completes every GET before sending,
+reusing cache and automatic primary storage. This is one current serial view,
+without historical MVCC. Both group options can be enabled together.
+[Read-group contract](adr/0084-explicit-unix-read-groups.md).
+
 For embedding within one serial actor, `arcdocdb.engine` exposes the M1 core.
 Its handles have thread ownership and lifecycle requirements. Consult the
 [current profile](implementazione/README.md), the

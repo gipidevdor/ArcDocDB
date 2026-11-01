@@ -32,6 +32,7 @@ increasing; no reuse or automatic retry after disconnect.
 | 2 GET | `key: bstr` | `[true, document: bstr]` or `[false, null]` |
 | 3 DELETE | `key: bstr` | durable unsigned u64 CSN, even if already absent |
 | 4 WRITE-GROUP, explicitly negotiated | `[[1,key,document] or [3,key], ...]`, 1..8 members | exact increasing positive u64 CSN array |
+| 5 READ-GROUP, explicitly negotiated | `[key:bstr,...]`, 1..8 members | exact array of `[true,document:bstr]` or `[false,null]` |
 
 Default HELLO/WELCOME retain their original bytes and four commands.
 `connect-local :write-groups t` offers HELLO key `2: [4]`; the server then
@@ -39,6 +40,13 @@ announces `[0,1,2,3,4]`. The client requires the exact offered capability before
 READY. Missing/unsolicited capabilities are errors; no downgrade or retry.
 Without negotiation, opcode 4 returns status 4 before engine admission.
 See [ADR-0083](../adr/0083-explicit-unix-write-groups.md).
+
+`connect-local :read-groups t` offers opcode 5. HELLO key 2 is the ordered
+nonempty subset `[4]`, `[5]` or `[4,5]`; WELCOME includes `[0,1,2,3]` followed
+by exactly that subset. Both options can be enabled together. The client checks
+both flags and the absolute deadline before READY; incomplete handshakes close
+ownership. Default and write-only bytes remain unchanged.
+See [ADR-0084](../adr/0084-explicit-unix-read-groups.md).
 
 Binary keys are 1 to 1024 bytes; documents are 1 to 60,000 bytes. A document
 contains one CBOR item with minimal headers/valid UTF-8, maximum
@@ -48,7 +56,7 @@ Envelope/control maps are deterministic and have an exact shape;
 no external bytes pass through the Lisp reader. A write group must fit the
 same complete-frame limit; each member retains the single-write limits.
 All members are validated before any copy or engine admission. The configured
-`max-write-group` limit applies to explicit groups too (status 5 when exceeded).
+`max-write-group` limit applies to explicit write groups too (status 5 when exceeded).
 An explicit group drains earlier collected writes and acts as a barrier.
 Cumulative capacity refusal returns status 2 without splitting or retry.
 Each operation retains its own CSN/SEAL; one shared strong flush precedes FIFO
@@ -56,8 +64,8 @@ publication and the response. A crash can recover a sealed prefix, and losing
 the response can leave all writes committed. This is not a transaction.
 
 Status 1: invalid arguments; 2: exhausted capacity; 3: unavailable engine;
-4: unsupported opcode; 5: limit exceeded. Rejections occur before
-engine admission, with a `null` payload. Envelope/handshake/
+4: unsupported opcode; 5: limit exceeded. Command-validation and write rejections
+precede engine admission, with a `null` payload. Envelope/handshake/
 ID/transfer errors close the connection. A fault after admission
 that prevents a certain answer closes the connection; the client reports an unknown outcome.
 PUT/DELETE/WRITE-GROUP respond only after strong engine completion.
@@ -67,6 +75,23 @@ a negotiated frame of at least 60,032 bytes, enough for any profile
 result; otherwise status 5 before reading. The value is
 copied and GET is finished before waiting for the peer: no EBR pin or writer
 lease is retained during send. This is a conservative, declared limit.
+
+Read groups validate every key before copies/GET, drain earlier writes and
+complete serially without interleaved data operations or peer waits. Results
+preserve order, duplicates and absence. Each GET uses the existing full value
+scratch and releases its pin before response send. Cache and automatic RAM/paged
+primary selection are shared with individual GET. There is no new server payload
+arena, data CSN or flush, and the write-group policy does not limit reads.
+The group provides one current serial view, without historical MVCC semantics.
+
+The actual complete read-group response must fit the negotiated frame; otherwise
+the whole group returns status 5/null, the engine stays usable and no partial
+result is delivered. This read-only budget refusal may follow completed GETs;
+write rejections still precede admission. A small negotiated frame can therefore
+serve a group whose actual result fits, including a one-key group. The client
+validates all members/documents before copies and checks correlation/deadline
+before exposing its private vector. Read errors close without mutation outcome
+uncertainty or implicit retries.
 
 <a id="risorse-e-ciclo-di-vita"></a>
 

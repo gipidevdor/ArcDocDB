@@ -6,7 +6,7 @@
 
 The executable profile is **M1 — Single-Series Durable Core**. One owner manages
 one Serie, from opening and recovery through admitted requests. The local
-service exposes PING, PUT, GET, DELETE and negotiated write groups over a Unix socket.
+service exposes PING, PUT, GET, DELETE and negotiated read/write groups over a Unix socket.
 
 <a id="provare-m1"></a>
 ## Try M1
@@ -31,6 +31,7 @@ service exposes PING, PUT, GET, DELETE and negotiated write groups over a Unix s
 | Record cache | [Verified fixed-budget M1 cache](cache-record.md#serial-m1-integration), independent of RAM/paged primary storage |
 | Strong write groups | [Bounded group commit](../adr/0080-group-commit-m1.md), cumulative reservation and automatic Unix collection |
 | Explicit client groups | [Negotiated write groups](../adr/0083-explicit-unix-write-groups.md), one synchronous client sharing a strong flush |
+| Grouped point reads | [Negotiated read groups](../adr/0084-explicit-unix-read-groups.md), one complete current serial vector using canonical GET/cache/RAM/paged storage |
 | Group append | [Bounded byte coalescing](../adr/0082-bounded-group-append.md), reusing exclusive engine scratch with unchanged seals and flush |
 | ACTIVE metadata | [Typed append-only arena](../adr/0081-active-append-metadata.md), fixed startup charge and immutable acquired prefixes |
 | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |

@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Integrate negotiated Unix read groups with canonical GET, verified cache and
+  automatic RAM/paged primary storage. Validate complete results and actual
+  frame budgets; preserve order/absence and close incomplete ownership.
+  [Contract](docs/adr/0084-explicit-unix-read-groups.md) and
+  [evidence](spikes/results/2026-11-01-local-read-groups/report.md).
+
 - Expose negotiated explicit Unix write groups to one synchronous client,
   with complete validation, independent strong CSNs and one shared flush.
   Preserve default wire bytes, absolute deadlines and unknown-outcome cleanup.

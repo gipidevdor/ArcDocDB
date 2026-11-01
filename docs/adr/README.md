@@ -197,3 +197,4 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0081](0081-active-append-metadata.md) | Preallocated typed ACTIVE metadata with immutable captured prefixes | Incremental M1 integration; persistent generic default preserved |
 | [0082](0082-bounded-group-append.md) | Bounded coalesced WAL append using existing exclusive M1 scratch | Incremental serial integration; independent SEALs and strong flush preserved |
 | [0083](0083-explicit-unix-write-groups.md) | Negotiated explicit Unix write groups for a single synchronous client | Incremental serial integration; independent outcomes, no implicit retry |
+| [0084](0084-explicit-unix-read-groups.md) | Negotiated serial read groups using canonical GET, cache and RAM/paged primary storage | Incremental M1 integration; complete results within one negotiated frame |

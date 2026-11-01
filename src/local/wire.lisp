@@ -20,6 +20,10 @@
 (defconstant +local-write-group-opcode+ 4)
 ;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-LIM-003
 (defconstant +local-write-group-limit+ 8)
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-LIM-003
+(defconstant +local-read-group-opcode+ 5)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+(defconstant +local-read-group-limit+ 8)
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (define-condition protocol-error (arcdocdb.conditions:arcdocdb-error) ()
@@ -48,6 +52,7 @@ Ownership: caller's immutable buffer until final use; no implicit copy."
   (max-frame 0 :type (integer 0 17825792) :read-only t)
   (max-inflight 0 :type (integer 0 16) :read-only t)
   (write-groups nil :type boolean :read-only t)
+  (read-groups nil :type boolean :read-only t)
   (frame-limit 65536 :type (integer 4096 17825792) :read-only t))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
@@ -221,29 +226,45 @@ PROTOCOL-ERROR for invalid version, unsigned value, kind, status, or ID; immutab
           (values kind id code payload))))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
-(declaim (ftype (function (b:octets b:index b:index) b:index) %wire-group-offer))
-(defun %wire-group-offer (buffer start end)
-  "Pre: minimal HELLO with three fields, first two consumed. Post: exact optional key 2/[4] offer end.
-Other capabilities, shapes or trailing fields are protocol errors; immutable input, no copy or admission."
-  (let ((cursor (%wire-expect buffer start end 0 2)))
-    (setf cursor (%wire-expect buffer cursor end 4 1))
-    (%wire-expect buffer cursor end 0 +local-write-group-opcode+)))
+(declaim (ftype (function (b:octets b:index b:index (integer 0 2))
+                         (values b:index boolean boolean &optional)) %wire-extra-opcodes))
+(defun %wire-extra-opcodes (buffer cursor end count)
+  "Pre: minimal optional list of at most two items. Post: exact ordered subset of [4,5] and flags.
+Immutable input; unknown, duplicate or reversed capabilities are protocol errors."
+  (case count
+    (0 (values cursor nil nil))
+    (1 (multiple-value-bind (opcode next) (%wire-uint buffer cursor end +local-read-group-opcode+)
+         (unless (member opcode '(4 5)) (%wire-fail :local-group-capability cursor))
+         (values next (= opcode +local-write-group-opcode+) (= opcode +local-read-group-opcode+))))
+    (2 (let ((next (%wire-expect buffer cursor end 0 +local-write-group-opcode+)))
+         (values (%wire-expect buffer next end 0 +local-read-group-opcode+) t t)))
+    (otherwise (error 'arcdocdb.conditions:invariant-violation :reason :local-capability-count))))
 
-;;; REQ: REQ-IPC-002 REQ-LIM-003
-(declaim (ftype (function (b:octets b:index b:index) (values b:index boolean &optional)) %wire-welcome-opcodes))
-(defun %wire-welcome-opcodes (buffer start end)
-  "Pre: minimal WELCOME, first two fields consumed. Post: exact old/new opcode list and offered group flag.
-Only [0,1,2,3] or [0,1,2,3,4], checked in at most five steps; no implicit capability acceptance by a client."
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (b:octets b:index b:index) (values b:index boolean boolean &optional)) %wire-group-offer))
+(defun %wire-group-offer (buffer start end)
+  "Pre: minimal HELLO with three fields, first two consumed. Post: exact key 2 and nonempty ordered [4,5] subset.
+Other shapes/capabilities are protocol errors; immutable input, no copy or admission."
   (let ((cursor (%wire-expect buffer start end 0 2)))
     (multiple-value-bind (major count next) (%wire-head buffer cursor end)
-      (unless (and (= major 4) (member count '(4 5))) (%wire-fail :local-welcome-opcodes cursor))
+      (unless (and (= major 4) (<= 1 count 2)) (%wire-fail :local-group-capabilities cursor))
+      (%wire-extra-opcodes buffer next end count))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+(declaim (ftype (function (b:octets b:index b:index) (values b:index boolean boolean &optional)) %wire-welcome-opcodes))
+(defun %wire-welcome-opcodes (buffer start end)
+  "Pre: minimal WELCOME, first two fields consumed. Post: mandatory [0,1,2,3] and exact ordered optional [4,5] subset.
+At most six bounded steps; the client must separately match the requested flags."
+  (let ((cursor (%wire-expect buffer start end 0 2)))
+    (multiple-value-bind (major count next) (%wire-head buffer cursor end)
+      (unless (and (= major 4) (<= 4 count 6)) (%wire-fail :local-welcome-opcodes cursor))
       (setf cursor next)
-      (dotimes (opcode count) (setf cursor (%wire-expect buffer cursor end 0 opcode)))
-      (values cursor (= count 5)))))
+      (dotimes (opcode 4) (setf cursor (%wire-expect buffer cursor end 0 opcode)))
+      (%wire-extra-opcodes buffer cursor end (- count 4)))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (declaim (ftype (function (b:octets b:index b:index boolean)
-                         (values (integer 4096 17825792) (integer 1 16) boolean &optional)) %wire-capacities))
+                         (values (integer 4096 17825792) (integer 1 16) boolean boolean &optional)) %wire-capacities))
 (defun %wire-capacities (buffer start end welcome)
   "Pre: handshake payload scanned. Post: exact maps, valid frame/inflight; exact M1 WELCOME.
 PROTOCOL-ERROR for keys, extra data, duplicates, capacity, or opcode; no payload copy."
@@ -256,16 +277,16 @@ PROTOCOL-ERROR for keys, extra data, duplicates, capacity, or opcode; no payload
       (setf cursor (%wire-expect buffer a end 0 1))
       (multiple-value-bind (inflight b) (%wire-uint buffer cursor end 16)
         (unless (plusp inflight) (%wire-fail :local-hello-inflight cursor))
-        (let ((groups nil))
+        (let ((groups nil) (reads nil))
           (setf cursor b)
           (if welcome
               (progn
                 (unless (and (<= frame +server-max-frame+) (= inflight 1))
                   (%wire-fail :local-welcome-limits start))
-                (multiple-value-setq (cursor groups) (%wire-welcome-opcodes buffer cursor end)))
-              (when (= fields 3) (setf cursor (%wire-group-offer buffer cursor end) groups t)))
+                (multiple-value-setq (cursor groups reads) (%wire-welcome-opcodes buffer cursor end)))
+              (when (= fields 3) (multiple-value-setq (cursor groups reads) (%wire-group-offer buffer cursor end))))
           (unless (= cursor end) (%wire-fail :local-handshake-trailing cursor))
-          (values frame inflight groups))))))
+          (values frame inflight groups reads))))))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values null &optional)) %wire-decode-options))
@@ -305,14 +326,14 @@ MAX-FRAME is the negotiated limit, distinct from capacities declared in the hand
     (when (and expected-kind (/= expected-kind kind)) (%wire-fail :local-kind start))
     (when (and (= kind 2) (<= id last-id)) (%wire-fail :local-request-id start))
     (when (and expected-id (/= expected-id id)) (%wire-fail :local-response-id start))
-    (multiple-value-bind (frame inflight groups)
+    (multiple-value-bind (frame inflight groups reads)
         (if (< kind 2)
             (progn
               (when (> (- end start) +hello-limit+) (%wire-fail :local-hello-budget start))
-              (%wire-capacities buffer payload end (= kind 1))) (values 0 0 nil))
+              (%wire-capacities buffer payload end (= kind 1))) (values 0 0 nil nil))
       (%make-envelope :buffer buffer :kind kind :id id :code code
                       :payload-start payload :payload-end end :max-frame frame
-                      :max-inflight inflight :write-groups groups :frame-limit max-frame))))
+                      :max-inflight inflight :write-groups groups :read-groups reads :frame-limit max-frame))))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t) (values envelope &optional)) %wire-envelope-input))
@@ -337,16 +358,17 @@ PROTOCOL-ERROR for another kind; INVALID-ARGUMENT for invalid buffer/structure i
   (values (envelope-max-frame envelope) (envelope-max-inflight envelope)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
-(declaim (ftype (function (t t &key (:write-groups t))
+(declaim (ftype (function (t t &key (:write-groups t) (:read-groups t))
                           (values (integer 4096 17825792) (integer 1 16) &optional)) decode-local-welcome))
-(defun decode-local-welcome (buffer envelope &key (write-groups nil))
-  "Pre: envelope bound to immutable buffer, exact requested WRITE-GROUPS boolean. Post: two verified M1 capacities.
+(defun decode-local-welcome (buffer envelope &key (write-groups nil) (read-groups nil))
+  "Pre: envelope bound to immutable buffer, exact requested group booleans. Post: two verified M1 capacities.
 PROTOCOL-ERROR for another kind or unsolicited/missing capability; INVALID-ARGUMENT for unbound inputs/options."
-  (unless (typep write-groups 'boolean)
+  (unless (and (typep write-groups 'boolean) (typep read-groups 'boolean))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-write-groups-option))
   (%wire-envelope-input buffer envelope)
   (unless (= (envelope-kind envelope) 1) (%wire-fail :local-expected-welcome))
   (unless (eq write-groups (envelope-write-groups envelope)) (%wire-fail :local-write-groups-negotiation))
+  (unless (eq read-groups (envelope-read-groups envelope)) (%wire-fail :local-read-groups-negotiation))
   (values (envelope-max-frame envelope) (envelope-max-inflight envelope)))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-002 REQ-AFF-008
@@ -517,6 +539,15 @@ INVALID-ARGUMENT for type or shape; ownership: exclusive OUT, no source aliasing
   nil)
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (b:octets b:index) b:index) %wire-frame-end))
+(defun %wire-frame-end (out end)
+  "Pre: complete private M1 frame. Post: exact u32 big-endian body length, END returned.
+Internal bounds checked before mutation; no truncation, publication, I/O or borrowed reference."
+  (unless (and (<= 5 end (length out)) (<= (- end 4) +server-max-frame+))
+    (error 'arcdocdb.conditions:invariant-violation :reason :local-frame-end))
+  (dotimes (i 4) (setf (aref out i) (ldb (byte 8 (* 8 (- 3 i))) (- end 4)))) end)
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t t) (values b:index b:index &optional)) %wire-output-begin))
 (defun %wire-output-begin (out kind id code payload-size limit)
   "Pre: owned output, external parameters. Post: prefix/envelope written, payload cursor and total END.
@@ -528,7 +559,7 @@ Ownership: no source loan; copy publishable only after payload completion."
          (end (+ 4 body-size)))
     (unless (and (<= body-size (min limit +server-max-frame+)) (<= end (length out)))
       (error 'arcdocdb.conditions:resource-exhausted :reason :local-output-budget))
-    (dotimes (i 4) (setf (aref out i) (ldb (byte 8 (* 8 (- 3 i))) body-size)))
+    (%wire-frame-end out end)
     (let ((cursor (%wire-put-head out 4 end 4 5)))
       (setf cursor (%wire-put-head out cursor end 0 1)
             cursor (%wire-put-head out cursor end 0 kind)
@@ -549,49 +580,50 @@ INVARIANT-VIOLATION for internal capacity; ownership: no source copy retained."
     finish))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
-(declaim (ftype (function (t t t boolean t) (values b:index &optional)) %wire-encode-handshake))
-(defun %wire-encode-handshake (out frame inflight welcome groups)
+(declaim (ftype (function (t t t boolean t t) (values b:index &optional)) %wire-encode-handshake))
+(defun %wire-encode-handshake (out frame inflight welcome groups reads)
   "Pre: external capacities and exclusive output. Post: exact HELLO/WELCOME including prefix.
 INVALID-ARGUMENT for limits; output preflight before writing, handshake <=4096."
-  (unless (typep groups 'boolean)
+  (unless (and (typep groups 'boolean) (typep reads 'boolean))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-write-groups-option))
   (%wire-limit frame)
   (unless (and (typep inflight '(integer 1 16))
                (if welcome (and (<= frame +server-max-frame+) (= inflight 1)) t))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-encode-capacities))
-  (let ((size (+ 3 (%wire-head-size frame) (%wire-head-size inflight)
-                 (if welcome (if groups 7 6) (if groups 3 0)))))
+  (let* ((caps (+ (if groups 1 0) (if reads 1 0)))
+         (size (+ 3 (%wire-head-size frame) (%wire-head-size inflight)
+                  (if welcome (+ 6 caps) (if (plusp caps) (+ 2 caps) 0)))))
     (multiple-value-bind (cursor end) (%wire-output-begin out (if welcome 1 0) 0 0 size +hello-limit+)
-      (setf cursor (%wire-put-head out cursor end 5 (if (or welcome groups) 3 2))
+      (setf cursor (%wire-put-head out cursor end 5 (if (or welcome (plusp caps)) 3 2))
             cursor (%wire-put-head out cursor end 0 0)
             cursor (%wire-put-head out cursor end 0 frame)
             cursor (%wire-put-head out cursor end 0 1)
             cursor (%wire-put-head out cursor end 0 inflight))
-      (when (or welcome groups)
+      (when (or welcome (plusp caps))
         (setf cursor (%wire-put-head out cursor end 0 2)
-              cursor (%wire-put-head out cursor end 4 (if welcome (if groups 5 4) 1)))
-        (if welcome
-            (dotimes (opcode (if groups 5 4)) (setf cursor (%wire-put-head out cursor end 0 opcode)))
-            (setf cursor (%wire-put-head out cursor end 0 +local-write-group-opcode+))))
+              cursor (%wire-put-head out cursor end 4 (if welcome (+ 4 caps) caps)))
+        (when welcome (dotimes (opcode 4) (setf cursor (%wire-put-head out cursor end 0 opcode))))
+        (when groups (setf cursor (%wire-put-head out cursor end 0 +local-write-group-opcode+)))
+        (when reads (setf cursor (%wire-put-head out cursor end 0 +local-read-group-opcode+))))
       (unless (= cursor end)
         (error 'arcdocdb.conditions:invariant-violation :reason :local-handshake-output))
       end)))
 
 ;;; REQ: REQ-IPC-002
-(declaim (ftype (function (t t &key (:inflight t) (:write-groups t)) (values b:index &optional)) encode-local-hello))
-(defun encode-local-hello (out frame &key (inflight 1) (write-groups nil))
-  "Pre: exclusive OUT, client capacities and optional WRITE-GROUPS boolean. Post: exact HELLO END with prefix.
-NIL retains legacy bytes; T offers only opcode 4. No data operation or implicit capability.
+(declaim (ftype (function (t t &key (:inflight t) (:write-groups t) (:read-groups t)) (values b:index &optional)) encode-local-hello))
+(defun encode-local-hello (out frame &key (inflight 1) (write-groups nil) (read-groups nil))
+  "Pre: exclusive OUT, capacities and optional group booleans. Post: exact HELLO END with prefix.
+Default and write-only bytes retained; optional opcodes 4/5 are offered in order. No data operation.
 Propagates preflight INVALID-ARGUMENT/RESOURCE-EXHAUSTED; ownership remains with caller."
-  (%wire-encode-handshake out frame inflight nil write-groups))
+  (%wire-encode-handshake out frame inflight nil write-groups read-groups))
 
 ;;; REQ: REQ-IPC-002
-(declaim (ftype (function (t t &key (:write-groups t)) (values b:index &optional)) encode-local-welcome))
-(defun encode-local-welcome (out frame &key (write-groups nil))
-  "Pre: exclusive OUT, negotiated M1 frame and WRITE-GROUPS boolean. Post: WELCOME END with prefix, inflight 1.
-Opcodes [0,1,2,3], plus 4 only for an explicit offer; NIL retains legacy bytes.
+(declaim (ftype (function (t t &key (:write-groups t) (:read-groups t)) (values b:index &optional)) encode-local-welcome))
+(defun encode-local-welcome (out frame &key (write-groups nil) (read-groups nil))
+  "Pre: exclusive OUT, negotiated M1 frame and exact group booleans. Post: WELCOME END with prefix, inflight 1.
+Opcodes [0,1,2,3] plus requested 4/5 in order; default and write-only bytes retained.
 Propagates INVALID-ARGUMENT/RESOURCE-EXHAUSTED before writing; ownership remains with caller."
-  (%wire-encode-handshake out frame 1 t write-groups))
+  (%wire-encode-handshake out frame 1 t write-groups read-groups))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t &key (:max-frame t)) (values b:index &optional)) encode-local-frame))

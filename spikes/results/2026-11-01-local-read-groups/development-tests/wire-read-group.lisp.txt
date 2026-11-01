@@ -1,0 +1,102 @@
+;;;; Independent wire fixtures for exact optional capabilities and complete read vectors.
+(in-package #:arcdocdb.local.wire.tests)
+(defun read-request (&rest keys) (request 5 (apply #'join (uint (length keys) 4) (mapcar #'bstr keys))))
+(defun read-group-status (wire)
+  (let ((work (l::make-local-group-workspace)))
+    (multiple-value-bind (status count) (l::decode-local-read-group wire (envelope wire) work)
+      (when (plusp status)
+        (is (every #'null (l::local-group-workspace-operations work)))
+        (is (every #'zerop (l::local-group-workspace-spans work)))) (values status count work))))
+(defun read-response (payload count &optional (status 0))
+  (let ((wire (framed (body 3 1 status payload))))
+    (l::decode-local-read-group-response wire (envelope wire) (cbor:crea-spazio-cbor)
+      (make-array 8 :element-type '(unsigned-byte 64)) count)))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-all-capabilities-exact-bytes-and-two-values
+  (dolist (writes '(nil t))
+    (dolist (reads '(nil t))
+      (let* ((caps (join (if writes (bytes 4) (bytes)) (if reads (bytes 5) (bytes)))) (out (output))
+             (hello (l:encode-local-hello out 4096 :write-groups writes :read-groups reads))
+             (wire (subseq out 0 hello))
+             (expected (framed (body 0 0 0 (join (bytes (if (or writes reads) #xa3 #xa2) 0 #x19 #x10 0 1 1)
+                             (if (or writes reads) (join (bytes 2) (uint (length caps) 4) caps) (bytes)))))))
+        (is (equalp expected wire)) (is (equal '(4096 1) (multiple-value-list (l:decode-local-hello wire (envelope wire)))))
+        (let* ((end (l:encode-local-welcome out 65536 :write-groups writes :read-groups reads)) (welcome (subseq out 0 end))
+               (expected (framed (body 1 0 0 (join (bytes #xa3 0 #x1a 0 1 0 0 1 1 2)
+                             (uint (+ 4 (length caps)) 4) (bytes 0 1 2 3) caps)))))
+          (is (equalp expected welcome))
+          (is (equal '(65536 1) (multiple-value-list (l:decode-local-welcome welcome (envelope welcome)
+                                                     :write-groups writes :read-groups reads))))
+          (signals l:protocol-error (l:decode-local-welcome welcome (envelope welcome) :write-groups writes :read-groups (not reads)))
+          (signals l:protocol-error (l:decode-local-welcome welcome (envelope welcome) :write-groups (not writes) :read-groups reads)))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+(deftest test-REQ-IPC-002-read-group-capability-errors-and-option-preflight
+  (dolist (offer (list (bytes #x80) (bytes #x82 5 4) (bytes #x82 5 5) (bytes #x82 4 4)
+                      (bytes #x82 4 6) (bytes #x83 4 5 6) (bytes #x81 3) (bytes #x81 #x18 5)))
+    (signals l:protocol-error (envelope (framed (body 0 0 0 (join (bytes #xa3 0 #x19 #x10 0 1 1 2) offer))))))
+  (dolist (option '(1 :yes "true"))
+    (signals arcdocdb.conditions:invalid-argument (l:connect-local "/not-opened" :read-groups option))
+    (signals arcdocdb.conditions:invalid-argument (l:encode-local-hello (output) 4096 :read-groups option))
+    (signals arcdocdb.conditions:invalid-argument (l:encode-local-welcome (output) 4096 :read-groups option))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-complete-key-validation-before-copy
+  (let* ((wire (read-request (bytes 0 #xff) (bytes 0 #xff))) (key (bytes 0 #xff)))
+    (multiple-value-bind (status count work) (read-group-status wire)
+      (is (zerop status)) (is (= count 2)) (fill wire 0)
+      (is (every (lambda (value) (equalp value key)) (subseq (l::local-group-workspace-operations work) 0 2)))
+      (is (not (eq (svref (l::local-group-workspace-operations work) 0) (svref (l::local-group-workspace-operations work) 1))))))
+  (is (= 1 (read-group-status (read-request))))
+  (is (= 5 (read-group-status (apply #'read-request (make-list 9 :initial-element (bytes 1)))))))
+  (let ((original (symbol-function 'l::%wire-copy)) (copies 0))
+    (unwind-protect
+         (progn (setf (symbol-function 'l::%wire-copy)
+                      (lambda (&rest args) (incf copies) (apply original args)))
+           (is (= 1 (read-group-status (read-request (bytes 1) (bytes)))))
+           (is (= 5 (read-group-status (read-request (bytes 1) (output 1025))))))
+           (is (= 1 (read-group-status (request 5 (bytes #x82 #x41 1 #xf6)))))) (is (zerop copies)))
+      (setf (symbol-function 'l::%wire-copy) original))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-prefix-alias-and-exact-request-frame
+  (let* ((out (output)) (keys (vector (bytes 0) (bytes #xff) :unselected))
+         (end (l::encode-local-read-group out 1 keys 2 65536)))
+    (is (equalp (subseq out 0 end) (read-request (bytes 0) (bytes #xff))))
+    (let ((before (copy-seq out)))
+      (signals arcdocdb.conditions:invalid-argument (l::encode-local-read-group out 1 keys 3 65536))
+      (signals arcdocdb.conditions:invalid-argument (l::encode-local-read-group out 1 (vector (bytes 1) out) 2 65536))
+      (is (equalp before out))))
+  (dolist (last-size '(1006 1007))
+    (let* ((out (output)) (before (copy-seq out)) (keys (vector (output 1024) (output 1024) (output 1024) (output last-size))))
+      (if (= last-size 1006)
+          (is (= 4100 (l::encode-local-read-group out 1 keys 4 4096)))
+          (progn (signals arcdocdb.conditions:resource-exhausted (l::encode-local-read-group out 1 keys 4 4096))
+                 (is (equalp before out)))))))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-response-copies-null-absence-and-duplicates
+  (let* ((payload (bytes #x84 #x82 #xf5 #x41 #xf6 #x82 #xf4 #xf6 #x82 #xf5 #x42 #x18 42 #x82 #xf5 #x42 #x18 42))
+         (wire (framed (body 3 1 0 payload)))
+         (result (l::decode-local-read-group-response wire (envelope wire) (cbor:crea-spazio-cbor)
+                   (make-array 8 :element-type '(unsigned-byte 64)) 4)))
+    (fill wire 0)
+    (is (equalp result (vector (bytes #xf6) nil (bytes #x18 42) (bytes #x18 42))))
+    (is (not (eq (svref result 2) (svref result 3))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-group-invalid-last-result-never-copies
+  (let ((original (symbol-function 'l::%wire-copy)) (copies 0))
+    (unwind-protect
+         (progn (setf (symbol-function 'l::%wire-copy)
+                      (lambda (&rest args) (incf copies) (apply original args)))
+           (dolist (bad (list (bytes #x82 #xf5 #x41 #xff) (bytes #x82 #xf4 0) (bytes #x82 0 #xf6)
+                             (bytes #x82 #xf5 #x40) (bytes #x81 #xf4)))
+             (signals l:protocol-error (read-response (join (bytes #x82 #x82 #xf5 #x41 0) bad) 2)))
+           (is (zerop copies)))
+      (setf (symbol-function 'l::%wire-copy) original)))
+  (dolist (count '(1 3)) (signals l:protocol-error (read-response (bytes #x82 #x82 #xf4 #xf6 #x82 #xf4 #xf6) count)))
+  (loop for status from 1 to 5 do (signals l:request-rejected (read-response (bytes #xf6) 1 status)))
+  (is (= 60000 (length (svref (read-response (join (bytes #x81 #x82 #xf5) (bstr (get-document 60000))) 1) 0)))))
+  (signals l:protocol-error (read-response (join (bytes #x81 #x82 #xf5) (bstr (get-document 60001))) 1)))

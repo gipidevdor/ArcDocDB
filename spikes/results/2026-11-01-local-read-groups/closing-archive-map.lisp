@@ -1,0 +1,17 @@
+(:kind :explicit-group-closing-input
+ :commands
+ (("4002506649-command-92693-0" "analysis-self-test")
+  ("4002506649-command-92694-0" "identity-self-test")
+  ("4002506649-command-92695-0" "archive-self-test")
+  ("4002506667-command-92839-0" "initial-archive-command")
+  ("4002506668-command-92879-0" "failed-fixture-command")
+  ("4002507798-command-98504-0" "final-archive-command")
+  ("4002507803-command-98559-0" "qualification-command")
+  ("4002507926-command-98766-0" "benchmark-archive-command")
+  ("4002507929-command-98797-0" "analysis-command")
+  ("4002507932-command-98826-0" "identity-command")
+  ("4002507936-command-98865-0" "printed-metrics-command")
+  ("4002507691-command-97995-0" "ci-self-test-command")
+  ("4002508025-command-99152-0" "final-checks")
+  ("4002508026-command-99173-0" "current-source-command"))
+ :worker-roots ("spikes/out/evidence-check-zqcQgh/" "spikes/out/evidence-check-vMt8UE/"))

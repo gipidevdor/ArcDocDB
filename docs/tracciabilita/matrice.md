@@ -341,3 +341,4 @@
 | [0081](../adr/0081-active-append-metadata.md) | —  (decision without a direct requirement) |
 | [0082](../adr/0082-bounded-group-append.md) | —  (decision without a direct requirement) |
 | [0083](../adr/0083-explicit-unix-write-groups.md) | —  (decision without a direct requirement) |
+| [0084](../adr/0084-explicit-unix-read-groups.md) | —  (decision without a direct requirement) |

@@ -13,6 +13,7 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   fragmentation and actual completed throughput across 1/2/4/8 connections.
   [Contract](docs/implementazione/buffer-socket-local-m1.md) and
   [evidence](spikes/results/2026-11-01-unix-service-latency/report.md).
+
 - Speed up exact offline backup comparison with typed whole-buffer equality and
   a bounded scalar tail, preserving all integrity checks. [Local measurements](spikes/results/2026-11-01-backup-comparison/README.md).
 

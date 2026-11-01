@@ -49,7 +49,7 @@ MODE :PASSED/:INVALID/:UNKNOWN; conserva wire, argv e log in una directory esclu
                   `(dolist (input ',inputs)
                      (let* ((arcdocdb.ci::*ci-coverage-normal-report* (first input))
                             (rows (arcdocdb.ci::ci-coverage-normal-proof ,(namestring root) ',identity)))
-                       (assert (= 7 (length rows)))
+                       (assert (= 8 (length rows)))
                        (assert (equal arcdocdb.ci.tests::*coverage-exclusions*
                                       (mapcar (lambda (row) (getf row :id)) rows)))
                        (dolist (row rows)
@@ -119,8 +119,8 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                (ci-coverage-parse-lcov (format nil "SF:src/fixture.lisp~%~Aend_of_record~%" body))))
       (unwind-protect
            (progn
-             (check :catalog-58-suites
-                    (lambda () (= 58 (length (arcdocdb.ci.tests:suite-specifications)))))
+             (check :catalog-59-suites
+                    (lambda () (= 59 (length (arcdocdb.ci.tests:suite-specifications)))))
              (check :catalog-merged-cache-fulltext-and-production-engine
                     (lambda ()
                       (let ((ids (mapcar (lambda (row) (getf row :id))
@@ -151,8 +151,12 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                     (lambda () (= 2 (length (getf (first (arcdocdb.ci.tests:suite-specifications)) :cases)))))
              (check :catalog-four-explicit-vertical-cases
                     (lambda () (= 4 (length arcdocdb.ci.tests::*vertical-cases*))))
-             (check :catalog-seven-explicit-allocation-exclusions
-                    (lambda () (= 7 (length arcdocdb.ci.tests::*coverage-exclusions*))))
+             (check :catalog-eight-explicit-allocation-exclusions
+                    (lambda () (= 8 (length arcdocdb.ci.tests::*coverage-exclusions*))))
+             (check :catalog-metrics-histogram-suite
+                    (lambda () (find "ARCDOCDB.METRICS.TESTS"
+                                     (arcdocdb.ci.tests:suite-specifications)
+                                     :key (lambda (row) (getf row :id)) :test #'equal)))
              (check :catalog-index-mode-suite
                     (lambda () (find "ARCDOCDB.INDEX.MODE.TESTS"
                                      (arcdocdb.ci.tests:suite-specifications)

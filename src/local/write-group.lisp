@@ -54,9 +54,16 @@ into individual admissions; no admitted write, encoding failure or unknown outco
 (declaim (ftype (function (e:motore local-connection local-write-queue function) null) dispatch-local-pending))
 (defun dispatch-local-pending (engine connection queue clock)
   "Pre: full frame and admitted request ID in actor slot order. Post: queued write or immediate checked command.
-Reads/PING/rejections drain prior writes as a barrier; one decoder invocation per request, no wire extension."
+Reads/PING/rejections/explicit groups drain prior writes as barriers; one decoder invocation per request."
   (let ((envelope (local-connection-pending connection)))
     (unless envelope (error 'arcdocdb.conditions:invariant-violation :reason :local-pending-envelope))
+    (when (and (= +local-write-group-opcode+ (envelope-code envelope))
+               (< (local-now clock) (local-connection-deadline connection)))
+      (flush-local-write-queue engine queue clock)
+      (if (>= (local-now clock) (local-connection-deadline connection))
+          (close-local-connection connection)
+          (queue-local-output connection (local-dispatch engine connection envelope clock) :response (local-now clock)))
+      (return-from dispatch-local-pending nil))
     (if (>= (local-now clock) (local-connection-deadline connection))
         (close-local-connection connection)
         (multiple-value-bind (status key document)

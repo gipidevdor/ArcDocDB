@@ -340,3 +340,4 @@
 | [0080](../adr/0080-group-commit-m1.md) | —  (decision without a direct requirement) |
 | [0081](../adr/0081-active-append-metadata.md) | —  (decision without a direct requirement) |
 | [0082](../adr/0082-bounded-group-append.md) | —  (decision without a direct requirement) |
+| [0083](../adr/0083-explicit-unix-write-groups.md) | —  (decision without a direct requirement) |

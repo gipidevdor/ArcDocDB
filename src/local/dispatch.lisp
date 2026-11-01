@@ -47,10 +47,13 @@ One command decoder feeds both immediate dispatch and the same-turn write collec
              (encode-local-response out id 2)))))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
-(defun local-dispatch (engine connection envelope)
+(declaim (ftype (function (e:motore local-connection envelope &optional (or null function)) b:index) local-dispatch))
+(defun local-dispatch (engine connection envelope &optional clock)
   "Pre: valid envelope and ID; one owner, private buffers. Post: response or propagated fault.
 Only RESOURCE-EXHAUSTED with engine still READY is a rejection before admission.
 An admitted fault is not translated into busy; the service closes, preserving the cause."
-  (multiple-value-bind (status key document)
-      (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
-    (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)))
+  (if (= +local-write-group-opcode+ (envelope-code envelope))
+      (local-dispatch-write-group engine connection envelope clock)
+      (multiple-value-bind (status key document)
+          (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
+        (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document))))

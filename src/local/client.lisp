@@ -55,23 +55,24 @@
       (decode-local-envelope buffer 4 end :space (local-client-space client)))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
-(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend)
+(declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t)) local-client) connect-local))
+(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend (write-groups nil))
   "Pre: explicit Unix path and trusted monotonic clock. Post: owned client after verified WELCOME.
 No data operation during handshake; an error always closes the owned socket."
-  (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock))
+  (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock) (typep write-groups 'boolean))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-configuration))
   (%native-check-backend io-backend)
-  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend
+  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend :write-groups write-groups
                                     :waiter (make-local-waiter 1 io-backend)))
          (until (local-until (local-now clock) 5)))
     (handler-case
         (progn
           (setf (local-client-socket client) (connect-local-socket path until :clock clock))
-          (let ((size (encode-local-hello (local-client-output client) max-frame)))
+          (let ((size (encode-local-hello (local-client-output client) max-frame :write-groups write-groups)))
             (transfer-local-client client (local-client-output client) 0 size :output until))
           (let ((envelope (receive-local-client client 4096 until)))
             (multiple-value-bind (frame inflight)
-                (decode-local-welcome (local-client-input client) envelope)
+                (decode-local-welcome (local-client-input client) envelope :write-groups write-groups)
               (unless (and (<= 4096 frame (min 65536 max-frame)) (= inflight 1))
                 (error 'protocol-error :reason :local-client-negotiation))
               (setf (local-client-limit client) frame)))
@@ -80,29 +81,64 @@ No data operation during handshake; an error always closes the owned socket."
       (error (condition) (fail-local-client client condition nil)))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
-(defun exchange-local-client (client opcode key document)
-  "Pre: READY owner and codec-verified arguments. Post: correlated terminal result.
-From the first mutating send attempt, a lost response produces OUTCOME-UNKNOWN."
+(declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64)
+                         (values t &optional t)) finish-local-client-response))
+(defun finish-local-client-response (client id opcode count results until)
+  "Pre: one owned exchange awaiting its response. Post: fully correlated result, group output copied after complete validation.
+Malformed/rejected responses never expose partially decoded group CSNs; propagates protocol/authoritative rejection."
+  (let ((envelope (receive-local-client client (local-client-limit client) until)))
+    (when (>= (local-now (local-client-clock client)) until)
+      (error 'protocol-error :reason :local-client-deadline))
+    (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
+      (error 'protocol-error :reason :local-client-response-id))
+    (if (and (= opcode +local-write-group-opcode+) (plusp count))
+        (progn
+          (decode-local-group-response (local-client-input client) envelope (local-client-group-csns client) count)
+          (when (>= (local-now (local-client-clock client)) until)
+            (error 'protocol-error :reason :local-client-deadline))
+          (replace results (local-client-group-csns client) :end1 count :end2 count) count)
+        (multiple-value-prog1
+            (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
+          (when (>= (local-now (local-client-clock client)) until)
+            (error 'protocol-error :reason :local-client-deadline))))))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
+(declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns))
+                         (values t &optional t)) run-local-client-exchange))
+(defun run-local-client-exchange (client id size opcode &optional (count 0) results)
+  "Pre: READY owner and encoded/preflighted frame. Post: correlated terminal result or rejection, one ID consumed.
+First mutating send attempt makes errors OUTCOME-UNKNOWN; incomplete nonlocal exits close ownership without retry.
+Secondary cleanup errors are retained, never replace an existing nonlocal transfer. No pin/lease spans I/O."
   (esigi-local-client client :ready)
-  (let* ((id (local-client-next-id client)) (out (local-client-output client)))
+  (unless (= id (local-client-next-id client))
+    (error 'arcdocdb.conditions:invariant-violation :reason :local-client-exchange-id))
+  (let ((until (local-until (local-now (local-client-clock client)) 30)) (complete nil))
+    (unless (<= size (+ 4 (local-client-limit client)))
+      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-frame-budget))
+    (setf (local-client-state client) :busy (local-client-next-id client) (1+ id))
+    (unwind-protect
+         (handler-case
+             (progn
+               (transfer-local-client client (local-client-output client) 0 size :output until)
+               (multiple-value-prog1 (finish-local-client-response client id opcode count results until)
+                 (setf (local-client-state client) :ready complete t)))
+           (request-rejected (condition) (setf (local-client-state client) :ready complete t) (error condition))
+           (error (condition) (fail-local-client client condition (not (null (member opcode '(1 3 4)))))))
+      (when (and (not complete) (not (eq :closed (local-client-state client))))
+        (handler-case (close-local client)
+          (error (cleanup) (push cleanup (local-client-cleanup-failures client))))))))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
+(declaim (ftype (function (t b:u16 t t) (values t &optional t)) exchange-local-client))
+(defun exchange-local-client (client opcode key document)
+  "Pre: READY owner and stable arguments. Post: one correlated legacy result; no retry after mutation uncertainty.
+Encoding/ID/frame refusals precede send and ID consumption; shared exchange owns every incomplete I/O exit."
+  (esigi-local-client client :ready)
+  (let ((id (local-client-next-id client)))
     (unless (<= id #xffffffffffffffff)
       (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
-    (let ((size (encode-local-request out id opcode key document))
-          (until (local-until (local-now (local-client-clock client)) 30)))
-      (unless (<= size (+ 4 (local-client-limit client)))
-        (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-frame-budget))
-      (setf (local-client-state client) :busy (local-client-next-id client) (1+ id))
-      (handler-case
-          (progn
-            (transfer-local-client client out 0 size :output until)
-            (let ((envelope (receive-local-client client (local-client-limit client) until)))
-              (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
-                (error 'protocol-error :reason :local-client-response-id))
-              (multiple-value-prog1
-                  (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
-                (setf (local-client-state client) :ready))))
-        (request-rejected (condition) (setf (local-client-state client) :ready) (error condition))
-        (error (condition) (fail-local-client client condition (not (null (member opcode '(1 3))))))))))
+    (let ((size (encode-local-request (local-client-output client) id opcode key document)))
+      (run-local-client-exchange client id size opcode))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006
 (defun client-put (client key document)

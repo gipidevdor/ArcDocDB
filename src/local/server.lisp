@@ -34,7 +34,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
   "Pre: actor's slot. Post: ownership consumed before close, even if close fails."
   (let ((socket (local-connection-socket connection)))
     (setf (local-connection-socket connection) nil (local-connection-state connection) :closed
-          (local-connection-pending connection) nil)
+          (local-connection-pending connection) nil (local-connection-write-groups connection) nil)
     (when socket (close-local-socket socket)))
   nil)
 
@@ -66,9 +66,11 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
     (if (eq :hello (local-connection-state connection))
         (multiple-value-bind (frame inflight) (decode-local-hello buffer envelope)
           (declare (ignore inflight)) ; il profilo negozia sempre un solo lavoro in volo.
-          (setf (local-connection-limit connection) (min 65536 frame))
+          (setf (local-connection-limit connection) (min 65536 frame)
+                (local-connection-write-groups connection) (envelope-write-groups envelope))
           (queue-local-output connection
-            (encode-local-welcome (local-connection-output connection) (local-connection-limit connection))
+            (encode-local-welcome (local-connection-output connection) (local-connection-limit connection)
+                                  :write-groups (local-connection-write-groups connection))
             :welcome (local-now clock)))
         (let ((id (envelope-id envelope)))
           (unless (and (= 2 (envelope-kind envelope)) (< (local-connection-last-id connection) id))
@@ -76,7 +78,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
           (setf (local-connection-last-id connection) id)
           (if defer
               (setf (local-connection-pending connection) envelope (local-connection-state connection) :pending)
-              (let ((size (local-dispatch engine connection envelope)))
+              (let ((size (local-dispatch engine connection envelope clock)))
                 (queue-local-output connection size :response (local-now clock))))))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
@@ -137,7 +139,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
         (if slot
             (progn
               (setf (local-connection-socket slot) socket (local-connection-last-id slot) 0
-                    (local-connection-limit slot) 4096)
+                    (local-connection-limit slot) 4096 (local-connection-write-groups slot) nil)
               (reset-local-input slot now)
               (setf (local-connection-state slot) :hello (local-connection-deadline slot) (local-until now 5)))
             (close-local-socket socket)))
@@ -203,7 +205,7 @@ Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
   (%native-check-backend io-backend)
   (local-until (local-now clock) 300)
   (let ((connections (map 'simple-vector (lambda (i) (declare (ignore i))
-                                         (make-local-connection :io-backend io-backend))
+                                         (make-local-connection :io-backend io-backend :group-limit max-write-group))
                           (make-array max-connections)))
         (engine nil) (listener nil) (namespace nil) (primary nil) (queue (make-local-write-queue :limit max-write-group))
         (waiter (make-local-waiter (1+ max-connections) io-backend)) (space (arcdocdb.cbor:crea-spazio-cbor)))

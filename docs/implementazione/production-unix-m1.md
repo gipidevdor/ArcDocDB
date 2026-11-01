@@ -31,20 +31,36 @@ increasing; no reuse or automatic retry after disconnect.
 | 1 PUT | `[key: bstr, document: bstr]` | durable unsigned u64 CSN |
 | 2 GET | `key: bstr` | `[true, document: bstr]` or `[false, null]` |
 | 3 DELETE | `key: bstr` | durable unsigned u64 CSN, even if already absent |
+| 4 WRITE-GROUP, explicitly negotiated | `[[1,key,document] or [3,key], ...]`, 1..8 members | exact increasing positive u64 CSN array |
+
+Default HELLO/WELCOME retain their original bytes and four commands.
+`connect-local :write-groups t` offers HELLO key `2: [4]`; the server then
+announces `[0,1,2,3,4]`. The client requires the exact offered capability before
+READY. Missing/unsolicited capabilities are errors; no downgrade or retry.
+Without negotiation, opcode 4 returns status 4 before engine admission.
+See [ADR-0083](../adr/0083-explicit-unix-write-groups.md).
 
 Binary keys are 1 to 1024 bytes; documents are 1 to 60,000 bytes. A document
 contains one CBOR item with minimal headers/valid UTF-8, maximum
 depth 100, verified separately from the container. The profile neither
 normalizes nor promises ordering/deduplication of maps inside the document.
 Envelope/control maps are deterministic and have an exact shape;
-no external bytes pass through the Lisp reader. No implicit batch payload.
+no external bytes pass through the Lisp reader. A write group must fit the
+same complete-frame limit; each member retains the single-write limits.
+All members are validated before any copy or engine admission. The configured
+`max-write-group` limit applies to explicit groups too (status 5 when exceeded).
+An explicit group drains earlier collected writes and acts as a barrier.
+Cumulative capacity refusal returns status 2 without splitting or retry.
+Each operation retains its own CSN/SEAL; one shared strong flush precedes FIFO
+publication and the response. A crash can recover a sealed prefix, and losing
+the response can leave all writes committed. This is not a transaction.
 
 Status 1: invalid arguments; 2: exhausted capacity; 3: unavailable engine;
 4: unsupported opcode; 5: limit exceeded. Rejections occur before
 engine admission, with a `null` payload. Envelope/handshake/
 ID/transfer errors close the connection. A fault after admission
 that prevents a certain answer closes the connection; the client reports an unknown outcome.
-PUT/DELETE respond only after strong engine completion.
+PUT/DELETE/WRITE-GROUP respond only after strong engine completion.
 
 The maximum response buffer is owned before dispatch. GET requires
 a negotiated frame of at least 60,032 bytes, enough for any profile

@@ -41,6 +41,18 @@ cleanup operations. Follow a symbol to its source-derived signature and contract
 `nil`. Mutations return a commit sequence number on success. A lost mutation
 response can produce `outcome-unknown`; the client does not retry transparently.
 
+To share a strong flush across writes from one client, connect with
+`:write-groups t`, then call
+`(client-write-group client operations results :count count)`.
+`operations` is a stable simple vector of 1..8 descriptors made with
+`arcdocdb.engine:crea-operazione-scrittura`, selecting `:put` or `:delete`.
+`results` is an exclusive simple `(unsigned-byte 64)` array with at least
+`count` slots. Success returns `count` and fills that prefix with distinct
+strong CSNs; its tail is unchanged. The whole response is checked before
+copying. Each operation has an independent SEAL, so an interrupted group can
+recover a prefix. An unknown outcome requires application reconciliation
+before retry. See the [negotiation and limits](adr/0083-explicit-unix-write-groups.md).
+
 For embedding within one serial actor, `arcdocdb.engine` exposes the M1 core.
 Its handles have thread ownership and lifecycle requirements. Consult the
 [current profile](implementazione/README.md), the

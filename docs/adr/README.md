@@ -196,3 +196,4 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0080](0080-group-commit-m1.md) | Bounded independent strong writes with one shared flush and cumulative admission | Implemented for serial M1/Unix actor; concurrency and power-loss gates separate |
 | [0081](0081-active-append-metadata.md) | Preallocated typed ACTIVE metadata with immutable captured prefixes | Incremental M1 integration; persistent generic default preserved |
 | [0082](0082-bounded-group-append.md) | Bounded coalesced WAL append using existing exclusive M1 scratch | Incremental serial integration; independent SEALs and strong flush preserved |
+| [0083](0083-explicit-unix-write-groups.md) | Negotiated explicit Unix write groups for a single synchronous client | Incremental serial integration; independent outcomes, no implicit retry |

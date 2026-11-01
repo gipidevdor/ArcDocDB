@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Expose negotiated explicit Unix write groups to one synchronous client,
+  with complete validation, independent strong CSNs and one shared flush.
+  Preserve default wire bytes, absolute deadlines and unknown-outcome cleanup.
+  [Contract](docs/adr/0083-explicit-unix-write-groups.md) and
+  [evidence](spikes/results/2026-11-01-local-write-groups/report.md).
+
 - Coalesce bounded strong-group append through existing exclusive M1 scratch,
   preserving independent CSNs/SEALs and one strong flush. Fault every incomplete
   acquired WAL exit, retaining ownership and the original cause.

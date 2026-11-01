@@ -174,8 +174,9 @@
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
                              (:file "active-types") (:file "active-directory")
-                             (:file "active-scan") (:file "active-build") (:file "active-init")
-                             (:file "active-preflight") (:file "active-read")))
+                             (:file "active-scan") (:file "active-arena") (:file "active-arena-write")
+                             (:file "active-build") (:file "active-init")
+                             (:file "active-preflight") (:file "active-arena-read") (:file "active-read")))
                (:module "get-directory" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "read")
                              (:file "sources-types") (:file "sources-read")))
@@ -337,7 +338,7 @@
                 :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
                (:module "get-active" :serial t
                 :components ((:file "support") (:file "construction") (:file "preflight")
-                             (:file "directory") (:file "read")))
+                             (:file "directory") (:file "read") (:file "append")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -410,6 +411,7 @@
                (:module "engine" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "record-cache") (:file "processes")))
                (:file "engine/write-group")
+               (:file "engine/active-arena")
                (:module "verify" :serial t
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))

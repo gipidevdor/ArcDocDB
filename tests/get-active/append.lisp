@@ -1,0 +1,195 @@
+;;;; C4: independent prefix witnesses, exact quotas and failures before any read or physical append.
+(in-package #:arcdocdb.get.active.tests)
+(declaim (optimize (safety 3) (speed 2) (debug 3)))
+(defun append-arena (fixture) (r::sorgente-get-attiva-arena (af-source fixture)))
+(defun append-image (arena)
+  (list (r::arena-get-attiva-count arena) (copy-seq (r::arena-get-attiva-ends arena))
+        (copy-seq (r::arena-get-attiva-limits arena)) (copy-seq (r::arena-get-attiva-rows arena))))
+(defun append-check-value (fixture ordinal)
+  (let ((context (af-context fixture)))
+    (unwind-protect
+         (progn
+           (active-read-reset fixture) (active-read-start fixture ordinal)
+           (r:leggi-record-attivo-get context (af-source fixture))
+           (active-read-copy-and-finish context (active-read-epoch fixture) (af-output fixture) (aref (af-values fixture) ordinal)))
+      (g:abbandona-get context))))
+
+;;; REQ: REQ-IDX-001 REQ-AFF-008 REQ-WAL-005
+(deftest test-REQ-AFF-008-active-append-startup-exact-budget-and-empty-root
+  (with-active-fixture (f :batches nil :cache-p nil)
+    (signals invalid-argument (active-create-source f :directory-mode :unknown) :active-directory-mode)
+    (signals resource-exhausted (active-create-source f :directory-mode :append-only :max-pages 2 :max-puts 3 :budget-payload 91)
+      :active-append-payload-budget)
+    (is (active-no-effects-p f)) (is (null (s:leggi-radice-serie (af-controller f))))
+    (let* ((source (active-create-source f :directory-mode :append-only :max-pages 2 :max-puts 3 :budget-payload 92))
+           (arena (r::sorgente-get-attiva-arena source)))
+      (is (= 92 (r::payload-arena-get-attiva arena)))
+      (is (= 2 (length (r::arena-get-attiva-ends arena))))
+      (is (= 3 (length (r::arena-get-attiva-limits arena))))
+      (is (= 18 (length (r::arena-get-attiva-rows arena))))
+      (dolist (array (rest (append-image arena))) (is (typep array '(simple-array (unsigned-byte 32) (*))))
+        (is (every #'zerop array)))
+      (let ((root (r:inizializza-radice-get-attiva source (af-lease f))))
+        (is (= 92 (r:payload-radice-get-attiva root))) (is (zerop (r::radice-get-attiva-count root)))
+        (is (= 64 (r::radice-get-attiva-end root))) (is (null (r::radice-get-attiva-directory root)))))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-AFF-008
+(deftest test-REQ-WAL-005-active-append-open-refusals-preserve-entire-arena
+  (dolist (kind '(:pages :puts))
+    (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages (if (eq kind :pages) 1 2) :max-puts 1
+                            :batches (if (eq kind :pages) '(((:kind :tombstone))) '(((:kind :put)))))
+      (let* ((arena (append-arena f)) (before (append-image arena))
+             (batch (active-make-batch f (if (eq kind :pages) '((:kind :tombstone)) '((:kind :put)))))
+             (state (active-preflight-witness f batch)))
+        (signals resource-exhausted
+          (r:verifica-capienza-get-attiva (af-source f) (af-lease f) batch (aref (af-roots f) 0))
+          (if (eq kind :pages) :active-page-budget :active-put-budget))
+        (is (equalp before (append-image arena))) (is (active-open-unchanged-p f batch state)))))
+  (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 2 :max-puts 2 :batches nil)
+    (let* ((arena (append-arena f)) (before (append-image arena)) (batch (active-make-batch f '((:kind :put)))))
+      (dotimes (i 2) (is (= 1 (r:verifica-capienza-get-attiva (af-source f) (af-lease f) batch nil))))
+      (is (equalp before (append-image arena))) (is (active-no-effects-p f)))))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-003 REQ-WAL-006 REQ-CMP-007
+(deftest test-REQ-WAL-006-active-append-v1-v2-pages-and-tombstone-boundaries
+  (dolist (version '(1 2))
+    (with-active-fixture (f :version version :directory-mode :append-only :cache-p nil :max-pages 3 :max-puts 3
+                            :base #x1ffffffff :budget-payload 100
+                            :batches '(((:kind :put :flags 4)) ((:kind :tombstone)) ((:kind :put) (:kind :put))))
+      (let ((arena (append-arena f)))
+        (is (equalp #(0 1 1 3) (r::arena-get-attiva-limits arena)))
+        (is (= 3 (r::arena-get-attiva-count arena)))
+        (dotimes (i 3)
+          (let ((root (aref (af-roots f) i)))
+            (is (null (r::radice-get-attiva-directory root))) (is (zerop (r::radice-get-attiva-nodes root)))
+            (is (= 100 (r:payload-radice-get-attiva root)))
+            (is (= (1+ i) (r::radice-get-attiva-count root)))))
+        (dotimes (i 3) (append-check-value f i))))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-002 REQ-AFF-004
+(deftest test-REQ-WAL-006-active-append-prepared-tail-is-not-a-reader-frontier
+  (dolist (operation '(:resolve :probe :read))
+    (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 4 :max-puts 4
+                            :batches '(((:kind :put)) ((:kind :put))) :publish-count 1)
+      (let ((early nil))
+        (unwind-protect
+             (progn
+               (is (= 2 (r::arena-get-attiva-count (append-arena f))))
+               (is (= 1 (r::radice-get-attiva-count (s:leggi-radice-serie (af-controller f)))))
+               (active-publish-candidate f 1) (setf early t) (active-read-start f 1)
+               (active-read-fault f operation :active-location-frontier))
+          (g:abbandona-get (af-context f))
+          (when early (active-read-remove-candidate-fi f 1)))))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-002 REQ-AFF-008
+(deftest test-REQ-IDX-001-active-append-old-root-ignores-all-unpublished-tail-fields
+  (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 4 :max-puts 4
+                          :batches '(((:kind :put)) ((:kind :put))) :publish-count 1)
+    (let* ((arena (append-arena f)) (before (append-image arena))
+           (ends (r::arena-get-attiva-ends arena)) (limits (r::arena-get-attiva-limits arena)) (rows (r::arena-get-attiva-rows arena)))
+      (unwind-protect
+           (progn
+             (setf (r::arena-get-attiva-count arena) 65536 (aref ends 1) #xffffffff (aref limits 2) #xffffffff)
+             (fill rows #xffffffff :start 6)
+             (append-check-value f 0))
+        (setf (r::arena-get-attiva-count arena) (first before))
+        (replace ends (second before)) (replace limits (third before)) (replace rows (fourth before))))))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-AFF-002 REQ-CMP-007
+(deftest test-REQ-AFF-002-active-append-damaged-prefix-faults-before-IO
+  (dolist (damage '(:root-end :page-end :row-limits :offset :csn :size :flags :proof))
+    (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 3 :max-puts 3
+                            :batches '(((:kind :put)) ((:kind :put))))
+      (let* ((arena (append-arena f)) (before (append-image arena)) (rows (r::arena-get-attiva-rows arena)))
+        (unwind-protect
+             (progn
+               (case damage
+                 (:root-end (incf (aref (r::arena-get-attiva-ends arena) 1)))
+                 (:page-end (setf (aref (r::arena-get-attiva-ends arena) 0) 0))
+                 (:row-limits (setf (aref (r::arena-get-attiva-limits arena) 1) 3))
+                 (:offset (incf (aref rows 0))) (:csn (incf (aref rows 3))) (:size (incf (aref rows 1)))
+                 (:flags (setf (aref rows 2) 128)) (:proof (setf (aref rows 5) 1)))
+               (active-read-start f (if (eq damage :page-end) 1 0))
+               (active-read-fault f :read
+                 (case damage
+                   (:root-end :active-append-prefix) ((:page-end :row-limits) :active-append-page)
+                   (:offset :resolver-location-absent) (:csn :resolver-candidate-csn) (:size :resolver-candidate-size)
+                   (:flags :resolver-row-flags) (:proof :resolver-unexpected-outcome))))
+          (g:abbandona-get (af-context f))
+          (replace (r::arena-get-attiva-ends arena) (second before))
+          (replace (r::arena-get-attiva-limits arena) (third before)) (replace rows (fourth before)))))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-AFF-001 REQ-AFF-004
+(deftest test-REQ-WAL-005-active-append-reused-tail-faults-without-CSN
+  (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 2 :max-puts 2 :batches nil)
+    (let* ((batch (active-make-batch f '((:kind :put)))) (buffer (copy-seq (w::lotto-buffer batch)))
+           (fields (active-preflight-batch-fields batch)) (controller (active-preflight-controller-fields f))
+           (csns (active-preflight-csn-image (af-registry f))))
+      (setf (aref (r::arena-get-attiva-ends (append-arena f)) 0) 123)
+      (signals invariant-violation (r:verifica-capienza-get-attiva (af-source f) (af-lease f) batch nil) :active-append-state)
+      (is (eq :faulted (s:stato-controllore-serie (af-controller f))))
+      (is (eq :archive (s:ambito-fault-serie (af-controller f))))
+      (is (equalp buffer (w::lotto-buffer batch)))
+      (is (active-preflight-same-fields-p fields (active-preflight-batch-fields batch)))
+      (is (active-preflight-same-fields-p controller (active-preflight-controller-fields f)))
+      (is (equalp csns (active-preflight-csn-image (af-registry f))))
+      (is (eq :libero (w:stato-csn-lotto batch))) (is (active-no-effects-p f)))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-MVC-008 REQ-AFF-008
+(deftest test-REQ-WAL-005-active-append-known-CSN-order-refusal-keeps-tail-unused
+  (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 2 :max-puts 2 :batches nil)
+    (let* ((batch (active-make-batch f '((:kind :put)))) (controller (af-controller f))
+           (arena (append-arena f)) (before (append-image arena))
+           (high (s::controllore-serie-last-high controller)) (low (s::controllore-serie-last-low controller)))
+      (active-seal-batch f batch 64)
+      (let ((csns (active-preflight-csn-image (af-registry f))))
+        (unwind-protect
+             (progn
+               (setf (s::controllore-serie-last-low controller) 7)
+               (signals invalid-argument
+                 (r:registra-lotto-get-attivo (af-source f) (af-lease f) batch nil nil :group) :serie-csn-order)
+               (is (eq :healthy (s:stato-controllore-serie controller))) (is (eq :none (s:ambito-fault-serie controller)))
+               (is (equalp before (append-image arena))) (is (active-no-effects-p f))
+               (is (equalp csns (active-preflight-csn-image (af-registry f))))
+               (is (null (w::lotto-owner batch))))
+          (setf (s::controllore-serie-last-high controller) high (s::controllore-serie-last-low controller) low))))))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-001 REQ-AFF-004
+(deftest test-REQ-WAL-006-active-append-incomplete-copy-and-adoption-never-reuse
+  (dolist (phase '(:copy-error :copy-unwind :adopt-error))
+    (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 2 :max-puts 2 :batches nil)
+      (let* ((batch (active-make-batch f '((:kind :put))))
+             (target (if (eq phase :adopt-error) 's:registra-commit-serie 'r::copia-put-attivi))
+             (original (symbol-function target)) (cause (make-condition 'io-fault :reason :append-fi :operation :test)) (fired nil))
+        (r:verifica-capienza-get-attiva (af-source f) (af-lease f) batch nil)
+        (active-seal-batch f batch 64)
+        (unwind-protect
+             (progn
+               (setf (symbol-function target)
+                     (lambda (&rest args) (apply original args) (setf fired t)
+                       (if (eq phase :copy-unwind) (throw 'append-interrupted :interrupted) (error cause))))
+               (if (eq phase :copy-unwind)
+                   (is (eq :interrupted (catch 'append-interrupted
+                      (r:registra-lotto-get-attivo (af-source f) (af-lease f) batch nil nil :group))))
+                   (handler-case (r:registra-lotto-get-attivo (af-source f) (af-lease f) batch nil nil :group)
+                     (io-fault (condition) (is (eq condition cause)))))
+               (is fired) (is (eq :faulted (s:stato-controllore-serie (af-controller f))))
+               (is (eq :archive (s:ambito-fault-serie (af-controller f))))
+               (is (null (s::controllore-serie-root (af-controller f)))) (is (active-no-effects-p f))
+               (signals io-fault (r:registra-lotto-get-attivo (af-source f) (af-lease f) batch nil nil :group) :serie-faulted))
+          (setf (symbol-function target) original))))))
+
+;;; REQ: REQ-IDX-001 REQ-AFF-002 REQ-AFF-008
+(deftest test-REQ-IDX-001-active-append-65536-page-search-boundaries
+  (with-active-fixture (f :directory-mode :append-only :cache-p nil :max-pages 65536 :max-puts 1)
+    (let* ((arena (append-arena f)) (ends (r::arena-get-attiva-ends arena)) (limits (r::arena-get-attiva-limits arena))
+           (saved-ends (copy-seq ends)) (saved-limits (copy-seq limits))
+           (root (r::%make-radice-get-attiva (af-source f) nil 65536 0 0 65600 nil)))
+      (unwind-protect
+           (progn
+             (dotimes (i 65536) (setf (aref ends i) (+ 65 i))) (fill limits 0)
+             (active-read-start f 0)
+             (is (eq arena (r::verifica-prefisso-arena-attiva (af-context f) root)))
+             (dolist (rank '(0 1 32767 32768 65534 65535))
+               (is (= rank (r::trova-pagina-arena-attiva (af-context f) root arena (+ 64 rank))))))
+        (g:abbandona-get (af-context f)) (replace ends saved-ends) (replace limits saved-limits)))))

@@ -261,7 +261,7 @@
                                (record-bytes 256) (contexts 1)
                                (max-pages 65536) (max-puts 1048576)
                                (max-batch-records 65536) (max-batch-bytes 67108864)
-                               (budget-payload 67108864))
+                               (budget-payload 67108864) (directory-mode :persistent))
   "BATCHES liste di plist; ordinale globale dei soli PUT. Il piano indipendente
 precede WAL/root. Tutti i lotti vengono scritti e flushati; PUBLISH-COUNT può
 lasciare una root solo pianificata. Non attesta l'indice atomico del prodotto."
@@ -356,7 +356,7 @@ lasciare una root solo pianificata. Non attesta l'indice atomico del prodotto."
                      (af-lease fixture) (s:acquisisci-controllore-serie (af-controller fixture))
                      (af-source fixture) (active-create-source fixture :max-pages max-pages :max-puts max-puts
                                           :batch-records max-batch-records :batch-bytes max-batch-bytes
-                                          :budget-payload budget-payload)))
+                                          :budget-payload budget-payload :directory-mode directory-mode)))
              (let ((previous nil) (start 64))
                (dotimes (rank batch-count)
                  (let* ((entries (aref (af-entries fixture) rank))

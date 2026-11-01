@@ -194,3 +194,4 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0078](0078-compattazione-prefix-m1.md) | Full-prefix canonical compaction and physical reclamation in serial M1 | Implemented for current-only M1; broader qualification separate |
 | [0079](0079-cache-record-m1.md) | Fixed-budget verified record cache in serial M1 and Unix service | Implemented for serial M1; broader load/RAM qualification separate |
 | [0080](0080-group-commit-m1.md) | Bounded independent strong writes with one shared flush and cumulative admission | Implemented for serial M1/Unix actor; concurrency and power-loss gates separate |
+| [0081](0081-active-append-metadata.md) | Preallocated typed ACTIVE metadata with immutable captured prefixes | Incremental M1 integration; persistent generic default preserved |

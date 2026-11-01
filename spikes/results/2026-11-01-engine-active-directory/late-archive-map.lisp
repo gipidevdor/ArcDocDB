@@ -1,0 +1,6 @@
+(("spikes/out/4002492542-command-60826-0/" "metrics-command/")
+ ("spikes/out/4002492572-command-60852-0/" "final-archive-command/")
+ ("spikes/out/4002492653-command-61054-0/" "comparison-command/")
+ ("spikes/out/4002492864-command-61141-0/" "sync-self-test/")
+ ("spikes/out/4002492913-command-61184-0/" "sync-diagnostic/")
+ ("spikes/out/4002493003-command-61296-0/" "sync-summary-command/"))

@@ -55,31 +55,33 @@ Typed errors before adoption; bytes not retained in the result."
       (conta-put-attivi buffer size (segmento-get-version segment) count))))
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-003 REQ-AFF-008
-(declaim (ftype (function (sorgente-get-attiva lotto resolver-words) null) copia-put-attivi))
-(defun copia-put-attivi (source batch rows)
-  "Pre: ordinary batch already verified, stable buffer, private rows sized exactly.
+(declaim (ftype (function (sorgente-get-attiva lotto resolver-words &optional index index) null) copia-put-attivi))
+(defun copia-put-attivi (source batch rows &optional (first 0) (limit (length rows)))
+  "Pre: ordinary batch already verified, stable buffer, exclusive unpublished row span [FIRST,LIMIT).
 Post: absolute offsets/size/flags/CSN copied, proof zero; no reference to reusable bytes/event.
 At most count+1 headers; INVARIANT-VIOLATION for count/range, no partial publication."
-  (unless (zerop (mod (length rows) +row-words+))
+  (unless (and (<= first limit (length rows)) (zerop (mod (length rows) +row-words+))
+               (zerop (mod first +row-words+)) (zerop (mod limit +row-words+)))
     (error 'invariant-violation :reason :active-row-shape))
-  (let ((pos 0) (used 0) (buffer (arcdocdb.wal::lotto-buffer batch))
+  (let ((pos 0) (used first) (buffer (arcdocdb.wal::lotto-buffer batch))
         (end (lunghezza-lotto batch)) (start (inizio-lotto batch))
         (version (segmento-get-version (sorgente-get-attiva-segment source))))
     (declare (type u32 pos) (type index used))
     (loop repeat (1+ (arcdocdb.wal::lotto-count batch))
           do (multiple-value-bind (next kind flags) (prossima-cornice-resolver buffer pos end version)
                (when (= kind +seal+)
-                 (unless (and (= next end) (= used (length rows)))
+                 (unless (and (= next end) (= used limit))
                    (error 'invariant-violation :reason :active-row-count))
                  (return-from copia-put-attivi nil))
                (when (= kind +put+)
-                 (unless (<= (+ used +row-words+) (length rows))
+                 (unless (<= (+ used +row-words+) limit)
                    (error 'invariant-violation :reason :active-row-count))
                  (setf (aref rows (+ used +row-offset+)) (+ start pos)
                        (aref rows (+ used +row-size+)) (- next pos)
                        (aref rows (+ used +row-flags+)) flags
                        (aref rows (+ used +row-csn-low+)) (leggi-u32 buffer (+ pos +stamp-offset+))
-                       (aref rows (+ used +row-csn-high+)) (leggi-u32 buffer (+ pos +stamp-offset+ 4)))
+                       (aref rows (+ used +row-csn-high+)) (leggi-u32 buffer (+ pos +stamp-offset+ 4))
+                       (aref rows (+ used +row-proof+)) 0)
                  (incf used +row-words+))
                (setf pos next)))
     (error 'invariant-violation :reason :active-scan-bound)))

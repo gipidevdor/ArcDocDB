@@ -71,7 +71,7 @@ connection to the primary index remains to be completed.
 
 ## Persistent directory and work limits
 
-The directory has four levels, each with sixteen references, indexed
+The default `:directory-mode :persistent` directory has four levels, each with sixteen references, indexed
 by the four hexadecimal digits of a u16 rank. Pages follow physical batch
 order. An append copies four vectors and shares only immutable
 subgraphs. It does not recopy previous PUTs, reread the ACTIVE file, or
@@ -198,3 +198,30 @@ capacity cases and selected mutations, keeping attribution separate.
 Real-thread stress, interruptions in every phase, condition
 coverage, heap/performance measurements, multiseries ACTIVE proofs, Serie
 directory/rotation/reclamation, concrete index, and C1 qualification remain open.
+
+## Preallocated append-only metadata
+
+[ADR-0081](../adr/0081-active-append-metadata.md) adds the explicit source-factory
+option `:directory-mode :append-only`, selected by serial M1. The generic default
+remains persistent. Three specialized u32 arrays hold page ends, cumulative row
+limits and the six-word PUT rows. Their complete payload is charged at startup:
+`8 * max-pages + 4 + 24 * max-puts` bytes, including the unused suffix.
+
+Each root still captures immutable page count, PUT count, end and caller content.
+Every new metadata entry is initialized once outside all published prefixes;
+later appends cannot change an old root's observable prefix. The source writer's
+tail counter never supplies a GET frontier. Readers retain the existing acquire,
+EBR, canonical identity, CSN/size/flags, target/proof and record verification.
+Lookup uses at most 17 page comparisons and 33 row comparisons within the
+captured row span, with no reader allocation or mutation.
+
+An OPEN preflight checks exact remaining page/PUT capacity and untouched tail
+before CSN assignment. A sealed preparation that starts changing the private
+tail faults the controller on every incomplete exit, without tail reuse or retry.
+Normal WAL coverage/durability checks and FIFO publication still decide visibility;
+M1 returns strong results only after its covering flush. One immutable Lisp root
+descriptor per commit remains: complete zero-allocation qualification is open.
+
+[Method and evidence](../../spikes/results/2026-11-01-engine-active-directory/report.md)
+keep baseline allocation, finite-model schedules, corruption/refusal/unwind cases,
+full product qualification and before/after timing attribution separate.

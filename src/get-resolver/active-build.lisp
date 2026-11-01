@@ -19,17 +19,21 @@ INVALID-ARGUMENT before creating capabilities or arrays; does not change documen
 (declaim (ftype (function (controllore-serie t segmento-get
                          &key (:max-pages integer) (:max-puts integer) (:batch-records integer)
                               (:batch-bytes integer) (:budget-payload integer)
+                              (:directory-mode t)
                               (:associazione-file (or null associazione-file))) sorgente-get-attiva)
                 crea-sorgente-get-attiva))
 (defun crea-sorgente-get-attiva (controller lease segment
                                 &key (max-pages 65536) (max-puts 1048576) (batch-records 65536)
-                                     (batch-bytes 67108864) (budget-payload 67108864) associazione-file)
+                                     (batch-bytes 67108864) (budget-payload 67108864)
+                                     (directory-mode :persistent) associazione-file)
   "Pre: lease, new ACTIVE with a header verified in the I/O pool; append/readonly for the SAME file.
 Post: local source ready, no I/O/frontier/publication. Header/id/version compared.
 INVALID-ARGUMENT for association/root already started; health/invariants propagate from the controller.
 ASSOCIAZIONE-FILE verifies the exact capabilities without I/O; nil retains the caller's precondition.
+DIRECTORY-MODE defaults to :PERSISTENT; :APPEND-ONLY charges all metadata arrays before creating the source.
 The caller retains the FDs until reclaim; the header alone does not attest to physical identity."
   (verifica-budget-attivo max-pages max-puts batch-records batch-bytes budget-payload)
+  (verifica-configurazione-arena-attiva directory-mode max-pages max-puts budget-payload)
   (arcdocdb.series::%check-owner controller lease) (arcdocdb.series::%require-healthy controller)
   (let ((log (arcdocdb.series::controllore-serie-log controller)))
     (verifica-log-segmento log)
@@ -48,14 +52,15 @@ The caller retains the FDs until reclaim; the header alone does not attest to ph
                (zerop (arcdocdb.series::controllore-serie-count controller))
                (= (arcdocdb.series::controllore-serie-next-offset controller) +segment-header-bytes+))
     (error 'invalid-argument :reason :active-source-started))
-  (%make-sorgente-get-attiva controller segment max-pages max-puts batch-records batch-bytes budget-payload))
+  (%make-sorgente-get-attiva controller segment max-pages max-puts batch-records batch-bytes budget-payload
+                           (crea-arena-get-attiva directory-mode max-pages max-puts)))
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
 (declaim (ftype (function (sorgente-get-attiva (or null radice-get-attiva) index u32) null)
                 verifica-delta-attivo))
 (defun verifica-delta-attivo (source previous start puts)
   "Pre: planned root/batch verified. Post: contiguity, cardinality, and peak authorized before arrays.
-Peak = previous payload + 24/new PUT + four 128-byte vectors; no copying of old PUTs.
+Persistent peak = previous payload + 24/new PUT + four 128-byte vectors; append-only uses its fully charged arena.
 Excludes other retained roots/events/objects: the overall budget remains the controller's responsibility.
 INVALID-ARGUMENT for source/offset, RESOURCE-EXHAUSTED for saturation, without adoption."
   (when previous
@@ -67,9 +72,11 @@ INVALID-ARGUMENT for source/offset, RESOURCE-EXHAUSTED for saturation, without a
     (error 'resource-exhausted :reason :active-page-budget))
   (when (> puts (- (sorgente-get-attiva-max-puts source) (if previous (radice-get-attiva-puts previous) 0)))
     (error 'resource-exhausted :reason :active-put-budget))
-  (when (> (+ (if previous (payload-radice-get-attiva previous) 0) (* +active-row-payload+ puts)
-              (* +active-directory-levels+ +active-node-payload+)) (sorgente-get-attiva-budget source))
-    (error 'resource-exhausted :reason :active-payload-budget))
+  (if (sorgente-get-attiva-arena source)
+      (verifica-coda-arena-attiva source previous)
+      (when (> (+ (if previous (payload-radice-get-attiva previous) 0) (* +active-row-payload+ puts)
+                  (* +active-directory-levels+ +active-node-payload+)) (sorgente-get-attiva-budget source))
+        (error 'resource-exhausted :reason :active-payload-budget)))
   nil)
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
@@ -106,10 +113,12 @@ Rejections before adoption leave the batch/CSN with the caller; interruption dur
     (arcdocdb.series::%check-admission controller batch previous level)
     (arcdocdb.series::%capture-token controller batch)
     (handler-case
-        (let* ((puts (verifica-lotto-attivo source batch))
-               (root (costruisci-delta-attivo source previous batch puts content)))
-          (multiple-value-bind (event generation) (registra-commit-serie controller lease batch previous root level)
-            (values event generation root)))
+        (let ((puts (verifica-lotto-attivo source batch)))
+          (if (sorgente-get-attiva-arena source)
+              (registra-delta-arena-attiva source lease batch previous puts content level)
+              (let ((root (costruisci-delta-attivo source previous batch puts content)))
+                (multiple-value-bind (event generation) (registra-commit-serie controller lease batch previous root level)
+                  (values event generation root)))))
       ;; Il buffer sealed è del writer: integrità/forma impossibili sono un guasto interno.
       (corruption-detected (condition) (arcdocdb.series::%mark-fault controller :archive) (error condition))
       (invariant-violation (condition) (arcdocdb.series::%mark-fault controller :archive) (error condition)))))

@@ -222,3 +222,18 @@ A fixed per-ACTIVE workspace contains eight one-record batches; the existing
 single-write API reuses batch zero. Extra batch buffers and planning/event arrays
 are separate from the index/cache grants and are released with the handle.
 [Verification and measurements](../../spikes/results/2026-10-31-engine-group-commit/report.md).
+
+## Bounded ACTIVE metadata
+
+M1 selects the [append-only ACTIVE arena](../adr/0081-active-append-metadata.md)
+with page/PUT bounds equal to `max-records`. Three specialized u32 arrays reserve
+`32 * max-records + 4` payload bytes before admission (2,097,156 bytes at the
+default 65,536-record limit). This reservation is separate from primary-index
+and record-cache grants and excludes object headers; it is not an RSS bound.
+
+Single writes and groups initialize only a private tail, then publish the exact
+captured prefix through the existing FIFO/flush protocol. Paging/growth/return
+does not replace the arena; canonical rotation/compaction creates a fresh one.
+The generic source factories keep their persistent default. M1 still creates
+one immutable root descriptor per commit; allocation and broader heap/GC gates
+remain measured residuals. [Evidence](../../spikes/results/2026-11-01-engine-active-directory/report.md).

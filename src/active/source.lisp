@@ -20,13 +20,14 @@ INVALID-ARGUMENT for another Archivio; no frontier reads, mutex, or registry mod
 ;;; REQ: REQ-FOR-001 REQ-IDX-001 REQ-WAL-006 REQ-MVC-008 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t segmento-attivo-preparato
                          &key (:max-pages integer) (:max-puts integer) (:batch-records integer)
-                              (:batch-bytes integer) (:budget-payload integer)) sorgente-get-attiva)
+                              (:batch-bytes integer) (:budget-payload integer) (:directory-mode t)) sorgente-get-attiva)
                 crea-sorgente-get-preparata))
 (defun crea-sorgente-get-preparata (controller lease prepared
                                   &key (max-pages 65536) (max-puts 1048576) (batch-records 65536)
-                                       (batch-bytes 67108864) (budget-payload 67108864))
+                                       (batch-bytes 67108864) (budget-payload 67108864) (directory-mode :persistent))
   "Pre: lease, unique controller on the prepared log, same CSN registry, nil root, and next-offset 64.
 Post: ACTIVE source with mandatory proof of actual capabilities, without syscall/publication.
+DIRECTORY-MODE selects the default persistent graph or fully preallocated :APPEND-ONLY metadata.
 Factory/lease/health errors propagated; INVALID-ARGUMENT for another log or file already advanced.
 The controller has already obtained the catalog decision before admitting traffic."
   (arcdocdb.series::%check-owner controller lease)
@@ -42,4 +43,5 @@ The controller has already obtained the catalog decision before admitting traffi
   (crea-sorgente-get-attiva controller lease (segmento-attivo-preparato-segment prepared)
                           :max-pages max-pages :max-puts max-puts :batch-records batch-records
                           :batch-bytes batch-bytes :budget-payload budget-payload
+                          :directory-mode directory-mode
                           :associazione-file (segmento-attivo-preparato-association prepared)))

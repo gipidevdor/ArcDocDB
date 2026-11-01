@@ -4,14 +4,14 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-IDX-001 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (contesto-get resolver-words u32 &optional u32) index) trova-riga-resolver))
-(defun trova-riga-resolver (context rows offset &optional (count (floor (length rows) +row-words+)))
-  "Pre: CANDIDATE under EBR, immutable rows sorted by offset. Post: exact PUT base.
+(declaim (ftype (function (contesto-get resolver-words u32 &optional u32 u32) index) trova-riga-resolver))
+(defun trova-riga-resolver (context rows offset &optional (count (floor (length rows) +row-words+)) (first 0))
+  "Pre: CANDIDATE under EBR, immutable sorted row span [FIRST,FIRST+COUNT). Post: exact PUT base.
 Absence does not mean an absent document: an already published location without a row makes it FAULTED.
 At most 33 steps over u32 cardinality; no explicit allocation or I/O."
   (unless (zerop (mod (length rows) +row-words+)) (guasto-get context :resolver-row-shape))
-  (unless (<= count (floor (length rows) +row-words+)) (guasto-get context :resolver-row-count))
-  (let ((left 0) (right count))
+  (unless (<= first (- (floor (length rows) +row-words+) count)) (guasto-get context :resolver-row-count))
+  (let ((left first) (right (+ first count)))
     (declare (type u32 left right))
     (loop repeat +binary-attempts+
           do (when (= left right) (guasto-get context :resolver-location-absent))
@@ -38,26 +38,51 @@ Any mismatch with the candidate makes GET FAULTED; no u64 boxing needed."
   nil)
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (contesto-get mappa-segmento-get index)
-                         (values u8 (or null u32) &optional)) verifica-riga-resolver))
-(defun verifica-riga-resolver (context map base)
+(declaim (ftype (function (contesto-get segmento-get u32 resolver-words index)
+                         (values u8 (or null u32) &optional)) verifica-riga-fonti-resolver))
+(defun verifica-riga-fonti-resolver (context segment end rows base)
   "Pre: row found under the same epoch as the candidate. Post: matching size/CSN/flags and proof.
 Primary LIVE is not interpreted as a storage flag; zero proof only for an ordinary record.
 Any mismatch makes GET FAULTED; the worker boundary must isolate the Serie."
-  (let* ((rows (mappa-segmento-get-rows map))
-         (flags (aref rows (+ base +row-flags+))) (proof (aref rows (+ base +row-proof+))))
+  (unless (and (zerop (mod base +row-words+)) (<= (+ base +row-words+) (length rows)))
+    (guasto-get context :resolver-row-shape))
+  (let ((flags (aref rows (+ base +row-flags+))) (proof (aref rows (+ base +row-proof+))))
     (verifica-parole-resolver context rows base)
     (unless (and (typep flags 'u8) (zerop (logand flags (logxor 255 (allowed-flags +put+)))))
       (guasto-get context :resolver-row-flags))
     (if (logtest flags +prepared+)
         (when (zerop proof) (guasto-get context :resolver-missing-outcome))
         (unless (zerop proof) (guasto-get context :resolver-unexpected-outcome)))
-    (verifica-target-get context (mappa-segmento-get-segment map) (mappa-segmento-get-end map) flags)
+    (verifica-target-get context segment end flags)
     (let ((offset (if (zerop proof) nil proof)))
-      (unless (eq (verifica-prova-target-get context (mappa-segmento-get-end map) flags offset)
+      (unless (eq (verifica-prova-target-get context end flags offset)
                   (logtest flags +prepared+))
         (guasto-get context :resolver-proof-state))
       (values (the u8 flags) offset))))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-002
+(declaim (ftype (function (contesto-get mappa-segmento-get index)
+                         (values u8 (or null u32) &optional)) verifica-riga-resolver))
+(defun verifica-riga-resolver (context map base)
+  "Pre: immutable map and matching row base acquired under EBR. Post: common canonical row/target/proof checks.
+Errors fault GET through the same verifier as append-only ACTIVE metadata."
+  (verifica-riga-fonti-resolver context (mappa-segmento-get-segment map) (mappa-segmento-get-end map)
+                               (mappa-segmento-get-rows map) base))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-AFF-002
+(declaim (ftype (function (contesto-get segmento-get) null) verifica-fonte-resolver))
+(defun verifica-fonte-resolver (context segment)
+  "Pre: CANDIDATE under EBR. Post: exact source owner/segment and live read-only capability.
+Foreign view INVALID-ARGUMENT; identity/lifetime mismatches fault GET. No I/O or mutation."
+  (let ((location (aref (contesto-get-content context) 1)))
+    (declare (type u64 location))
+    (unless (eq (segmento-get-owner segment) (contesto-get-view context))
+      (error 'invalid-argument :reason :resolver-source-owner))
+    (unless (and (zerop (segmento-get-high segment)) (= (segmento-get-low segment) (ldb (byte 32 32) location)))
+      (guasto-get context :resolver-source-segment))
+    (unless (and (eq (mode-file (segmento-get-file segment)) :input) (eq (stato-file (segmento-get-file segment)) :open))
+      (guasto-get context :resolver-source-lifetime)))
+  nil)
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-002
 (declaim (ftype (function (contesto-get mappa-segmento-get)
@@ -73,14 +98,7 @@ Errors/nonlocal exits release EBR; incorrect order rejected before assuming clea
          (let* ((segment (mappa-segmento-get-segment map)) (content (contesto-get-content context))
                 (location (aref content 1)))
            (declare (type u64 location))
-           (unless (eq (segmento-get-owner segment) (contesto-get-view context))
-             (error 'invalid-argument :reason :resolver-source-owner))
-           (unless (and (zerop (segmento-get-high segment))
-                        (= (segmento-get-low segment) (ldb (byte 32 32) location)))
-             (guasto-get context :resolver-source-segment))
-           (unless (and (eq (mode-file (segmento-get-file segment)) :input)
-                        (eq (stato-file (segmento-get-file segment)) :open))
-             (guasto-get context :resolver-source-lifetime))
+           (verifica-fonte-resolver context segment)
            (let ((base (trova-riga-resolver context (mappa-segmento-get-rows map)
                                            (ldb (byte 32 0) location) (mappa-segmento-get-count map))))
              (multiple-value-bind (flags proof) (verifica-riga-resolver context map base)

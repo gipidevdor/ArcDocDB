@@ -9,6 +9,7 @@
 (defun inizializza-radice-get-attiva (source lease &key (content nil))
   "Pre: new ACTIVE source, lease, durable header, and decided EDIT; admission closed.
 Post: empty published/planned root, end=64 and zero pages/PUTs/nodes; borrowed CONTENT.
+An append-only source already owns and charges its full fixed arena; no arena is allocated here.
 No I/O, event, or CSN token. The first batch uses this root as PREVIOUS.
 INVALID-ARGUMENT for a closed/advanced file or started controller; health/invariants propagate.
 The caller retains content and FD under EBR; CAS does not prove the durable EDIT decision."

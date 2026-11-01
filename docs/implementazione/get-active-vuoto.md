@@ -41,9 +41,14 @@ The initial legacy NIL controller may still register the first batch directly.
 
 The empty root contains only source, content, and scalar metadata:
 directory NIL, count/puts/nodes zero, end 64. It allocates neither pages nor row
-vectors. Page/row payload is zero; the Lisp root object
+vectors. In the default persistent mode, page/row payload is zero; the Lisp root object
 and existing sources still have a cost. The first delta inserts
 the rank-zero page and four nodes, keeping the empty root immutable.
+
+With [append-only metadata](../adr/0081-active-append-metadata.md), the source
+has already charged and allocated its complete fixed arrays. Empty root count,
+PUT count and end retain the same values, while its reported payload includes
+that full reservation. The first append initializes only the unpublished suffix.
 
 An ACTIVE candidate before the first batch is impossible: no offset
 belongs to [64,64). The resolver signals candidate failure

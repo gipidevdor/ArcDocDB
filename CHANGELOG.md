@@ -7,6 +7,11 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Integrate preallocated typed ACTIVE metadata into serial M1, preserving old
+  root prefixes and canonical read verification while removing per-write page
+  objects and persistent path copies. [Contract](docs/adr/0081-active-append-metadata.md)
+  and [evidence](spikes/results/2026-11-01-engine-active-directory/report.md).
+
 - Integrate bounded strong group commit into serial M1 and the Unix actor:
   cumulative index/ACTIVE reservation, independent CSNs/SEALs, one shared flush,
   ordered publication, read barriers and no retry after admission.

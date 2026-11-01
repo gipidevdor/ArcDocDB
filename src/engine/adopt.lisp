@@ -39,7 +39,8 @@ Rebinding rereads canonical header; neither rewrites file nor reconstructs durab
           (motore-append engine) (arcdocdb.wal::log-io-file (a:log-segmento-attivo-preparato wrapped))
           (motore-lease engine) (s:acquisisci-controllore-serie controller)
           (motore-source engine) (a:crea-sorgente-get-preparata controller (motore-lease engine) wrapped
-                                  :max-puts (motore-max-records engine)
+                                  :max-pages (motore-max-records engine) :max-puts (motore-max-records engine)
+                                  :directory-mode :append-only
                                   :batch-records 1 :batch-bytes (+ (motore-max-record-bytes engine) w::+seal-total+)))
     (initialize-write-group engine id)
     (gd:inizializza-fonti-get-attive (motore-source engine) (motore-lease engine) (motore-sources engine)))

@@ -15,7 +15,8 @@
 (defstruct (backend (:constructor make-backend
                          (open reader writer flush directory-flush close
                           &key identity entry-identity rename directory-entries open-relative file-metadata
-                               create-relative rename-exclusive directory-lock unlink-relative))
+                               create-relative rename-exclusive directory-lock unlink-relative
+                               directory-node directory-identity directory-entry-identity))
                     (:copier nil))
   "Pre: trusted stable functions. Post: immutable table of injectable calls.
 Open receives name/mode; read fd/octets/start/count/offset; write fd/octets/start/count.
@@ -50,7 +51,12 @@ No native fallback for missing callbacks."
   (directory-entries nil :type (or null function) :read-only t)
   (open-relative nil :type (or null function) :read-only t)
   (file-metadata nil :type (or null function) :read-only t)
-  (create-relative nil :type (or null function) :read-only t))
+  (create-relative nil :type (or null function) :read-only t)
+  ;; DIRECTORY-NODE(fd,leaf,create-p) exclusively creates or opens a nofollow directory, returns owned FD.
+  ;; DIRECTORY-IDENTITY(fd) and DIRECTORY-ENTRY-IDENTITY(parent-fd,leaf) return exact directory dev/inode.
+  (directory-node nil :type (or null function) :read-only t)
+  (directory-identity nil :type (or null function) :read-only t)
+  (directory-entry-identity nil :type (or null function) :read-only t))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-STO-003
 (defstruct (file-io (:constructor %make-file (mode backend max-transfer max-file-bytes))

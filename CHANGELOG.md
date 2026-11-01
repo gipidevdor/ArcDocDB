@@ -14,6 +14,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   [Contract](docs/implementazione/buffer-socket-local-m1.md) and
   [evidence](spikes/results/2026-11-01-unix-service-latency/report.md).
 
+- Add [offline M1 backup and verified restore](docs/implementazione/backup-offline-m1.md):
+  canonical-only copies, bounded binary inventory and CRC32C, exact comparison,
+  new-target publication without replacement, and CLI/API operations. Staged copies
+  are checked before publication; restore checks the stored CRC during copying too.
+  Complete Archivio and online/incremental backup remain separate work.
+
 - Expose independent conditional PUT/DELETE groups to one Unix client through
   negotiated opcode 7, with complete per-member outcomes and a shared strong flush.
   [Contract](docs/adr/0087-explicit-conditional-unix-groups.md) and

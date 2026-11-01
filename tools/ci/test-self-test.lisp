@@ -119,16 +119,18 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                (ci-coverage-parse-lcov (format nil "SF:src/fixture.lisp~%~Aend_of_record~%" body))))
       (unwind-protect
            (progn
-             (check :catalog-59-suites
-                    (lambda () (= 59 (length (arcdocdb.ci.tests:suite-specifications)))))
+             (check :catalog-60-suites
+                    (lambda () (= 60 (length (arcdocdb.ci.tests:suite-specifications)))))
              (check :catalog-merged-cache-fulltext-and-production-engine
                     (lambda ()
                       (let ((ids (mapcar (lambda (row) (getf row :id))
                                          (arcdocdb.ci.tests:suite-specifications))))
                         (and (member "ARCDOCDB.CACHE.TESTS" ids :test #'equal)
+                             (member "ARCDOCDB.METRICS.TESTS" ids :test #'equal)
                              (member "ARCDOCDB.FULLTEXT.ADMISSION.TESTS" ids :test #'equal)
                              (member "ARCDOCDB.ENGINE.TESTS" ids :test #'equal)
                              (member "ARCDOCDB.VERIFY.TESTS" ids :test #'equal)
+                             (member "ARCDOCDB.BACKUP.TESTS" ids :test #'equal)
                              (every (lambda (id) (member id ids :test #'equal))
                                     '("ARCDOCDB.LOCAL.WIRE.TESTS" "ARCDOCDB.LOCAL.NATIVE.TESTS"
                                       "ARCDOCDB.LOCAL.SERVER.TESTS" "ARCDOCDB.LOCAL.PROCESS.TESTS"))))))

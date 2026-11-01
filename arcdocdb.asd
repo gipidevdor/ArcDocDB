@@ -95,11 +95,13 @@
                 :components ((:file "package") (:file "types") (:file "identity-types")
                              (:file "native") (:file "readiness") (:file "native-namespace") (:file "native-publish")
                              (:file "native-directory")
+                             (:file "native-directory-node")
                              (:file "native-open-relative")
                              (:file "native-create-relative")
                              (:file "lifecycle") (:file "identity") (:file "directory")
                              (:file "rename") (:file "namespace") (:file "publish") (:file "open-relative")
                              (:file "create-relative")
+                             (:file "directory-identity") (:file "directory-node") (:file "directory-publish")
                              (:file "transfer") (:file "flush")
                              (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock") (:file "derived-remove") (:file "segment-remove")))
                (:module "wal" :serial t
@@ -244,7 +246,11 @@
                              (:file "write-group-commit") (:file "write-group") (:file "read") (:file "conditional") (:file "conditional-group")))
                (:module "verify" :serial t
                 :components ((:file "package") (:file "types") (:file "read")
-                             (:file "order") (:file "report") (:file "resources"))))
+                             (:file "order") (:file "report") (:file "resources")))
+               (:module "backup" :serial t
+                :components ((:file "package") (:file "types") (:file "manifest-write") (:file "manifest-read")
+                             (:file "resources") (:file "copy") (:file "directory") (:file "verify")
+                             (:file "operations") (:file "api"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/local"
@@ -429,6 +435,9 @@
                (:module "verify" :serial t
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))
+               (:module "backup" :serial t
+                :components ((:file "support") (:file "manifest") (:file "roundtrip") (:file "guards")
+                             (:file "directory") (:file "faults") (:file "streaming") (:file "cli") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "native") (:file "socket-buffer") (:file "server")
                              (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version") (:file "conditional-group")

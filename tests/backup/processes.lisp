@@ -1,0 +1,95 @@
+(in-package #:arcdocdb.backup.tests)
+
+(defun backup-crash (mode phase)
+  (format t "~&BACKUP-CRASH-READY ~A ~A~%" mode phase) (finish-output)
+  (sb-posix:kill (sb-posix:getpid) sb-posix:sigkill)
+  (error "SIGKILL did not occur."))
+(defun child-main (arguments)
+  (destructuring-bind (mode source destination format phase) arguments
+    (let ((version (parse-integer format)))
+      (when (string= mode "seed-paged")
+        (et::with-engine (engine (et::group-open (uiop:ensure-directory-pathname source) :create t :version version))
+          (et::rotation-force-paged engine :paged)
+          (et::group-run engine (vector (et::group-put 1 1) (et::group-put 2 2) (et::group-put 1 3)
+                                       (et::group-delete 2) (et::group-put 3 4)) 1)
+          (et::check-initial engine) (is (et::automatic-files (uiop:ensure-directory-pathname source)))
+          (backup-crash mode phase)))
+      (let ((observer (lambda (event name)
+                        (declare (ignore name))
+                        (when (string= (symbol-name event) phase) (backup-crash mode phase)) nil))
+            (backend (when (string= phase "PARTIAL-WRITE")
+                       (native-fixture-backend
+                         (lambda (fd bytes start count)
+                           (is (plusp (io::native-write fd bytes start (min 17 count))))
+                           (backup-crash mode phase))
+                         #'io::native-flush #'io::native-directory-flush #'io::native-close))))
+        (cond ((string= mode "backup") (backup source destination :observer observer :backend backend))
+              ((string= mode "restore") (restore source destination :observer observer :backend backend))
+              (t (error "Unknown backup child mode."))))))
+  (error "Requested crash phase was not reached."))
+
+(defun killed-child (root mode source target version phase)
+  (let* ((stem (format nil "~A-~A-v~D" mode phase version))
+         (out (merge-pathnames (concatenate 'string stem ".stdout") root))
+         (err (merge-pathnames (concatenate 'string stem ".stderr") root))
+         (process (sb-ext:run-program (namestring sb-ext:*runtime-pathname*)
+                    (list "--noinform" "--no-userinit" "--no-sysinit" "--script"
+                          (namestring (asdf:system-relative-pathname "arcdocdb" "tools/backup-crash.lisp"))
+                          mode (namestring source) (namestring target) (write-to-string version) phase)
+                    :wait nil :output out :error err)))
+    (unwind-protect
+         (progn
+           (sb-ext:with-timeout 60 (sb-ext:process-wait process))
+           (is (eq :signaled (sb-ext:process-status process))) (is (= 9 (sb-ext:process-exit-code process)))
+           (is (search (format nil "BACKUP-CRASH-READY ~A ~A" mode phase) (uiop:read-file-string out))))
+      (when (member (sb-ext:process-status process) '(:running :stopped))
+        (sb-ext:process-kill process sb-posix:sigkill) (sb-ext:process-wait process))
+      (write-string (uiop:read-file-string out)) (write-string (uiop:read-file-string err))
+      (format t "~&~S~%" (list :kind :backup-crash-child :mode mode :phase phase :version version
+                               :status (sb-ext:process-status process) :code (sb-ext:process-exit-code process)))
+      (sb-ext:process-close process))))
+
+(defun check-crash-case (version mode phase)
+  (et::with-root (root)
+    (let* ((source (source-store root version)) (original (vt::store-image source))
+           (base (merge-pathnames "base/" root)) (target (merge-pathnames "target/" root))
+           (temporary (merge-pathnames "target.tmp/" root))
+           (published (member phase '("DIRECTORY-PUBLISHED" "DIRECTORY-DURABLE") :test #'string=)))
+      (when (string= mode "restore") (backup source base))
+      (let* ((input (if (string= mode "restore") base source)) (before (vt::store-image input)))
+        (killed-child root mode input target version phase)
+        (is (equalp before (vt::store-image input))))
+      (is (equalp original (vt::store-image source)))
+      (is (eq (not (null published)) (not (null (probe-file target)))))
+      (is (eq (null published) (not (null (probe-file temporary)))))
+      (when (string= phase "BEFORE-PUBLICATION")
+        (if (string= mode "backup") (verify temporary) (vt::inspect-store temporary)))
+      (when published
+        (let ((restored (if (string= mode "restore") target (merge-pathnames "checked/" root))))
+          (when (string= mode "backup") (verify target) (restore target restored))
+          (et::with-engine (engine (et::open-engine restored :version version))
+            (et::check-initial engine) (is (= 6 (e:scrivi-documento engine (et::key 4) (et::value 5)))))))
+      ;; Source lock is released by process death; a new independent backup succeeds without reusing its stage.
+      (is (= 5 (getf (backup source (merge-pathnames "fresh/" root)) :max-csn))))))
+
+;;; REQ: REQ-AFF-014 REQ-AFF-001 REQ-AFF-007 REQ-AFF-009
+(deftest test-REQ-AFF-014-real-SIGKILL-at-copy-flush-publication-and-durability-v1-v2
+  (dolist (version '(1 2))
+    (dolist (mode '("backup" "restore"))
+      (dolist (phase '("STAGE-CREATED" "PARTIAL-WRITE" "FILE-FLUSHED" "BEFORE-PUBLICATION"
+                       "DIRECTORY-PUBLISHED" "DIRECTORY-DURABLE"))
+        (check-crash-case version mode phase)))))
+
+;;; REQ: REQ-AFF-014 REQ-IDX-013 REQ-WAL-002
+(deftest test-REQ-AFF-014-real-paged-derivative-after-engine-SIGKILL-is-omitted
+  (dolist (version '(1 2))
+    (et::with-root (root)
+      (let* ((source (merge-pathnames "source/" root)) (copy (merge-pathnames "backup/" root))
+             (restored (merge-pathnames "restored/" root)))
+        (ensure-directories-exist (merge-pathnames ".fixture" source))
+        (killed-child root "seed-paged" source copy version "SEEDED")
+        (is (et::automatic-files source))
+        (let ((before (vt::store-image source)) (report (backup source copy)))
+          (is (getf report :omitted-files)) (restore copy restored)
+          (is (equalp before (vt::store-image source))))
+        (et::with-engine (engine (et::open-engine restored :version version)) (et::check-initial engine))))))

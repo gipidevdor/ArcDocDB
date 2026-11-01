@@ -268,3 +268,8 @@ CLEAN/MERGE, historical MVCC and multiseries remain separate milestones.
 The [offline M1 verifier](implementazione/verificatore-offline-m1.md) inspects
 canonical files without startup or repair, including after a crash. Complete
 Archivio/catalog/index verification and backup qualification remain open.
+
+[Offline M1 backup and restore](implementazione/backup-offline-m1.md) provide a
+canonical copy/check/compare/restore path for one stopped Serie, with exclusive
+publication and no source recovery. Complete Archivio, online/incremental backup
+and full REQ-AFF-014 qualification remain open.

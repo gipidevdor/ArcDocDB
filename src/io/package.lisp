@@ -5,6 +5,8 @@
   (:import-from #:arcdocdb.conditions #:io-fault #:invalid-argument #:resource-exhausted
                 #:invariant-violation #:unsupported-format)
   (:export #:prova-rimozione-segmento #:prova-segmento-rimovibile #:rimuovi-segmento
+           #:apri-directory-nella-directory #:crea-directory-temporanea
+           #:pubblica-directory-temporanea #:verifica-directory-distinte
            #:nome-derivato-automatico-p #:prova-rimozione-derivato #:prova-derivato-rimovibile #:rimuovi-derivato
            #:backend #:make-backend #:file-io
            #:associazione-file #:associa-file #:verifica-associazione-file #:verifica-file-distinti

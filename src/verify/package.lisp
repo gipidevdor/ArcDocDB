@@ -11,6 +11,6 @@
                    (#:r #:arcdocdb.record) (#:f #:arcdocdb.storage.format))
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted
                 #:invariant-violation #:corruption-detected #:unsupported-format)
-  (:export #:verifica-storage-m1 #:verification-error #:verification-primary
+  (:export #:verifica-storage-m1 #:call-with-verified-storage-m1 #:verification-error #:verification-primary
            #:verification-cleanup #:verification-stage #:verification-file
            #:verification-actions))

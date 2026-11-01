@@ -32,7 +32,7 @@ Durations, byte/group increments, queue depths and ticks are 0..2^60−1.
 The configuration sample cap is also each scalar counter's cap. Invalid public
 arguments are rejected with `invalid-argument` before mutation. Within an event,
 all affected counts and its latency are accepted together or rejected together.
-Rejected events preserve accepted counts and set sticky incompleteness bits;
+Capacity-rejected valid events preserve accepted counts and set sticky incompleteness bits;
 flush/request rejection also marks its latency distribution incomplete.
 The affected event family then rejects further events until reset, including
 smaller groups or zero-byte appends. Its distribution retains an accepted
@@ -52,8 +52,10 @@ The child histograms and mutable arrays are never exposed.
 `valore-contatore(snapshot, key)` returns count and completeness for these keys:
 `:richieste`, `:errori`, `:cache-hit`, `:cache-miss`, `:cache-espulsioni`,
 `:cache-errori-verifica`, `:wal-append`, `:wal-byte`, `:wal-flush`, `:wal-record`.
-`metriche-complete-p(snapshot)` concerns accepted/submitted event accounting,
-not whether the caller has instrumented every real operation.
+`metriche-complete-p(snapshot)` concerns valid submitted-event accounting,
+not whether the caller has instrumented every real operation. Invalid
+instrumentation calls leave state unchanged and signal a condition for the
+adapter to report separately.
 
 `tasso-contatore(snapshot, key)` returns an exact per-second rational rate,
 `:ok/:incomplete/:zero-window`, and completeness. The rate uses injected
@@ -118,3 +120,9 @@ The [preregistered method](metriche-serie-metodo.md) separates correctness,
 limits, saturation, provenance, isolation, interrupted mutation and hot
 allocation/cost. Results must retain exact source
 identities, original failures, parameters and all measurement repetitions.
+
+The [2026-11-01 qualification](../../spikes/results/2026-11-01-metrics-counters/report.md)
+retains 72 metrics cases on SBCL 2.6.9/2.6.10, the complete 2.6.9 product
+catalog and all 80 timed windows. A completed request measured a local median
+19.67 ns per event-loop iteration on the Apple M4, including the driver;
+that is a component measurement, not database performance.

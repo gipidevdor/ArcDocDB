@@ -49,14 +49,19 @@
 ;;; REQ: REQ-OBS-001 REQ-AFF-008
 (declaim (ftype (function (t t) (integer 0)) syntax-occurrences))
 (defun syntax-occurrences (form tree)
-  "Pre: finite acyclic macro syntax. Post: number of structurally equal occurrences, without expansion or evaluation."
+  "Pre: finite acyclic proper macro syntax. Post: matching complete subforms, not incidental list tails.
+No expansion or evaluation occurs; element-wise traversal preserves the distinction between EQ operands and a LET binding."
   (cond ((equal form tree) 1)
-        ((consp tree) (+ (syntax-occurrences form (car tree)) (syntax-occurrences form (cdr tree))))
+        ((consp tree) (loop for child in tree sum (syntax-occurrences form child)))
         (t 0)))
 
 ;;; REQ: REQ-OBS-001 REQ-OBS-002 REQ-AFF-008
 (deftest REQ-OBS-001-mutation-macro-expansion-and-values
   "Pre: the production mutation macro with a static test body. Post: one histogram evaluation and all body values survive."
+  (is (zerop (syntax-occurrences '(m::*accesso-istogrammi* sb-thread:*current-thread*)
+                                '(eq m::*accesso-istogrammi* sb-thread:*current-thread*))))
+  (is (= 1 (syntax-occurrences '(m::*accesso-istogrammi* sb-thread:*current-thread*)
+                               '(let ((m::*accesso-istogrammi* sb-thread:*current-thread*)) (values)))))
   (let ((histogram-form '(progn (incf evaluations) histogram))
         (body-form '(values :first nil :third)))
     (multiple-value-bind (expansion expanded-p)

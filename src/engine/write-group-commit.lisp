@@ -74,7 +74,7 @@ Each SEAL is its operation's durable atomicity point; one flush covers the conti
 Append/flush/publication failure or incomplete exit faults admission; no partial response or reuse on uncertainty."
   (group-build-seals engine operations count)
   (osserva-motore engine :before-append)
-  (w:scrivi-gruppo (motore-group engine))
+  (w:scrivi-gruppo (motore-group engine) :buffer (motore-scratch engine))
   (osserva-motore engine :after-append)
   (w:sincronizza-gruppo (motore-group engine))
   (osserva-motore engine :after-flush)

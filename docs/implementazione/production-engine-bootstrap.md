@@ -237,3 +237,16 @@ does not replace the arena; canonical rotation/compaction creates a fresh one.
 The generic source factories keep their persistent default. M1 still creates
 one immutable root descriptor per commit; allocation and broader heap/GC gates
 remain measured residuals. [Evidence](../../spikes/results/2026-11-01-engine-active-directory/report.md).
+
+## Bounded group append
+
+[ADR-0082](../adr/0082-bounded-group-append.md) reuses the engine's exclusive
+scratch for independently sealed strong groups fitting 64 KiB and the existing
+file-transfer limit. These groups use one append entry; single batches and
+larger groups retain per-batch append. No additional payload buffer is allocated.
+The serial owner finishes recovery/maintenance before borrowing the scratch,
+and no scratch reference survives the call. CSNs, SEALs, one canonical strong
+flush, FIFO publication and acknowledgment order remain unchanged. Every
+incomplete acquired WAL exit now faults its retained ownership, including
+nonlocal acquisition handoff and copy exits. See
+[verification and measurements](../../spikes/results/2026-11-01-engine-group-append/report.md).

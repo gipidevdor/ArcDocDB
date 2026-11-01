@@ -60,24 +60,21 @@ No retry, no further coverage; the worker propagates the event to the Serie/Arch
   nil)
 
 ;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-001
-(declaim (ftype (function (gruppo) file-offset) scrivi-gruppo))
-(defun scrivi-gruppo (group)
+(declaim (ftype (function (gruppo &key (:buffer t)) file-offset) scrivi-gruppo))
+(defun scrivi-gruppo (group &key buffer)
   "Pre: I/O task, ready group; no mutation/reuse of buffers in flight.
 Post: all batches written, not yet durable; ownership remains with the group until flush.
-Prepared SEAL points are appended; IO-FAULT/INVARIANT-VIOLATION => fail-stop, no confirmation."
-  (acquisisci-gruppo group)
-  (handler-case
-      (let ((file (log-io-file (gruppo-log group))))
-        (dotimes (i (gruppo-count group))
-          (let* ((lotto (the lotto (svref (gruppo-slots group) i)))
-                 (end (append-esatto file (lotto-buffer lotto) 0 (lotto-used lotto))))
-            (unless (= end (+ (lotto-start lotto) (lotto-used lotto)))
-              (error 'invariant-violation :reason :group-write-frontier))
-            (setf (lotto-state lotto) :written)))
-        (setf (gruppo-state group) :written)
-        (posizione-scritta file))
-    (io-fault (c) (fault-gruppo group) (error c))
-    (invariant-violation (c) (fault-gruppo group) (error c))))
+BUFFER optionally combines a small group in exclusive caller scratch; NIL retains per-batch append.
+Choice and alias validation precede acquisition; no scratch reference is retained or fallback after I/O.
+Prepared SEAL points are appended; every incomplete acquired exit is fail-stop, preserving its cause."
+  (let ((buffered (verifica-buffer-gruppo group buffer)) (complete nil))
+    (unwind-protect
+         (progn
+           (acquisisci-gruppo group)
+           (let ((end (if buffered (scrivi-buffer-gruppo group (the octets buffer)) (scrivi-lotti-gruppo group))))
+             (setf (gruppo-state group) :written complete t) end))
+      (when (and (not complete) (eq group (log-io-active (gruppo-log group))))
+        (fault-gruppo group)))))
 
 ;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-001
 (declaim (ftype (function (gruppo) file-offset) sincronizza-gruppo))

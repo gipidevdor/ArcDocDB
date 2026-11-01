@@ -101,7 +101,7 @@
                              (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock") (:file "derived-remove") (:file "segment-remove")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
-                             (:file "frame") (:file "group") (:file "executor") (:file "csn")))
+                             (:file "frame") (:file "group") (:file "append") (:file "executor") (:file "csn")))
                (:module "fulltext-put" :serial t
                 :components ((:file "package") (:file "types") (:file "build")
                              (:file "start") (:file "prepare") (:file "reserve")
@@ -393,7 +393,7 @@
                 :components ((:file "support") (:file "bootstrap") (:file "threads")
                              (:file "native") (:file "guards") (:file "adoption")))
                (:module "wal" :serial t
-                :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
+                :components ((:file "support") (:file "builder") (:file "group") (:file "append") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
                (:module "series" :serial t
                 :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads")
@@ -411,6 +411,7 @@
                (:module "engine" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "record-cache") (:file "processes")))
                (:file "engine/write-group")
+               (:file "engine/group-append")
                (:file "engine/active-arena")
                (:module "verify" :serial t
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")

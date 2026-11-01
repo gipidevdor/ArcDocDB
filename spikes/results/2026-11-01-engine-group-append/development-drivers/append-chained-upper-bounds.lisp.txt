@@ -1,0 +1,56 @@
+;;; OWNER: one acquired I/O group and an optional exclusive caller-owned scratch; no retention after return.
+;;; SHARED: no cross-Serie state; original batches remain sealed and immutable until write completes.
+(in-package #:arcdocdb.wal)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-WAL-002 REQ-AFF-008
+(defconstant +max-group-append-buffer-bytes+ 65536)
+
+;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-008
+(declaim (ftype (function (gruppo t) boolean) verifica-buffer-gruppo))
+(defun verifica-buffer-gruppo (group buffer)
+  "Pre: owner of a ready group; optional exclusive stable simple octet buffer. Post: fixed append choice before acquisition.
+INVALID-ARGUMENT for type or alias with any batch, even on fallback; no state, buffer, frontier or CSN changes.
+NIL, single batch, insufficient scratch, 64 KiB cap or file-transfer cap select the original sequential path."
+  (esigi-gruppo group :ready)
+  (unless (typep buffer '(or null octets)) (error 'invalid-argument :reason :group-append-buffer-type))
+  (when buffer
+    (dotimes (i (gruppo-count group))
+      (when (eq buffer (lotto-buffer (the lotto (svref (gruppo-slots group) i))))
+        (error 'invalid-argument :reason :group-append-buffer-alias))))
+  (not (null (and buffer (> (gruppo-count group) 1)
+                  (<= (gruppo-bytes group) (length (the octets buffer)) +max-group-append-buffer-bytes+
+                      (arcdocdb.io::file-max-transfer (log-io-file (gruppo-log group))))))))
+
+;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-001
+(declaim (ftype (function (gruppo) file-offset) scrivi-lotti-gruppo))
+(defun scrivi-lotti-gruppo (group)
+  "Pre: acquired group, stable independently sealed batches. Post: original per-batch append and written coverage.
+SEAL remains the atomic point; this prepares bytes only. Outer executor faults every incomplete exit."
+  (let ((file (log-io-file (gruppo-log group))))
+    (dotimes (i (gruppo-count group))
+      (let* ((batch (the lotto (svref (gruppo-slots group) i)))
+             (end (append-esatto file (lotto-buffer batch) 0 (lotto-used batch))))
+        (unless (= end (+ (lotto-start batch) (lotto-used batch)))
+          (error 'invariant-violation :reason :group-write-frontier))
+        (setf (lotto-state batch) :written)))
+    (posizione-scritta file)))
+
+;;; REQ: REQ-WAL-002 REQ-WAL-005 REQ-WAL-006 REQ-AFF-001
+(declaim (ftype (function (gruppo octets) file-offset) scrivi-buffer-gruppo))
+(defun scrivi-buffer-gruppo (group buffer)
+  "Pre: acquired group and admitted nonaliasing exclusive scratch. Post: identical concatenated bytes and written coverage.
+Every frame, CSN and SEAL is preserved. One append entry, no flush/publication/ack; SEAL is still the atomic point.
+Original batches are not modified; every incomplete exit belongs to the outer terminal fault boundary."
+  (let ((position 0))
+    (dotimes (i (gruppo-count group))
+      (let ((batch (the lotto (svref (gruppo-slots group) i))))
+        (unless (= (lotto-start batch) (+ (gruppo-start group) position))
+          (error 'invariant-violation :reason :group-write-frontier))
+        (replace buffer (lotto-buffer batch) :start1 position :end1 (+ position (lotto-used batch)) :end2 (lotto-used batch))
+        (incf position (lotto-used batch))))
+    (unless (= position (gruppo-bytes group)) (error 'invariant-violation :reason :group-write-size))
+    (let ((end (append-esatto (log-io-file (gruppo-log group)) buffer 0 position)))
+      (unless (= end (+ (gruppo-start group) position)) (error 'invariant-violation :reason :group-write-frontier))
+      (dotimes (i (gruppo-count group)) (setf (lotto-state (the lotto (svref (gruppo-slots group) i))) :written))
+      end)))

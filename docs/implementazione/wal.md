@@ -45,7 +45,7 @@ nonempty snapshot for the I/O pool.
 
 | Operation | Effect |
 |---|---|
-| `scrivi-gruppo` | Log CAS, preflight of all budgets/frontiers, N appends, written state |
+| `scrivi-gruppo` | Log CAS, preflight of all budgets/frontiers, sequential or explicitly buffered append, written state |
 | `sincronizza-gruppo` | CAS written → flushing, one flush, N durable states, log release |
 | `esegui-gruppo` | Both phases in the same I/O task |
 | `coperto-p` | Checks byte coverage: written for async, durable for group/strong |
@@ -71,6 +71,17 @@ An earlier already durable batch retains that coverage even if a subsequent
 group fails; this does not authorize acknowledgments after the fault.
 Async is rejected for control/multiseries; PREPARE/COMMIT obligations still
 require Transaction Manager checks.
+
+[ADR-0082](../adr/0082-bounded-group-append.md) adds optional exclusive caller
+scratch with `:buffer`. Type/alias validation precedes log acquisition. A group
+with more than one batch uses one append entry if total bytes fit the scratch,
+64 KiB and the file-transfer limit; otherwise the choice remains sequential
+before I/O. Source buffers and independent SEALs are unchanged. No scratch
+reference is retained; the caller must keep it exclusive until return.
+Every incomplete acquired exit faults the group/log/batches, including nonlocal
+exits at acquisition handoff. Known unacquired refusals preserve normal state.
+One append entry can need multiple positive short writes; EINTR and other
+errors fault without retry. Flush and publication contracts remain unchanged.
 
 <a id="durata-riuso-e-guasti"></a>
 

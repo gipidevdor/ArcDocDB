@@ -1,0 +1,48 @@
+;;;; C4: actual M1 small-group staging and large-group fallback with strong reopen.
+(in-package #:arcdocdb.engine.tests)
+(defun append-engine (root create version mode)
+  (e:apri-motore root (archive-id) (series-id) :create create :version version :clock (lambda () 10)
+    :max-file-bytes 2097152 :max-record-bytes 65536 :max-records 64 :max-segments 16
+    :index-capacity 32 :key-arena-bytes 4096
+    :index-policy (if (eq mode :legacy) :legacy (e:crea-politica-indice-automatico :budget 8388608 :frames 1))))
+(defun append-check-documents (engine size)
+  (let ((target (bytes (+ size 6) 204)))
+    (dotimes (id 8)
+      (fill target 204)
+      (multiple-value-bind (status length) (e:leggi-documento engine (key id) target :start 3)
+        (is (eq :found status)) (is (= size length))
+        (is (every (lambda (n) (= (+ id 17) n)) (subseq target 3 (+ 3 size)))))
+      (is (every (lambda (n) (= n 204)) (subseq target 0 3)))
+      (is (every (lambda (n) (= n 204)) (subseq target (+ 3 size)))))))
+
+;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-IDX-013 REQ-AFF-008
+(deftest test-REQ-WAL-002-engine-bounded-append-both-formats-and-primary-modes
+  (dolist (version '(1 2))
+    (dolist (mode '(:legacy :resident :paged))
+      (dolist (size '(2048 60000))
+        (with-root (root)
+          (with-engine (engine (append-engine root t version mode))
+            (rotation-force-paged engine mode)
+            (let ((operations (make-array 8)) (output (group-output)) (calls 0) (flushes 0)
+                  (scratch (e::motore-scratch engine)) (original (symbol-function 'arcdocdb.io:append-esatto))
+                  (flush (symbol-function 'arcdocdb.io:durable-flush)))
+              (dotimes (id 8) (setf (svref operations id) (e:crea-operazione-scrittura :put (key id) (bytes size (+ id 17)))))
+              (unwind-protect
+                   (progn
+                     (setf (symbol-function 'arcdocdb.io:append-esatto)
+                           (lambda (file buffer start end)
+                             (when (eq file (e::motore-append engine))
+                               (incf calls) (is (eq (< size 60000) (eq buffer scratch))))
+                             (funcall original file buffer start end))
+                           (symbol-function 'arcdocdb.io:durable-flush)
+                           (lambda (file) (when (eq file (e::motore-append engine)) (incf flushes)) (funcall flush file)))
+                     (is (= 8 (e:scrivi-gruppo-documenti engine operations output)))
+                     (dotimes (i 8) (is (= (1+ i) (aref output i))))
+                     (is (= calls (if (< size 60000) 1 8))) (is (= flushes 1)))
+                (setf (symbol-function 'arcdocdb.io:append-esatto) original (symbol-function 'arcdocdb.io:durable-flush) flush))
+              (is (eq scratch (e::motore-scratch engine))) (fill scratch 223)
+              (append-check-documents engine size) (check-frontier engine 8)))
+          (with-engine (engine (append-engine root nil version mode))
+            (rotation-force-paged engine mode)
+            (append-check-documents engine size) (check-frontier engine 8)
+            (is (= 9 (e:cancella-documento engine (key 0)))) (check-get engine 0 nil)))))))

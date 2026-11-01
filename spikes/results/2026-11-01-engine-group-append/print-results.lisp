@@ -1,0 +1,18 @@
+;;;; C4 presentation only; analyze.lisp validates every underlying count and pairing.
+(let* ((*read-eval* nil) (root (make-pathname :name nil :type nil :defaults *load-truename*))
+       (data (with-open-file (stream (merge-pathnames "comparison.lisp" root)) (read stream))))
+  (dolist (width '(1 2 4 8))
+    (let ((rows (remove-if-not (lambda (r) (= width (fourth (getf r :case)))) (getf data :engine))))
+      (format t "width ~D historical engine ratio ~,4F .. ~,4F~%" width
+        (reduce #'min rows :key (lambda (r) (getf r :ratio))) (reduce #'max rows :key (lambda (r) (getf r :ratio))))))
+  (format t "| Primary | v | Limit | Before op/s | After op/s | Ratio | P99 before ms | P99 after ms |~%|---|---:|---:|---:|---:|---:|---:|---:|~%")
+  (dolist (row (getf data :unix))
+    (let ((key (getf row :case)))
+      (format t "| ~A | ~D | ~D | ~,1F | ~,1F | ~,4F | ~,3F | ~,3F |~%" (first key) (second key) (fourth key)
+        (getf row :before-ops-per-second) (getf row :after-ops-per-second) (getf row :ratio)
+        (/ (getf row :before-p99-us) 1000d0) (/ (getf row :after-p99-us) 1000d0))))
+  (format t "| Value bytes | Append sequential us/group | Append staged us/group | Whole CPU ratio | Throughput ratio |~%|---:|---:|---:|---:|---:|~%")
+  (dolist (row (remove-if-not (lambda (r) (= 8 (second (getf r :case)))) (getf data :executor)))
+    (format t "| ~D | ~,3F | ~,3F | ~,4F | ~,4F |~%" (first (getf row :case))
+      (getf (getf row :sequential) :append-cpu-us-per-group) (getf (getf row :staged) :append-cpu-us-per-group)
+      (getf row :whole-cpu-ratio) (getf row :throughput-ratio))))

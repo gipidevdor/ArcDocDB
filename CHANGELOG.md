@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Coalesce bounded strong-group append through existing exclusive M1 scratch,
+  preserving independent CSNs/SEALs and one strong flush. Fault every incomplete
+  acquired WAL exit, retaining ownership and the original cause.
+  [Contract](docs/adr/0082-bounded-group-append.md) and
+  [evidence](spikes/results/2026-11-01-engine-group-append/report.md).
+
 - Integrate preallocated typed ACTIVE metadata into serial M1, preserving old
   root prefixes and canonical read verification while removing per-write page
   objects and persistent path copies. [Contract](docs/adr/0081-active-append-metadata.md)

@@ -1,0 +1,16 @@
+;;;; C4: warmed allocation window for the new pure classifier, both outcomes, full eight-key queue.
+(load (merge-pathnames "focused.lisp" *load-truename*))
+(in-package #:arcdocdb.local.server.tests)
+(with-engine (engine root :create t)
+  (let* ((queue (l::make-local-write-queue)) (read (group-pending 1 2 (bytes 9)))
+         (keys (vector (bytes 9) (bytes 8))) (hits 0))
+    (dotimes (i 8) (l::dispatch-local-pending engine (group-pending (1+ i) 1 (bytes (1+ i))) queue (lambda () 10)))
+    (dotimes (i 1000) (l::independent-local-get-p engine read queue 0 (aref keys (mod i 2))))
+    (let ((before (sb-ext:get-bytes-consed)))
+      (dotimes (i 100000)
+        (when (l::independent-local-get-p engine read queue 0 (aref keys (mod i 2))) (incf hits)))
+      (let ((allocated (- (sb-ext:get-bytes-consed) before)))
+        (is (= 50000 hits)) (is (zerop allocated))
+        (format t "~S~%" (list :kind :disjoint-classifier-allocation :status :passed :calls 100000
+                               :independent hits :allocated-bytes allocated :runtime (lisp-implementation-version)))))
+    (l::clear-local-write-queue queue)))

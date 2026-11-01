@@ -326,7 +326,7 @@
   :inv ("INV-N1") :adr ("ADR-0055") :ver (:test :rev) :fi ())
  (:id "REQ-IPC-002" :src "ADR-0055" :cls "C1" :stato :progettato
   :txt "Local transport uses u32-plus-CBOR frames, versioning, and multiplexed identifiers; it handles partial transfers and checks limits before allocation and admission. Connections, requests, buffers, and waits are bounded; slow clients neither retain EBR epochs nor block writers or compute workers."
-  :inv ("INV-A8" "INV-P5" "INV-P6") :adr ("ADR-0029" "ADR-0045" "ADR-0048" "ADR-0055" "ADR-0083" "ADR-0084" "ADR-0085" "ADR-0086" "ADR-0087") :ver (:test :fuzz :model :bench :rev) :fi ())
+  :inv ("INV-A8" "INV-P5" "INV-P6") :adr ("ADR-0029" "ADR-0045" "ADR-0048" "ADR-0055" "ADR-0083" "ADR-0084" "ADR-0085" "ADR-0086" "ADR-0087" "ADR-0088") :ver (:test :fuzz :model :bench :rev) :fi ())
  (:id "REQ-IPC-003" :src "ADR-0055" :cls "C2" :stato :progettato
   :txt "The local listener verifies path, runtime directory, owner, and restricted access before exposure; an occupied name fails without automatic removal at startup. Shutdown removes only the node still identified as its own in a protected directory; orphans require explicit intervention."
   :inv () :adr ("ADR-0055") :ver (:test :rev) :fi ())

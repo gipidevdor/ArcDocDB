@@ -1,0 +1,18 @@
+;;;; C4: calibration and before/after summaries, all windows retained.
+(with-open-file (in (merge-pathnames "analyze.lisp" *load-truename*))
+  (loop for form = (let ((*read-eval* nil)) (read in nil :eof)) do
+    (when (eq form :eof) (error "Missing analysis entry"))
+    (when (and (consp form) (eq (first form) 'let)) (return)) (eval form)))
+(in-package #:write-cost-analysis)
+(let ((rows nil))
+  (dolist (name '("baseline-calibration/" "candidate-calibration/"))
+    (dolist (case (getf (campaign name) :cases))
+      (let ((on nil) (off nil))
+        (dolist (window (getf case :windows))
+          (if (getf window :sync-timed) (push (getf window :ops-per-second) on) (push (getf window :ops-per-second) off)))
+        (ensure (and (= 3 (length on)) (= 3 (length off))))
+        (push (list :campaign name :key (getf case :key) :timed-ops (b::median on) :untimed-ops (b::median off)
+                    :timed-over-untimed (/ (b::median on) (b::median off))) rows))))
+  (save-new "statistics-data.lisp" (list :kind :write-cost-statistics :status :passed :calibration (reverse rows)))
+  (dolist (row (reverse rows)) (format t "~A ~S timing on/off ~,3Fx~%" (getf row :campaign) (getf row :key) (getf row :timed-over-untimed)))
+  (format t "~S~%" '(:kind :write-cost-statistics :status :passed)))

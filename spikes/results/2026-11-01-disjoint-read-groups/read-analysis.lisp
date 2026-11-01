@@ -1,0 +1,15 @@
+;;;; C4: unchanged large-read driver against the immediately preceding main controls.
+(with-open-file (in #p"spikes/results/2026-11-01-unix-service-latency/analyze.lisp")
+  (loop for form = (let ((*read-eval* nil)) (read in nil :eof)) do
+    (when (eq form :eof) (error "Missing read analysis entry"))
+    (when (and (consp form) (eq (first form) 'let)) (return))
+    (let ((*load-truename* (truename "spikes/results/2026-11-01-unix-service-latency/analyze.lisp"))) (eval form))))
+(in-package #:unix-latency-analysis)
+(let ((before (campaign "late-main/read-control/")) (after (campaign "../2026-11-01-disjoint-read-groups/read-control/")) (pairs nil))
+  (dolist (right (getf after :cases))
+    (let ((left (find (getf right :key) (getf before :cases) :key (lambda (r) (getf r :key)) :test #'equal)))
+      (ensure left) (push (list :key (getf right :key) :before left :after right) pairs)
+      (format t "~S ~,2F MB/s, ~,3Fx~%" (getf right :key) (getf right :median-mb-per-second)
+              (/ (getf right :median-operations-per-second) (getf left :median-operations-per-second)))))
+  (save "../2026-11-01-disjoint-read-groups/read-analysis-data.lisp" (list :kind :disjoint-large-read-analysis :status :passed :pairs (reverse pairs)))
+  (format t "~S~%" '(:kind :disjoint-large-read-analysis :status :passed)))

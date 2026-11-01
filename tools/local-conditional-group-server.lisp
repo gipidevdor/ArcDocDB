@@ -1,3 +1,4 @@
+;;;; Publish the injection marker before EOF can wake the parent; the client still verifies actual response loss.
 ;;;; C4-only finite cohort gate; actual product dispatch and strong I/O, no product batching wait.
 (require :asdf)
 (asdf:load-asd (truename "arcdocdb.asd"))
@@ -39,7 +40,8 @@
     (setf (symbol-function 'arcdocdb.local::queue-local-output)
           (lambda (connection size kind now)
             (if (and (not dropped) (eq kind :response) (mutation-p connection))
-                (progn (setf dropped t) (arcdocdb.local::close-local-connection connection)
-                       (format *error-output* "CONDITIONAL-COHORT-RESPONSE-DROPPED~%") (finish-output *error-output*) nil)
+                (progn (setf dropped t)
+                       (format *error-output* "CONDITIONAL-COHORT-RESPONSE-DROPPED~%") (finish-output *error-output*)
+                       (arcdocdb.local::close-local-connection connection) nil)
                 (funcall queue-output connection size kind now)))))
   (arcdocdb.local::server-cli-main (uiop:command-line-arguments)))

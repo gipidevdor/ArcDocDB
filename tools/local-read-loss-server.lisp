@@ -1,3 +1,4 @@
+;;;; Publish the injection marker before EOF can wake the parent; the client still verifies actual response loss.
 ;;;; C4: drop one fully constructed read-group response; real engine/startup/service retain ownership.
 (require :asdf)
 (asdf:load-asd (merge-pathnames "../arcdocdb.asd" *load-truename*))
@@ -14,7 +15,8 @@
         (lambda (connection size kind now)
           (let ((env (arcdocdb.local::local-connection-pending connection)))
             (if (and (not dropped) (eq kind :response) env (= 5 (arcdocdb.local:envelope-code env)))
-                (progn (setf dropped t) (arcdocdb.local::close-local-connection connection)
-                       (format *error-output* "READ-GROUP-RESPONSE-DROPPED~%") (finish-output *error-output*) nil)
+                (progn (setf dropped t)
+                       (format *error-output* "READ-GROUP-RESPONSE-DROPPED~%") (finish-output *error-output*)
+                       (arcdocdb.local::close-local-connection connection) nil)
                 (funcall queue connection size kind now)))))
   (arcdocdb.local::server-cli-main (uiop:command-line-arguments)))

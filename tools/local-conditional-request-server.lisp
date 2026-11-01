@@ -1,3 +1,4 @@
+;;;; Publish the injection marker before EOF can wake the parent; the client still verifies actual response loss.
 ;;;; C4: actual product startup/dispatch, verified primary mode, exact flush count and one lost complete response.
 (require :asdf)
 (asdf:load-asd (merge-pathnames "../arcdocdb.asd" *load-truename*))
@@ -29,7 +30,8 @@
           (lambda (connection size kind now)
             (let ((envelope (arcdocdb.local::local-connection-pending connection)))
               (if (and (not dropped) (eq kind :response) envelope (= 7 (arcdocdb.local:envelope-code envelope)))
-                  (progn (setf dropped t) (arcdocdb.local::close-local-connection connection)
-                         (format *error-output* "EXPLICIT-CONDITIONAL-RESPONSE-DROPPED~%") (finish-output *error-output*) nil)
+                  (progn (setf dropped t)
+                         (format *error-output* "EXPLICIT-CONDITIONAL-RESPONSE-DROPPED~%") (finish-output *error-output*)
+                       (arcdocdb.local::close-local-connection connection) nil)
                   (funcall queue-output connection size kind now))))))
   (arcdocdb.local::server-cli-main (uiop:command-line-arguments)))

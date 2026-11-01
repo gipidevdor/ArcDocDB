@@ -277,7 +277,13 @@ its own ID, CSN and SEAL; every response follows the shared strong flush and
 complete publication. The wire shape and one-in-flight limit remain unchanged.
 No timer waits to fill a group, and an isolated write follows the existing path.
 
-Slot order is preserved: GET/PING/rejections drain preceding writes as a barrier.
+Logical slot order is preserved. An ordinary valid GET with full response credit
+may copy its canonical value before preceding queued writes when its exact key
+differs from every queued mutation. A later write to its key remains after that
+read. Same-key GET, PING, versioned/explicit operations and rejections drain the
+queue. [ADR-0088](../adr/0088-independent-get-write-groups.md) records the changed
+physical read/fault order and unchanged unknown-outcome rules. No response is
+sent until dispatch completes the final strong group; failure closes all peers.
 Fresh absolute-deadline checks remove expired commands before admission. Only
 an unadmitted capacity refusal may split into individually admitted requests;
 uncertain admitted writes are never repeated. Peer sends happen after engine
@@ -288,3 +294,9 @@ provides individual admissions for comparison or an owner-selected admission
 policy; it does not weaken durability or change wire operations. The production
 CLI uses the default. Buffers remain bounded before listen; this option is not
 a limit on whole-process RSS. [Evidence](../../spikes/results/2026-10-31-engine-group-commit/report.md).
+
+The [independent-GET campaign](../../spikes/results/2026-11-01-disjoint-read-groups/report.md)
+separates strong-flush cost, actual group density and wall throughput with the
+same before/after drivers. It includes RAM/paged, maintenance and limit-1
+controls; controlled bursts do not establish natural-arrival concurrency or
+power-loss guarantees. [C1 review and decision table](../../spikes/results/2026-11-01-disjoint-read-groups/review.md).

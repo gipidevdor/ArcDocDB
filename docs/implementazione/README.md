@@ -32,6 +32,7 @@ read/write/conditional groups over a Unix socket.
 | Backup and restore | [Offline M1 backup](backup-offline-m1.md): verified canonical copy, comparison and restore into a new directory |
 | Record cache | [Verified fixed-budget M1 cache](cache-record.md#serial-m1-integration), independent of RAM/paged primary storage |
 | Strong write groups | [Bounded group commit](../adr/0080-group-commit-m1.md), cumulative reservation and automatic Unix collection |
+| Independent ordinary reads | [Disjoint GET scheduling](../adr/0088-independent-get-write-groups.md), canonical copied values, exact-key barriers and strong completion before sends |
 | Explicit client groups | [Negotiated write groups](../adr/0083-explicit-unix-write-groups.md), one synchronous client sharing a strong flush |
 | Grouped point reads | [Negotiated read groups](../adr/0084-explicit-unix-read-groups.md), one complete current serial vector using canonical GET/cache/RAM/paged storage |
 | Conditional client groups | [Negotiated conditional groups](../adr/0087-explicit-conditional-unix-groups.md), independent conditions and individual results for one synchronous client |

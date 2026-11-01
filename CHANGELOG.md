@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Add [offline M1 backup and verified restore](docs/implementazione/backup-offline-m1.md):
+  canonical-only copies, bounded binary inventory and CRC32C, exact comparison,
+  new-target publication without replacement, and CLI/API operations. Staged copies
+  are checked before publication; restore checks the stored CRC during copying too.
+  Complete Archivio and online/incremental backup remain separate work.
+
 - Share strong flush across independent same-turn conditional and ordinary Unix
   writes, preserving same-key order, conflicts, deadlines and unknown outcomes.
   [Contract](docs/adr/0086-conditional-same-turn-group-commit.md) and

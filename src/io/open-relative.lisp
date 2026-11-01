@@ -112,7 +112,7 @@ a nonzero return preserves failure with errno NIL; other conditions are outside 
 
 ;;; REQ: REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function ((or null arcdocdb.conditions:arcdocdb-error) (or null fixnum) boolean
-                          &optional (member :open-relative :create-relative)) null)
+                          &optional (member :open-relative :create-relative :directory-node)) null)
                 segnala-apertura-relativa))
 (defun segnala-apertura-relativa (primary cleanup-errno cleanup-failed &optional (operation :open-relative))
   "Pre: cleanup completed or attempted. Post: EQ-identical primary condition if cleanup succeeded.
@@ -130,8 +130,10 @@ OPERATION identifies opening/creation for a non-I/O primary cause; cleanup witho
                  :cleanup-errno cleanup-errno))
         (error primary)))
   (when cleanup-failed
-    (error 'invariant-violation :reason (if (eq operation :create-relative)
-                                          :io-create-relative-cleanup :io-open-relative-cleanup)))
+    (error 'invariant-violation :reason
+           (case operation (:create-relative :io-create-relative-cleanup)
+                 (:directory-node :io-directory-node-cleanup) (:open-relative :io-open-relative-cleanup)
+                 (otherwise (error 'invariant-violation :reason :io-cleanup-operation)))))
   nil)
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-AFF-008 REQ-STO-003 REQ-REC-001

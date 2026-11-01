@@ -1,0 +1,82 @@
+(in-package #:arcdocdb.backup.tests)
+
+;;; REQ: REQ-AFF-014 REQ-REC-001 REQ-MVC-006
+(deftest test-REQ-AFF-014-backup-restore-byte-equality-and-independent-engine-v1-v2
+  (dolist (version '(1 2))
+    (et::with-root (root)
+      (let* ((source (source-store root version)) (copy (merge-pathnames "backup/" root))
+             (restored (merge-pathnames "restored/" root)) (before (vt::store-image source)))
+        (is (eq :ok (getf (backup source copy) :status)))
+        (is (eq :ok (getf (verify copy) :status)))
+        (is (eq :identical (getf (compare-backup source copy) :status)))
+        (is (equalp before (canonical-images copy)))
+        (is (eq :ok (getf (restore copy restored) :status)))
+        (is (equalp before (vt::store-image restored)))
+        (is (equalp before (vt::store-image source)))
+        (et::with-engine (engine (et::open-engine restored :version version))
+          (et::check-initial engine)
+          (is (= 6 (e:scrivi-documento engine (et::key 4) (et::value 5)))))))))
+
+;;; REQ: REQ-AFF-014 REQ-CMP-001 REQ-STO-003
+(deftest test-REQ-AFF-014-rotated-compacted-and-empty-stores
+  (dolist (version '(1 2))
+    (dolist (mode '(:empty :rotated :compacted))
+      (et::with-root (root)
+        (let* ((source (source-store root version (if (eq mode :empty) 0 40)))
+               (copy (merge-pathnames "backup/" root)) (restored (merge-pathnames "restored/" root)))
+          (unless (eq mode :empty)
+            (et::with-engine (engine (et::open-engine source :version version))
+              (is (= 41 (e:cancella-documento engine (et::key 2))))
+              (when (eq mode :compacted) (e:compatta-motore engine :force t))))
+          (let ((before (vt::store-image source)))
+            (backup source copy) (restore copy restored)
+            (is (equalp before (vt::store-image source)))
+            (is (equalp before (vt::store-image restored))))
+          (et::with-engine (engine (et::open-engine restored :version version))
+            (if (eq mode :empty) (et::check-frontier engine 0)
+                (progn (et::check-get engine 0 (et::value 7)) (et::check-get engine 1 (et::value 5))
+                       (et::check-get engine 2 nil) (et::check-frontier engine 41)))))))))
+
+;;; REQ: REQ-AFF-014 REQ-AFF-009 REQ-AFF-010
+(deftest test-REQ-AFF-014-retained-tail-and-omitted-derivative
+  (et::with-root (root)
+    (let* ((source (source-store root 2)) (copy (merge-pathnames "backup/" root))
+           (restored (merge-pathnames "restored/" root))
+           (row (find :active (getf (vt::inspect-store source) :segments) :key (lambda (r) (getf r :state)))))
+      (vt::append-fixture-byte (vt::segment-path source row))
+      (vt::write-fixture (merge-pathnames "derived.idx" source) #(3 2 1))
+      (let* ((before (vt::store-image source)) (report (backup source copy)))
+        (is (eq :attention (getf report :canonical-status)))
+        (is (= 1 (getf report :noncanonical-bytes)))
+        (is (equal '("derived.idx") (getf report :omitted-files)))
+        (is (null (probe-file (merge-pathnames "derived.idx" copy))))
+        (is (eq :identical (getf (compare-backup source copy) :status)))
+        (restore copy restored) (is (equalp before (vt::store-image source))))
+      (et::with-engine (engine (et::open-engine restored)) (et::check-initial engine)))))
+
+;;; REQ: REQ-AFF-014 REQ-AFF-010
+(deftest test-REQ-AFF-014-comparison-detects-legitimate-later-source-write
+  (et::with-root (root)
+    (let* ((source (source-store root 2)) (copy (merge-pathnames "backup/" root)))
+      (backup source copy)
+      (et::with-engine (engine (et::open-engine source))
+        (is (= 6 (e:scrivi-documento engine (et::key 4) (et::value 8)))))
+      (is (eq :different (getf (compare-backup source copy) :status)))
+      (is (eq :ok (getf (verify copy) :status))))))
+
+;;; REQ: REQ-AFF-014 REQ-AFF-002
+(deftest test-REQ-AFF-014-comparison-checks-bytes-with-identical-CSN-size-and-record-count
+  (et::with-root (root)
+    (let* ((source (source-store root 2)) (other (merge-pathnames "other/" root)) (copy (merge-pathnames "backup/" root)))
+      (ensure-directories-exist (merge-pathnames ".fixture" other))
+      (et::with-engine (engine (et::open-engine other :create t))
+        (e:scrivi-documento engine (et::key 1) (et::value 1))
+        (e:scrivi-documento engine (et::key 2) (et::value 2))
+        (e:scrivi-documento engine (et::key 1) (et::value 3))
+        (e:cancella-documento engine (et::key 2))
+        (e:scrivi-documento engine (et::key 3) (et::value 9)))
+      (backup other copy)
+      (let ((report (compare-backup source copy)))
+        (is (eq :different (getf report :status)))
+        (is (every #'stringp (getf report :differences)))
+        (is (getf report :differences))))))

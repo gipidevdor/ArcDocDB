@@ -28,6 +28,7 @@ service exposes PING, PUT, GET, DELETE and negotiated read/write groups over a U
 | Automatic maintenance | [M1 delta renewal](rinnovo-automatico-m1.md) before PUT/DELETE at threshold or next-key saturation, with finite fresh names and one admission |
 | Reads and recovery | [GET](get-record.md), [Serie recovery](recovery-serie.md), [Archivio recovery](recovery-archivio.md) |
 | Offline inspection | [M1 canonical verifier](verificatore-offline-m1.md): read-only API/CLI, explicit coverage and exit status |
+| Backup and restore | [Offline M1 backup](backup-offline-m1.md): verified canonical copy, comparison and restore into a new directory |
 | Record cache | [Verified fixed-budget M1 cache](cache-record.md#serial-m1-integration), independent of RAM/paged primary storage |
 | Strong write groups | [Bounded group commit](../adr/0080-group-commit-m1.md), cumulative reservation and automatic Unix collection |
 | Explicit client groups | [Negotiated write groups](../adr/0083-explicit-unix-write-groups.md), one synchronous client sharing a strong flush |

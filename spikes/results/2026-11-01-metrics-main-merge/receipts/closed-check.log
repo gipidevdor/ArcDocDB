@@ -1,0 +1,49 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/observability-histograms/ArcDocDB/spikes/results/2026-11-01-metrics-main-merge/archive/"
+ :INDEXED-FILES 37 :ACTUAL-FILES 39 :INDEXED-BYTES 1186467 :PROCESSES
+ ((:LABEL "trace-generation" :RECORD-PATH
+   "processes/trace-generation/report.lisp" :COMMAND
+   ("/opt/homebrew/Cellar/sbcl/2.6.9/bin/sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "tools/check-trace.lisp" "--write")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "full" :RECORD-PATH "processes/full/report.lisp" :COMMAND
+   ("/opt/homebrew/Cellar/sbcl/2.6.9/bin/sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script"
+    "spikes/out/metrics-main-merge-20261101/verify-merged.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "audit" :RECORD-PATH "processes/audit/report.lisp" :COMMAND
+   ("/usr/bin/env"
+    "ASDF_OUTPUT_TRANSLATIONS=(:output-translations ((:root :**/ :*.*.*) (\"/Users/gpicchiarelli/.codex/worktrees/observability-histograms/ArcDocDB/spikes/out/metrics-main-merge-20261101/audit-fasl/\" :**/ :*.*.*)) :ignore-inherited-configuration)"
+    "make" "SBCL=/opt/homebrew/Cellar/sbcl/2.6.9/bin/sbcl" "legal-check" "lint"
+    "lint-selftest" "record-command-selftest" "snapshot-mutation-selftest"
+    "reader-mutation-selftest" "trace" "links" "fulltext-check"
+    "evidence-selftest" "spikes-check" "ci-selftest")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "evidence" :RECORD-PATH "processes/evidence/report.lisp" :COMMAND
+   ("make" "SBCL=/opt/homebrew/Cellar/sbcl/2.6.9/bin/sbcl" "EVIDENCE_JOBS=4"
+    "evidence")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "primary-before" :RECORD-PATH "processes/primary-before/report.lisp"
+   :COMMAND
+   ("python3" "spikes/out/metrics-main-merge-20261101/primary-preservation.py"
+    "before" "dd755e0080242e36a6cda1182117e3cddb230319")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "primary-ff" :RECORD-PATH "processes/primary-ff/report.lisp" :COMMAND
+   ("git" "-C" "/Users/gpicchiarelli/Documents/ArcDocDB" "merge" "--ff-only"
+    "--quiet" "dd755e0080242e36a6cda1182117e3cddb230319")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "primary-after" :RECORD-PATH "processes/primary-after/report.lisp"
+   :COMMAND
+   ("python3" "spikes/out/metrics-main-merge-20261101/primary-preservation.py"
+    "after" "dd755e0080242e36a6cda1182117e3cddb230319")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "b317ba383106c438cb7e8a127f17c689b748919a06a9420236533318bd311f23"
+ :CATALOGUE-SHA256
+ "fa72d8381c0598879a9020d253814c621cbed33493c1c2b286183899fffe9334"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

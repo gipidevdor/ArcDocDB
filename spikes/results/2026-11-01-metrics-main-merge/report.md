@@ -1,0 +1,9 @@
+# Main integration — observability, backup and Unix groups
+
+Merge source `dd755e0080242e36a6cda1182117e3cddb230319` combines main parent `2acefea` with qualified observability parent `cacec72`. Both changelog/module entries are retained. The combined registry has 60 suites and nine explicit allocation exclusions for coverage only. The standalone backup integration entry includes metrics. Engine/local/backup code is preserved from main; metric code/tests/drivers are preserved from the feature branch.
+
+Strict SBCL 2.6.9 core/local/test compilation and the complete product catalog passed **2730/2730 cases**, with no failures, skips or unexecuted cases. Standard legal, lint, recorder/mutation-runner self-tests, trace, links, full-text, evidence-tool, eleven spike correctness and CI self-tests passed. Retained evidence integrity passed independently. All command records retain exact source blobs, outputs and status.
+
+The primary checkout's pre-existing modified/untracked files were hashed before its safe fast-forward, after verifying no target-path overlap. Every pre-existing file was compared again afterward; its bytes/link target remained unchanged. No stash, reset, branch deletion or other worktree update was used. The exact [before/after data and command outputs](archive/archive-index.lisp) are retained alongside [qualification](archive/qualification.lisp).
+
+This is integration correctness evidence on the local macOS ARM64 host. It adds no throughput/latency measurement and does not qualify Linux, power loss or C1/MC/DC. Previous [histogram](../2026-11-01-metrics-histograms/report.md) and [counter](../2026-11-01-metrics-counters/report.md) measurements keep their original source identities and limits. Large records are losslessly gzip-compressed; compiled caches are excluded. Publication receipts are separate from the closed archive.

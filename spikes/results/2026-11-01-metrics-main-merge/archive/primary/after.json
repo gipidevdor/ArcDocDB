@@ -1,0 +1,9 @@
+{
+  "all_preexisting_bytes_unchanged": true,
+  "head": "dd755e0080242e36a6cda1182117e3cddb230319",
+  "kind": "primary-local-work-preservation",
+  "original_head": "31e438bb67f4db0a35f81363d5cb78dcf97ba05a",
+  "preserved_files": 142,
+  "schema_version": 1,
+  "status": "ok"
+}

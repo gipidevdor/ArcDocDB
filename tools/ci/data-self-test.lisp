@@ -40,7 +40,7 @@ Il packet resta un file wire; il codice del child non legge/evaluta forme dal pa
                   (identity (getf normal :identity)))
              (assert (not (fboundp (find-symbol \"CI-RUN-JOB\" \"ARCDOCDB.CI\"))))
              (assert (null (find-package \"ARCDOCDB.IO\")))
-             (assert (= 7 (length arcdocdb.ci.tests::*coverage-exclusions*)))
+             (assert (= 8 (length arcdocdb.ci.tests::*coverage-exclusions*)))
              (assert (every (lambda (row) (eq :passed (getf row :normal-status)))
                             (arcdocdb.ci::ci-coverage-normal-proof directory identity)))
              (let ((wrong (copy-list identity)))

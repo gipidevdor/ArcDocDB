@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Add bounded owner-local latency histograms with immutable captures, integer
+  nearest ranks for P50/P95/P99/P99.9, explicit over-range intervals and sticky
+  saturation. Keep engine instrumentation and aggregate counters separate.
+  [Contract](docs/implementazione/istogrammi-latenza.md) and
+  [verification method](docs/implementazione/istogrammi-latenza-metodo.md).
+
 - Share strong flush across independent same-turn conditional and ordinary Unix
   writes, preserving same-key order, conflicts, deadlines and unknown outcomes.
   [Contract](docs/adr/0086-conditional-same-turn-group-commit.md) and

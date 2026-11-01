@@ -1,0 +1,52 @@
+(require :asdf)
+(defun replace-exact-once (text old new)
+  (let ((at (search old text)))
+    (unless (and at (not (search old text :start2 (1+ at))))
+      (error "Expected exactly one replacement: ~S" old))
+    (concatenate 'string (subseq text 0 at) new (subseq text (+ at (length old))))))
+(let* ((root (truename "./"))
+       (out (merge-pathnames "spikes/out/backup-m1-20261101/pre-fix/" root))
+       (record (let ((*read-eval* nil))
+                 (with-open-file (in "spikes/out/backup-m1-20261101/late-corruption-reproduction-2/report.lisp")
+                   (read in))))
+       (files nil))
+  (unless (and (eq (getf record :source-consistency) :stable)
+               (eql (getf record :exit-code) 1)) (error "Invalid failed baseline"))
+  (ensure-directories-exist out)
+  (dolist (path '("src/backup/copy.lisp" "src/backup/operations.lisp"))
+    (let* ((final (uiop:read-file-string path))
+           (before
+             (if (search "copy.lisp" path)
+                 (replace-exact-once
+                   (replace-exact-once
+                     (replace-exact-once
+                       (replace-exact-once final
+                         "entry &optional boolean) null) copy-entry"
+                         "entry) null) copy-entry")
+                       "(defun copy-entry (job source target row &optional verify-crc-p)"
+                       "(defun copy-entry (job source target row)")
+                     (format nil "VERIFY-CRC-P compares the observed copy CRC with the immutable stored expectation, never replacing it.~%") "")
+                   (format nil "    (let ((crc (stream-file job input (entry-size row) output)))~%      (if verify-crc-p~%          (unless (= crc (entry-crc row)) (error 'corruption-detected :reason :backup-file-crc))~%          (setf (entry-crc row) crc)))")
+                   "    (setf (entry-crc row) (stream-file job input (entry-size row) output))")
+                 (replace-exact-once final "(copy-entry job directory stage row t)"
+                                     "(copy-entry job directory stage row)")))
+           (target (merge-pathnames (concatenate 'string (file-namestring path) ".txt") out))
+           (expected (getf (find path (getf record :source-blobs-before)
+                                :test #'string= :key (lambda (row) (getf row :path))) :git-blob)))
+      (with-open-file (stream target :direction :output :if-exists :error
+                                     :external-format :utf-8)
+        (write-string before stream))
+      (let ((actual (string-trim '(#\Newline #\Return)
+                                (uiop:run-program (list "git" "hash-object" (namestring target)) :output :string))))
+        (unless (equal expected actual) (error "Baseline mismatch for ~A: ~A vs ~A" path actual expected))
+        (push (list :runtime-path path :reconstructed-file (file-namestring target)
+                    :snapshot-blob expected :actual-blob actual :comparison :equal) files))))
+  (with-open-file (stream (merge-pathnames "audit.lisp" out) :direction :output :if-exists :error)
+    (write (list :schema-version 1 :kind :failed-baseline-reconstruction :status :ok
+                 :record "processes/late-corruption-reproduction-2/report.lisp"
+                 :method :inverse-fix-checked-against-stable-pre-fix-snapshot
+                 :files (nreverse files)
+                 :limits '(:reconstructs-two-changed-runtime-files :other-files-bound-by-record-snapshot))
+           :stream stream :readably t :pretty t)
+    (terpri stream)))
+(format t "~&Both reconstructed pre-fix runtime files match the recorded failing source blobs.~%")

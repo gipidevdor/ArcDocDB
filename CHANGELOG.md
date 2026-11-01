@@ -7,8 +7,9 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
-- Keep the selected SBCL executable in snapshot/reader mutation-driver children,
-  so another runtime earlier in `PATH` cannot inherit an incompatible core.
+- Keep the selected SBCL executable in snapshot/reader mutation-driver children
+  and the archive closure checker, so another runtime earlier in `PATH` cannot
+  inherit an incompatible core.
 
 - Add owner-local request/cache/WAL counters and queue samples, coherent immutable
   captures, exact window rates and bounded disjoint-source aggregation. Merge

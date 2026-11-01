@@ -25,6 +25,16 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   [Contract](docs/adr/0087-explicit-conditional-unix-groups.md) and
   [evidence](spikes/results/2026-11-01-local-conditional-groups/report.md).
 
+- Keep the selected SBCL executable in snapshot/reader mutation-driver children
+  and the archive closure checker, so another runtime earlier in `PATH` cannot
+  inherit an incompatible core.
+
+- Add owner-local request/cache/WAL counters and queue samples, coherent immutable
+  captures, exact window rates and bounded disjoint-source aggregation. Merge
+  histogram populations before deriving percentiles; preserve saturation and
+  distinguish aggregate queue-peak bounds. Engine instrumentation follows
+  separately. [Contract](docs/implementazione/metriche-serie.md).
+
 - Add bounded owner-local latency histograms with immutable captures, integer
   nearest ranks for P50/P95/P99/P99.9, explicit over-range intervals and sticky
   saturation. Keep engine instrumentation and aggregate counters separate.

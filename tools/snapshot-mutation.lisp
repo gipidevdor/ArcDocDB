@@ -230,10 +230,11 @@
   (write-runner directory))
 
 (defun execute-copy (directory &optional selected)
-  "Deadline bounded: conserva exit e signal reali, separati, anche alla terminazione del child."
+  "Bounded child deadline; preserve real exit/signal separately. Reuse this runtime, independently of PATH."
   (let* ((stdout (merge-pathnames "stdout.log" directory)) (stderr (merge-pathnames "stderr.log" directory))
-         (argv (append '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger"
-                         "--script" "isolated-build.lisp") (when selected (list selected))))
+         (argv (append (list (namestring sb-ext:*runtime-pathname*)
+                             "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger"
+                             "--script" "isolated-build.lisp") (when selected (list selected))))
          (process (uiop:launch-program argv :directory directory :output stdout :error-output stderr))
          (deadline (+ (get-internal-real-time) (* +child-seconds+ internal-time-units-per-second)))
          (timed-out nil) (exit nil) (signal nil))

@@ -49,7 +49,7 @@ MODE :PASSED/:INVALID/:UNKNOWN; conserva wire, argv e log in una directory esclu
                   `(dolist (input ',inputs)
                      (let* ((arcdocdb.ci::*ci-coverage-normal-report* (first input))
                             (rows (arcdocdb.ci::ci-coverage-normal-proof ,(namestring root) ',identity)))
-                       (assert (= 8 (length rows)))
+                       (assert (= 9 (length rows)))
                        (assert (equal arcdocdb.ci.tests::*coverage-exclusions*
                                       (mapcar (lambda (row) (getf row :id)) rows)))
                        (dolist (row rows)
@@ -153,8 +153,8 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                     (lambda () (= 2 (length (getf (first (arcdocdb.ci.tests:suite-specifications)) :cases)))))
              (check :catalog-four-explicit-vertical-cases
                     (lambda () (= 4 (length arcdocdb.ci.tests::*vertical-cases*))))
-             (check :catalog-eight-explicit-allocation-exclusions
-                    (lambda () (= 8 (length arcdocdb.ci.tests::*coverage-exclusions*))))
+             (check :catalog-nine-explicit-allocation-exclusions
+                    (lambda () (= 9 (length arcdocdb.ci.tests::*coverage-exclusions*))))
              (check :catalog-metrics-histogram-suite
                     (lambda () (find "ARCDOCDB.METRICS.TESTS"
                                      (arcdocdb.ci.tests:suite-specifications)

@@ -1,0 +1,3 @@
+fatal error encountered in SBCL pid 47538 pthread 0x1f6ca5300:
+core was built for runtime "hostname-id-1790429406" but this is "iMac-di-GIACOMO-gpicchiarelli-2026-10-30-19-54-31"
+

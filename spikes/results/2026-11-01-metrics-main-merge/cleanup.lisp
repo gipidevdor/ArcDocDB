@@ -1,0 +1,13 @@
+(:SCHEMA-VERSION 1 :KIND :OWNED-CACHE-CLEANUP :STATUS :OK :TARGETS
+ ((:PATH
+   #A((121) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/observability-histograms/ArcDocDB/spikes/out/metrics-main-merge-20261101/full/fasl/")
+   :STATUS :PRESENT :FILES 892 :LOGICAL-BYTES 21229365)
+  (:PATH
+   #A((122) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/observability-histograms/ArcDocDB/spikes/out/metrics-main-merge-20261101/audit-fasl/")
+   :STATUS :PRESENT :FILES 892 :LOGICAL-BYTES 21231121))
+ :REMOVED-FILES 1784 :REMOVED-LOGICAL-BYTES 42460486
+ :SOURCE-AND-ORIGINAL-EVIDENCE-REMOVED NIL :SHARED-CACHE-REMOVED NIL :LIMITS
+ (:EXPLICIT-CAMPAIGN-CACHE-LIST :NOT-PHYSICAL-FREE-SPACE-MEASUREMENT
+  :NO-OTHER-WORKTREES :NO-GIT-MAINTENANCE))

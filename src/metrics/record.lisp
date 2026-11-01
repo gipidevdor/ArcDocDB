@@ -21,11 +21,12 @@ INVALID-ARGUMENT rejects type/owner violations before reading mutable counters o
   histogram)
 
 ;;; REQ: REQ-OBS-001 REQ-OBS-002 REQ-AFF-008 REQ-AFF-003
-(defmacro %con-mutazione-istogramma ((histogram &key reset sola-lettura) &body body)
+(defmacro %con-mutazione-istogramma ((histogram &key reset sola-lettura prima) &body body)
   "Pre: static body and histogram already validated for this owner; RESET permits recovery.
 Post: preserves body values, unwinds the thread-local scope, and commits valid mutation state last.
-RESET/SOLA-LETTURA are literal booleans. Reentry rejects before cleanup; histogram is evaluated once."
-  (unless (and (member reset '(nil t)) (member sola-lettura '(nil t)))
+RESET/SOLA-LETTURA are literal booleans. PRIMA holds guarded preconditions/local setup before mutation marking.
+PRIMA must not write metric state. Reentry rejects before setup; histogram is evaluated once."
+  (unless (and (member reset '(nil t)) (member sola-lettura '(nil t)) (listp prima))
     (error 'invalid-argument :reason :metrics-histogram-scope))
   (let ((hist (gensym "HISTOGRAM")))
     `(let ((,hist ,histogram))
@@ -34,6 +35,7 @@ RESET/SOLA-LETTURA are literal booleans. Reentry rejects before cleanup; histogr
        (let ((*accesso-istogrammi* sb-thread:*current-thread*))
          (when (and (istogramma-latenze-guasto-p ,hist) (not ,reset))
            (error 'invariant-violation :reason :metrics-histogram-interrupted))
+         ,@prima
          ,(if sola-lettura `(progn ,@body)
               `(progn
                  (setf (istogramma-latenze-guasto-p ,hist) t)
@@ -69,13 +71,19 @@ INVALID-ARGUMENT rejects invalid duration/owner before mutation; time is supplie
     (%con-mutazione-istogramma (hist) (%registra-latenza hist value))))
 
 ;;; REQ: REQ-OBS-001 REQ-OBS-002 REQ-AFF-008
+(declaim (ftype (function (istogramma-latenze) istogramma-latenze) %azzera-istogramma))
+(defun %azzera-istogramma (hist)
+  "Pre: entered owner mutation scope. Post: empty counters, maximum and saturation.
+The fault marker belongs to the enclosing scope and is deliberately not cleared here."
+  (fill (istogramma-latenze-contatori hist) 0)
+  (setf (istogramma-latenze-campioni hist) 0 (istogramma-latenze-saturato-p hist) nil
+        (istogramma-latenze-massimo-osservato hist) 0)
+  hist)
+
+;;; REQ: REQ-OBS-001 REQ-OBS-002 REQ-AFF-008
 (declaim (ftype (function (t) istogramma-latenze) azzera-istogramma))
 (defun azzera-istogramma (histogram)
   "Pre: owner begins a new measurement window. Post: fixed counters, maximum and saturation reset.
 INVALID-ARGUMENT rejects type/owner before mutation; old immutable snapshots remain valid."
   (let ((hist (%verifica-istogramma-owner histogram)))
-    (%con-mutazione-istogramma (hist :reset t)
-      (fill (istogramma-latenze-contatori hist) 0)
-      (setf (istogramma-latenze-campioni hist) 0 (istogramma-latenze-saturato-p hist) nil
-            (istogramma-latenze-massimo-osservato hist) 0)
-      hist)))
+    (%con-mutazione-istogramma (hist :reset t) (%azzera-istogramma hist))))

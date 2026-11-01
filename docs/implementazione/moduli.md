@@ -10,8 +10,9 @@ Each method and result retains its own scope.
 
 | Module | Contract and verification | Code |
 |---|---|---|
-| Latency histograms | [Owner-local fixed memory, percentile intervals and saturation](istogrammi-latenza.md), [method](istogrammi-latenza-metodo.md), [qualification](../../spikes/results/2026-11-01-metrics-histograms/report.md); runtime instrumentation and aggregation follow separately | [`src/metrics/`](../../src/metrics/) |
 | M1 offline backup | [Copy, manifest, verification, comparison and restore](backup-offline-m1.md) | [`src/backup/`](../../src/backup/), [`CLI`](../../tools/arcdocdb-backup.lisp) |
+| Latency histograms | [Owner-local fixed memory, percentile intervals and saturation](istogrammi-latenza.md), [method](istogrammi-latenza-metodo.md), [qualification](../../spikes/results/2026-11-01-metrics-histograms/report.md); runtime instrumentation follows separately | [`src/metrics/`](../../src/metrics/) |
+| Event metrics | [Counters, immutable cuts and original provenance](metriche-serie.md); runtime publication and diagnosis follow separately | [`src/metrics/`](../../src/metrics/) |
 | M1 offline verifier | [Canonical-only inspection, no startup or repair](verificatore-offline-m1.md) | [`src/verify/`](../../src/verify/), [`CLI`](../../tools/arcdocdb-verify.lisp) |
 | M1 image discovery | [Bounded inventory, canonical source, and fully verified adoption](scoperta-indice-m1.md) | [`src/engine/image-discovery.lisp`](../../src/engine/image-discovery.lisp) |
 | M1 delta maintenance | [Key/byte policy and renewal only at threshold](manutenzione-indice-m1.md) | [`src/engine/image-maintenance.lisp`](../../src/engine/image-maintenance.lisp) |

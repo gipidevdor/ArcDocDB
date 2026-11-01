@@ -39,6 +39,7 @@ read/write/conditional groups over a Unix socket.
 | ACTIVE metadata | [Typed append-only arena](../adr/0081-active-append-metadata.md), fixed startup charge and immutable acquired prefixes |
 | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |
 | Latency distributions | [Bounded owner-local histograms](istogrammi-latenza.md), immutable captures and explicit precision/saturation; runtime instrumentation follows separately |
+| Event metrics | [Owner-local counters and coherent snapshot sums](metriche-serie.md), exact rates, compatible distributions and bounded original provenance |
 | Full text | [Analysis and queries](full-text.md), [codec](full-text-codec.md), [PUT/WAL binding](full-text-put.md), [rows](full-text-righe.md) |
 | CRC32C | [Backends and platforms](crc32c-piattaforme.md), [measurements and kernel selection](crc32c-unroll32.md) |
 

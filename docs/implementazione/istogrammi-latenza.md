@@ -2,9 +2,10 @@
 
 **Authorized increment 1, 2026-11-01 — REQ-OBS-001/002, C3.**
 This component supplies the latency distribution primitive under `src/metrics/`.
-The requirements remain designed in their full scope: request counters, throughput,
-cross-Serie aggregation, controller diagnostics and engine/Unix instrumentation
-are subsequent increments. No new shared coordination or persistent format is introduced.
+The requirements remain designed in their full scope. The subsequent
+[counter and aggregation component](metriche-serie.md) composes these histograms;
+controller diagnostics and engine/Unix instrumentation remain future work.
+No new shared coordination or persistent format is introduced.
 
 ## Stable contract
 
@@ -41,10 +42,12 @@ identifying the caller's clock domain. No implicit conversion is performed.
 Supplying an incompatible scale is rejected. The maximum is always expressed in
 the selected unit; the default denotes 60 seconds only for nanoseconds.
 
-Future aggregation must compare precision, maximum, unit, scale and clock
+Aggregation compares precision, maximum, unit, scale and clock
 domain, and account for count caps and incompleteness. Equal array lengths alone
 are insufficient. Percentiles will be obtained from summed compatible counts,
-never by averaging per-Serie percentiles. That aggregation is not implemented here.
+never by averaging per-Serie percentiles. `unisci-istantanee-latenze` implements
+the cold multiset sum; [metric snapshots](metriche-serie.md) additionally retain
+original partition identities and reject overlapping contributions.
 
 ## Integer geometry and declared precision
 

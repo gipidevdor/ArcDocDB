@@ -389,7 +389,7 @@
   (let* ((log (merge-pathnames "closed-check.log" observations))
          (checker (merge-pathnames "check-command-archive.lisp" *collector-source*))
          (process (uiop:launch-program
-                   (list "sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+                   (list (namestring sb-ext:*runtime-pathname*) "--noinform" "--no-userinit" "--no-sysinit" "--script"
                          (namestring checker) "--archive" (namestring root))
                    :output log :error-output :output)))
     (multiple-value-bind (exit signal) (uiop:wait-process process)

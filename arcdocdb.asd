@@ -26,6 +26,11 @@
                              (:file "crc32c-vops" :if-feature :arcdocdb-crc32c-arm64)
                              (:file "crc32c-native" :if-feature :arcdocdb-crc32c-arm64)
                              (:file "record") (:file "batch")))
+               (:module "metrics" :serial t
+                :components ((:file "package") (:file "types") (:file "geometry") (:file "build")
+                             (:file "record") (:file "snapshot") (:file "quantile") (:file "merge")
+                             (:file "counter-types") (:file "counter-build") (:file "counter-record")
+                             (:file "counter-snapshot") (:file "counter-aggregate")))
                (:module "hash" :serial t
                 :components ((:file "package") (:file "arithmetic") (:file "blocks") (:file "hash64")))
                (:module "codec" :serial t
@@ -327,6 +332,10 @@
                              (:file "cbor-item-read-threads")
                              (:file "cbor-string-read-support") (:file "cbor-string-read")
                              (:file "cbor-string-read-threads")))
+               (:module "metrics" :serial t
+                :components ((:file "support") (:file "geometry") (:file "quantiles")
+                             (:file "limits") (:file "isolation") (:file "allocation") (:file "merge")
+                             (:file "counters") (:file "counter-isolation") (:file "counter-allocation")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t

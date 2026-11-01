@@ -21,15 +21,19 @@ Loop bounded by size/chunk; short read/append rejects, no suffix discarded or du
 ;;; REQ: REQ-AFF-014 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (job io:file-io io:file-io b:index) boolean) equal-file-bytes-p))
 (defun equal-file-bytes-p (job left right size)
-  "Pre: readonly files of equal admitted size, same stable verification window. Post: exact byte equality.
-Bounded sequential reads; no hash-collision inference, data/index reconstruction or mutation."
+  "Pre: prepared job with same-sized octet buffers, readonly files of equal admitted size, stable window.
+Post: exact byte equality; EQUALP for complete buffers, scalar comparison for a final partial prefix.
+Bounded sequential reads, all short-read errors preserved; no unused scratch suffix is compared.
+No hash-collision inference, data/index reconstruction, scratch allocation or mutation."
   (let ((a (job-left job)) (b (job-right job)))
     (loop for offset from 0 below size by (length a) for count = (min (length a) (- size offset))
           always (progn
                    (unless (and (= count (io:leggi-esatto left a 0 count offset))
                                 (= count (io:leggi-esatto right b 0 count offset)))
                      (error 'corruption-detected :reason :backup-short-read :offset offset))
-                   (loop for i below count always (= (aref a i) (aref b i)))))))
+                   (if (= count (length a))
+                       (equalp a b)
+                       (loop for i below count always (= (aref a i) (aref b i))))))))
 
 ;;; REQ: REQ-AFF-014 REQ-AFF-001 REQ-AFF-002 REQ-AFF-004
 (declaim (ftype (function (job io:file-io io:file-io entry &optional boolean) null) copy-entry))

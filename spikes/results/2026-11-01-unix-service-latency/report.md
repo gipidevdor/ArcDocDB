@@ -31,7 +31,7 @@ operations. Selected format-2 medians of actual completed throughput are:
 Across all sixteen 60,000-byte cases (both formats, modes and all four connection
 counts), measured gains range from 1.409× to 4.314×. Keep the full range rather
 than selecting the largest gain. Small-read results include a 0.981× case.
-Mixed workloads range from 0.441× to 1.516×; their CSN/flush ledgers still pass.
+Mixed workloads range from 0.441× to 1.516×; their CSN/strong-group ledgers still pass.
 Host load and durability costs were not isolated, so no write-speed improvement
 or causal attribution of these mixed-workload fluctuations is claimed. Forced
 maintenance cases pass at 1.039×/1.098× measured throughput. Profiling off/on
@@ -53,9 +53,56 @@ errors. Their original records and driver variants are kept; successful runs
 replace none of their bytes. Positive self-tests detect malformed quantile/CSN
 ledgers, changed copies, incomplete qualification and wrong cleanup/closure scope.
 
-The remote main branch advanced with the independently completed offline backup
-while these checks ran. Integration of that committed state, any subsequent
-combined-source qualification, archive closure and owned cleanup will be recorded
-below. The completed increment measurements above remain a separate source scope.
+Remote main advanced with the independently completed offline backup while these
+checks ran. Merge `b3d949a` preserves that committed history and this increment;
+`adf3141` reconciles the existing backup integration spike with sixty suites and
+adds metrics to its affected-suite checks. Other worktrees and their branches
+were not edited or removed. The original full-run source identity remains a
+separate scope from the combined integration identity.
+
+The integrated tree passed another byte-identical 66-case/330-window/512,000-op
+matrix. Selected format-2 60,000-byte results are:
+
+| Mode / connections | Integrated MB/s | Gain against baseline | Window P50 |
+|---|---:|---:|---:|
+| Resident / 1 | 597.06 | 2.454× | 96 µs |
+| Resident / 8 | 760.98 | 2.743× | 458 µs |
+| Paged / 1 | 557.69 | 2.502× | 105 µs |
+| Paged / 8 | 725.50 | 2.736× | 483 µs |
+
+The combined 1,734-file source inventory passed warning-as-error forced product
+builds and the affected backup, verifier, metrics and four Unix suites on both
+2.6.9 and 2.6.10, including the real Unix process campaign. Combined documentation
+checks passed 566 source documents, 1,180 HTML pages, 89,902 local links/anchors,
+56 runtime packages, 736 exported bindings and 653 prose contracts. Static
+audits and CI self-tests also passed. The earlier full-repository runs and these
+combined affected-suite runs are deliberately identified separately.
+
+The integration proof checks that every prior product source remains identical
+except the five declared I/O/verifier extension files; new backup/directory
+components are exercised by the integration spike. The actor, native transport,
+engine, WAL, index and histogram sources remain unchanged after their full runs.
+Post-integration global Unix stream defaults still read 8,192/8,192 bytes: only
+owned socket grants were adjusted.
+
+Raw windows, all three main matrices, both profiler calibrations, successful and
+failed command records, exact failed driver variants and child-copy hashes are
+retained. See [comparison](comparison-integrated.lisp),
+[increment qualification](qualification-data.lisp),
+[full-run source identity](source-identity.lisp), and
+[combined integration identity](integration-source-identity.lisp).
+
+[Evidence closure](closure.lisp) passed 1,690 retained-file hash checks after
+lossless compaction. A subsequent independent replay of all 66 baseline versus
+integrated comparisons also passed using the compressed data. The completed
+closure command and final archive records are retained in the
+[tail archive](tail-archive-data.lisp), including the failed diagnostic records.
+
+[Owned cleanup](cleanup.lisp) removed nineteen generated/cache/failed-fixture
+roots totaling **214,062,507 logical regular-file bytes**. This is not a physical
+free-space measurement. `_build`, this worktree's spike output and exact
+2.6.9/2.6.10 cache prefixes were removed only after verification; other worktrees,
+branches and shared Git storage were not cleaned. Final artifact/source checks
+run again after cleanup before publication.
 
 [Preregistered method and amendment](method.md) · [Two C1 readings](review.md).

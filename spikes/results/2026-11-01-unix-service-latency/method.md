@@ -84,3 +84,22 @@ identical main matrix. Retain the original scheduling hypothesis as deferred;
 avoid adding a second phase without an independent measured need. Record native
 positive/error/size/readback/cleanup boundaries and the complete existing native,
 actor, framing, strong-commit and real-process campaigns on both Lisp runtimes.
+
+## Integration of the concurrently completed remote main
+
+The increment completed full 2.6.9 check-core, strict full 2.6.10, documentation,
+focused tests and exact source identity before merging remote main `2acefea`.
+That committed main adds the offline backup component, optional I/O backend
+callbacks, capability-relative directory operations and a borrowed-directory
+verification boundary. It does not edit the Unix native transport or actor.
+
+Preserve both independent histories. Merge only that committed state in this
+worktree; leave other worktrees/branches intact. Reconcile the catalog to sixty
+suites (including metrics and backup), and update the existing backup integration
+spike to the combined catalog. Reuse its warning-as-error forced product build
+and affected backup, verifier, metrics, native/wire/actor/client and actual Unix
+process suites on both runtimes. Repeat the identical 66-case unprofiled matrix
+on the integrated tree. Rebuild/verify all docs and run the CI/source audits.
+Retain the earlier full-suite identity and the exact combined-source integration
+identity separately; do not relabel affected-suite integration as a second
+whole-repository full run. The server retains one transfer per slot/turn.

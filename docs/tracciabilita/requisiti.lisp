@@ -141,10 +141,10 @@
   :inv ("INV-T1") :adr ("ADR-0005") :ver (:test) :fi ())
  (:id "REQ-TXS-002" :src "Single-Serie transactions" :cls "C1" :stato :progettato
   :txt "A single-Serie transaction is serialized by the logical writer and detects conflicts with optimistic version checking; version checking is atomic with respect to application."
-  :inv ("INV-T2" "INV-P1") :adr ("ADR-0005" "ADR-0085") :ver (:test :diff :model) :fi ())
+  :inv ("INV-T2" "INV-P1") :adr ("ADR-0005" "ADR-0085" "ADR-0086") :ver (:test :diff :model) :fi ())
  (:id "REQ-TXS-003" :src "Single-Serie transactions" :cls "C1" :stato :progettato
   :txt "When two transactions read the same version, the second to commit fails with a conflict and may retry."
-  :inv ("INV-T2") :adr ("ADR-0005" "ADR-0085") :ver (:test :diff) :fi ())
+  :inv ("INV-T2") :adr ("ADR-0005" "ADR-0085" "ADR-0086") :ver (:test :diff) :fi ())
  (:id "REQ-TXM-001" :src "Multiseries transactions" :cls "C1" :stato :progettato
   :txt "All changes in a multiseries transaction share a single TXID."
   :inv ("INV-T5") :adr ("ADR-0006" "ADR-0041") :ver (:test :fi) :fi ("FI-12"))

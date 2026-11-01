@@ -74,6 +74,12 @@ after delete/reinsert. Conflicts precede maintenance and WAL effects. These
 single-operation conditions reuse the serial writer, not transaction write sets
 or historical MVCC. The original GET still returns exactly two values.
 [Contract](../adr/0085-conditional-current-writes.md).
+The service's internal conditional group path validates that no condition depends
+on an earlier operation key, probes through the same primary lookup, and passes
+only applicable operations to the existing strong group writer. All-conflict
+cohorts perform no writer preflight or maintenance. Private projection scratch
+survives ACTIVE rotation and clears on every exit; no public engine API or
+transaction write set is added. [Decision](../adr/0086-conditional-same-turn-group-commit.md).
 
 The writer reuses batch, group, and scratch. Format/capacity preflight precedes
 the CSN, including load, key arena, slot credit, and index revision.

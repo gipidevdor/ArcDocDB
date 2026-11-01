@@ -7,6 +7,11 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Share strong flush across independent same-turn conditional and ordinary Unix
+  writes, preserving same-key order, conflicts, deadlines and unknown outcomes.
+  [Contract](docs/adr/0086-conditional-same-turn-group-commit.md) and
+  [evidence](spikes/results/2026-11-01-conditional-group-commit/report.md).
+
 - Add verified current CSNs and optimistic conditional PUT/DELETE to the engine
   and negotiated Unix client. Stale versions conflict before maintenance or WAL
   effects; matching writes retain strong durability and unknown-outcome handling.

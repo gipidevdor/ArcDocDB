@@ -226,7 +226,7 @@
                (:module "engine" :serial t
                 :components ((:file "package") (:file "image-config") (:file "image-discovery-config")
                              (:file "image-maintenance-config") (:file "image-auto-types") (:file "index-auto-types")
-                             (:file "delta-types") (:file "write-group-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
+                             (:file "delta-types") (:file "write-group-types") (:file "conditional-group-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
                              (:file "config") (:file "record-cache") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
                              (:file "image-source") (:file "image-discovery") (:file "image-recovery") (:file "image-activation")
                              (:file "image-build-types") (:file "image-build-read") (:file "image-build-plan")
@@ -238,7 +238,7 @@
                              (:file "compaction-write") (:file "compaction-verify") (:file "compaction-plan")
                              (:file "compaction-relocate") (:file "compaction-install") (:file "compaction") (:file "write")
                              (:file "write-group-index") (:file "write-group-legacy") (:file "write-group-plan")
-                             (:file "write-group-commit") (:file "write-group") (:file "read") (:file "conditional")))
+                             (:file "write-group-commit") (:file "write-group") (:file "read") (:file "conditional") (:file "conditional-group")))
                (:module "verify" :serial t
                 :components ((:file "package") (:file "types") (:file "read")
                              (:file "order") (:file "report") (:file "resources"))))
@@ -254,7 +254,7 @@
                (:file "group-read") (:file "group-build") (:file "group-dispatch")
                (:file "read-group-wire") (:file "read-group-dispatch")
                (:file "version-wire") (:file "version-dispatch")
-               (:file "dispatch") (:file "server") (:file "write-group") (:file "client") (:file "client-group")
+               (:file "dispatch") (:file "server") (:file "write-queue") (:file "write-group") (:file "client") (:file "client-group")
                (:file "client-read-group") (:file "client-version") (:file "cli")))
 
 (defsystem "arcdocdb/tests"
@@ -418,12 +418,14 @@
                (:file "engine/group-append")
                (:file "engine/active-arena")
                (:file "engine/conditional")
+               (:file "engine/conditional-group")
                (:module "verify" :serial t
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "native") (:file "server")
-                             (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version")
-                             (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes"))))
+                             (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version") (:file "conditional-group")
+                             (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes")
+                             (:file "conditional-group-processes"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.ci.tests '#:run)))

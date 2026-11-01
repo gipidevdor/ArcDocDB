@@ -69,6 +69,7 @@ No public accessor for FDs or roots; capability not transferable across threads.
   (batch nil :type (or null w:lotto))
   (group nil :type (or null w:gruppo))
   (write-workspace nil :type (or null write-group-workspace))
+  (conditional-workspace (%make-conditional-group-workspace) :type conditional-group-workspace :read-only t)
   (get-context nil :type (or null g:contesto-get))
   (fds nil :type list)
   (recovery-sets nil :type list)

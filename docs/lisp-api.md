@@ -77,6 +77,13 @@ capability options can be combined. Lost mutation responses remain
 `outcome-unknown`; do not retry without reconciling application intent.
 [Conditional operation contract](adr/0085-conditional-current-writes.md).
 
+The service can share a strong flush across already-ready independent conditional
+mutations and ordinary writes from different clients. Conditions depending on an
+earlier queued key drain those writes first. There is no wait to form a batch,
+new option or client retry. Conflicts consume no CSN/flush; each applicable write
+still has an independent SEAL and acknowledgment. A group is not a transaction.
+[Same-turn conditional grouping](adr/0086-conditional-same-turn-group-commit.md).
+
 For embedding within one serial actor, `arcdocdb.engine` exposes the M1 core.
 Its handles have thread ownership and lifecycle requirements. Consult the
 [current profile](implementazione/README.md), the

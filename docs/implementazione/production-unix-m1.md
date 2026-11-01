@@ -52,10 +52,15 @@ See [ADR-0084](../adr/0084-explicit-unix-read-groups.md).
 Versioned GET returns `[true,CSN,document:bstr]` or `[false,0,null]`; conditional
 PUT/DELETE returns `[true,new-CSN]` or `[false,current-live-CSN]`. Expected zero
 tests absence. A conflict is status 0 and consumes no CSN/flush. Version operations
-drain earlier collected writes before comparison; conditional writes use the
-existing strong writer individually. Versioned GET requires at least 60,040 body
+with a dependency on an earlier queued key drain those writes before comparison.
+Independent ready mutations share the existing strong group writer, filtering
+conflicts without CSNs or flushes; no timer or peer wait forms the group. Each
+applicable operation retains its own SEAL and result. Versioned GET remains a
+barrier and requires at least 60,040 body
 bytes; other limits and mutation uncertainty remain unchanged.
 See [ADR-0085](../adr/0085-conditional-current-writes.md).
+Independent conditional coalescing and deadline/fallback rules are specified in
+[ADR-0086](../adr/0086-conditional-same-turn-group-commit.md).
 
 Binary keys are 1 to 1024 bytes; documents are 1 to 60,000 bytes. A document
 contains one CBOR item with minimal headers/valid UTF-8, maximum

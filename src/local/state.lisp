@@ -76,11 +76,17 @@ supplied by the owning boundary."))
   (operations (make-array 8 :initial-element nil) :type simple-vector :read-only t)
   (csns (make-array 8 :element-type '(unsigned-byte 64) :initial-element 0)
         :type (simple-array (unsigned-byte 64) (*)) :read-only t)
+  (expected (make-array 8 :element-type '(unsigned-byte 64) :initial-element 0)
+            :type (simple-array (unsigned-byte 64) (*)) :read-only t)
+  (conditions (make-array 8 :element-type '(unsigned-byte 8) :initial-element 0) :type b:octets :read-only t)
+  (applied (make-array 8 :element-type '(unsigned-byte 8) :initial-element 0) :type b:octets :read-only t)
   (count 0 :type (integer 0 8))
   (limit 8 :type (integer 1 8) :read-only t))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-002
 (declaim (ftype (function (e:motore simple-vector function local-write-queue) null) dispatch-local-ready))
+;;; REQ: REQ-IPC-002 REQ-WAL-006
+(declaim (ftype (function (e:motore local-write-queue function) null) flush-local-write-queue))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (defstruct (local-client (:constructor make-local-client) (:copier nil))

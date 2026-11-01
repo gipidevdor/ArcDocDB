@@ -9,9 +9,9 @@
   (asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
   (asdf:load-system "arcdocdb" :force t)
   (asdf:load-system "arcdocdb/tests"))
-(assert (= 59 (length (uiop:symbol-call :arcdocdb.ci.tests :suite-specifications))))
-(dolist (package '(:arcdocdb.backup.tests :arcdocdb.verify.tests
+(assert (= 60 (length (uiop:symbol-call :arcdocdb.ci.tests :suite-specifications))))
+(dolist (package '(:arcdocdb.backup.tests :arcdocdb.verify.tests :arcdocdb.metrics.tests
                    :arcdocdb.local.wire.tests :arcdocdb.local.native.tests
                    :arcdocdb.local.server.tests :arcdocdb.local.process.tests))
   (uiop:symbol-call package :run))
-(format t "~&Integrated backup, verifier and four Unix suites passed; product compiled without warnings.~%")
+(format t "~&Integrated backup, verifier, metrics and four Unix suites passed; product compiled without warnings.~%")

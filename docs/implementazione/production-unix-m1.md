@@ -34,6 +34,7 @@ increasing; no reuse or automatic retry after disconnect.
 | 4 WRITE-GROUP, explicitly negotiated | `[[1,key,document] or [3,key], ...]`, 1..8 members | exact increasing positive u64 CSN array |
 | 5 READ-GROUP, explicitly negotiated | `[key:bstr,...]`, 1..8 members | exact array of `[true,document:bstr]` or `[false,null]` |
 | 6 VERSION, explicitly negotiated | `[0,key]`, `[1,key,expected,document]` or `[3,key,expected]` | versioned GET or conditional strong write result |
+| 7 CONDITIONAL-GROUP, explicitly negotiated | `[[1,key,expected,document] or [3,key,expected], ...]`, 1..8 distinct keys | exact array of `[applied:boolean,token:u64]` |
 
 Default HELLO/WELCOME retain their original bytes and four commands.
 `connect-local :write-groups t` offers HELLO key `2: [4]`; the server then
@@ -43,11 +44,24 @@ Without negotiation, opcode 4 returns status 4 before engine admission.
 See [ADR-0083](../adr/0083-explicit-unix-write-groups.md).
 
 `connect-local :read-groups t` offers opcode 5. HELLO key 2 is the ordered
-nonempty subset of `[4,5,6]`; WELCOME includes `[0,1,2,3]` followed
-by exactly that subset. `:versions t` enables opcode 6 alongside either group option. The client checks
+nonempty subset of `[4,5,6,7]`; WELCOME includes `[0,1,2,3]` followed
+by exactly that subset. `:versions t` enables opcode 6 alongside the other capabilities. The client checks
 all flags and the absolute deadline before READY; incomplete handshakes close
 ownership. Default and write-only bytes remain unchanged.
 See [ADR-0084](../adr/0084-explicit-unix-read-groups.md).
+
+`:conditional-groups t` offers opcode 7 independently of the other flags. Its
+complete distinct-key request is a barrier after earlier collected writes.
+Expected u64 tokens and all keys/documents are validated before copies or engine
+probes. Reuse the internal conditional projection and strong writer: applied
+members share one flush; conflicts consume no CSN; all conflicts skip writer
+maintenance. Administrative `max-write-group` and complete-frame limits apply.
+An unadmitted capacity refusal rejects the whole request without fallback/split.
+Results preserve member order, with positive increasing CSNs among applied
+entries and current live tokens (zero for absence) for conflicts. The client
+validates the complete response and original deadline before copying either
+output prefix. Lost/malformed/late mutating results are `outcome-unknown`, with
+no implicit retry. [ADR-0087](../adr/0087-explicit-conditional-unix-groups.md).
 
 Versioned GET returns `[true,CSN,document:bstr]` or `[false,0,null]`; conditional
 PUT/DELETE returns `[true,new-CSN]` or `[false,current-live-CSN]`. Expected zero
@@ -82,7 +96,8 @@ Status 1: invalid arguments; 2: exhausted capacity; 3: unavailable engine;
 precede engine admission, with a `null` payload. Envelope/handshake/
 ID/transfer errors close the connection. A fault after admission
 that prevents a certain answer closes the connection; the client reports an unknown outcome.
-PUT/DELETE/WRITE-GROUP respond only after strong engine completion.
+Applied PUT/DELETE, explicit write groups and conditional mutations respond only
+after strong engine completion.
 
 The maximum response buffer is owned before dispatch. GET requires
 a negotiated frame of at least 60,032 bytes, enough for any profile

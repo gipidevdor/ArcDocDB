@@ -8,6 +8,7 @@
   (:export #:serve-local #:connect-local #:close-local
            #:client-put #:client-get #:client-delete #:client-ping
            #:client-write-group #:client-get-group
+           #:client-write-group-if
            #:client-get-version #:client-put-if #:client-delete-if
            #:protocol-error #:protocol-error-reason
            #:request-rejected #:rejection-status #:outcome-unknown #:unknown-cause

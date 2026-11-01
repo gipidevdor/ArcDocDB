@@ -1,0 +1,16 @@
+(:kind :explicit-group-closing-input
+ :commands
+ (("4002521112-command-42856-0" "initial-archive-command")
+  ("4002521235-command-44074-0" "archive-self-test")
+  ("4002522526-command-64676-0" "final-archive-command")
+  ("4002522590-command-68226-0" "qualification-summary-command")
+  ("4002522855-command-75771-0" "get-analyzer-self-test")
+  ("4002523135-command-79150-0" "analysis-command")
+  ("4002523582-command-83390-0" "benchmark-archive-command")
+  ("4002523661-command-83735-0" "get-analysis-command")
+  ("4002524041-command-85696-0" "get-repeat-archive-command")
+  ("4002524058-command-85766-0" "get-repeat-analysis-command")
+  ("4002524143-command-86805-0" "identity-command")
+  ("4002524480-command-90727-0" "current-source-command")
+  ("4002524480-command-90729-0" "final-checks"))
+ :worker-roots ("spikes/out/evidence-check-mlDlwB/"))

@@ -1,0 +1,5 @@
+(("spikes/out/4002521007-command-41519-0/" "full-check-2.6.9/")
+ ("spikes/out/4002521007-command-41517-0/" "strict-2.6.10/")
+ ("spikes/out/4002521007-command-41518-0/" "documentation/")
+ ("spikes/out/4002522311-command-59949-0/" "ci-self-test-command/")
+ ("spikes/out/4002522068-command-54079-0/" "boundaries/"))

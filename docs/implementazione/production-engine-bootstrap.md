@@ -80,6 +80,10 @@ only applicable operations to the existing strong group writer. All-conflict
 cohorts perform no writer preflight or maintenance. Private projection scratch
 survives ACTIVE rotation and clears on every exit; no public engine API or
 transaction write set is added. [Decision](../adr/0086-conditional-same-turn-group-commit.md).
+The negotiated explicit conditional Unix group reuses this same internal path
+for one synchronous client, after complete distinct-key/frame validation and a
+barrier. It never splits a capacity refusal into individual admissions.
+[Service contract](../adr/0087-explicit-conditional-unix-groups.md).
 
 The writer reuses batch, group, and scratch. Format/capacity preflight precedes
 the CSN, including load, key arena, slot credit, and index revision.

@@ -77,7 +77,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (deftest test-REQ-IPC-002-version-capability-errors-and-preflight
-  (dolist (caps (list (bytes #x82 6 4) (bytes #x82 6 6) (bytes #x81 7) (bytes #x81 #x18 6) (bytes #x84 4 5 6 7)))
+  (dolist (caps (list (bytes #x82 6 4) (bytes #x82 6 6) (bytes #x81 8) (bytes #x81 #x18 6) (bytes #x85 4 5 6 7 8)))
     (signals l:protocol-error (envelope (framed (body 0 0 0 (join (bytes #xa3 0 #x19 #x10 0 1 1 2) caps))))))
   (dolist (option '(1 :yes "true"))
     (signals arcdocdb.conditions:invalid-argument (l:connect-local "/not-opened" :versions option))

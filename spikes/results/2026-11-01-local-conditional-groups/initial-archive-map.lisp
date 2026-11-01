@@ -1,0 +1,7 @@
+(("spikes/out/4002519354-command-29203-0/" "baseline/")
+ ("spikes/out/4002520187-command-39369-0/" "development-core/")
+ ("spikes/out/4002520411-command-39876-0/" "development-processes/")
+ ("spikes/out/4002520966-command-41286-0/" "focused/")
+ ("spikes/out/4002520996-command-41384-0/" "analyzer-self-test/")
+ ("spikes/out/4002520996-command-41386-0/" "baseline-integrity/")
+ ("spikes/out/4002520996-command-41385-0/" "identity-self-test/"))

@@ -72,7 +72,7 @@ and the positive u64 commit CSN, or `:absent`, `nil` and `0`. Pass the token to
 `(client-delete-if client key expected)`. The result is `:applied` and a new
 strong CSN, or `:conflict` and the current live CSN (`0` if absent). Expected
 `0` means insert only if currently absent; a stale positive version still
-conflicts after delete/reinsert. Conflicts consume no CSN or flush. All three
+conflicts after delete/reinsert. Conflicts consume no CSN or flush. These
 capability options can be combined. Lost mutation responses remain
 `outcome-unknown`; do not retry without reconciling application intent.
 [Conditional operation contract](adr/0085-conditional-current-writes.md).
@@ -83,6 +83,24 @@ earlier queued key drain those writes first. There is no wait to form a batch,
 new option or client retry. Conflicts consume no CSN/flush; each applicable write
 still has an independent SEAL and acknowledgment. A group is not a transaction.
 [Same-turn conditional grouping](adr/0086-conditional-same-turn-group-commit.md).
+
+For independent conditional writes from one client, connect with
+`:conditional-groups t` and call
+`(client-write-group-if client operations expected tokens applied :count count)`.
+The selected 1..8 existing write descriptors must have distinct binary keys.
+`expected` is a stable simple u64 array; `tokens` is a separate exclusive simple
+u64 output array and `applied` an exclusive simple u8 output array. Both outputs
+need at least `count` slots and must not overlap inputs or private client scratch.
+The return value is the applied count. An applied byte of `1` has a new strong
+CSN; `0` has the current live CSN, or zero for absence. Result tails are unchanged.
+All members and the original deadline are checked before copying either prefix.
+Conflicts consume no CSN, and an all-conflict group does not enter writer
+maintenance. Capacity rejection never splits the group. No result is authorized
+after an incomplete exchange; reconcile unknown outcomes before a deliberate
+retry. This capability is independent of `:versions` and can be combined with all
+other options. Applied members share a strong flush with independent SEALs; the
+group is not a transaction.
+[Explicit conditional group contract](adr/0087-explicit-conditional-unix-groups.md).
 
 For embedding within one serial actor, `arcdocdb.engine` exposes the M1 core.
 Its handles have thread ownership and lifecycle requirements. Consult the

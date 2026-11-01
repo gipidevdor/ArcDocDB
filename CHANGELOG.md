@@ -13,6 +13,11 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   are checked before publication; restore checks the stored CRC during copying too.
   Complete Archivio and online/incremental backup remain separate work.
 
+- Expose independent conditional PUT/DELETE groups to one Unix client through
+  negotiated opcode 7, with complete per-member outcomes and a shared strong flush.
+  [Contract](docs/adr/0087-explicit-conditional-unix-groups.md) and
+  [evidence](spikes/results/2026-11-01-local-conditional-groups/report.md).
+
 - Share strong flush across independent same-turn conditional and ordinary Unix
   writes, preserving same-key order, conflicts, deadlines and unknown outcomes.
   [Contract](docs/adr/0086-conditional-same-turn-group-commit.md) and

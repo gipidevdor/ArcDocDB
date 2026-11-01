@@ -1,7 +1,7 @@
 ;;;; Scripted native transfers around the real synchronous client state machine.
 (in-package #:arcdocdb.local.server.tests)
 
-(defun scripted-group-client (reply &key fragment fault throw-tag expire short-io read-groups versions)
+(defun scripted-group-client (reply &key fragment fault throw-tag expire short-io read-groups versions conditional-groups)
   (let ((cursor 0) (sent 0) (calls 0) (now 0) (polls 0) (final-checks 0))
     (let* ((backend (l::make-native-backend
                      :send (lambda (fd buffer start count)
@@ -22,7 +22,8 @@
                                 (is (eq op :poll)) (incf polls)
                                 (arcdocdb.binary:scrivi-u16 (first args) 6
                                   (arcdocdb.binary:leggi-u16 (first args) 4)) (values 1 0))))
-           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :write-groups t :read-groups read-groups :versions versions
+           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :write-groups t :read-groups read-groups
+                     :versions versions :conditional-groups conditional-groups
                      :clock (lambda ()
                               (when (and (eq expire :decode) (= cursor (length reply)))
                                 (when (= 2 (incf final-checks)) (setf now (* 30 internal-time-units-per-second)))) now)

@@ -7,6 +7,9 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Speed up exact offline backup comparison with typed whole-buffer equality and
+  a bounded scalar tail, preserving all integrity checks. [Local measurements](spikes/results/2026-11-01-backup-comparison/README.md).
+
 - Add [offline M1 backup and verified restore](docs/implementazione/backup-offline-m1.md):
   canonical-only copies, bounded binary inventory and CRC32C, exact comparison,
   new-target publication without replacement, and CLI/API operations. Staged copies

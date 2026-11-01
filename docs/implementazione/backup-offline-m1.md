@@ -32,6 +32,12 @@ fixnum), `:buffer-bytes` 1 MiB (4 KiB..8 MiB). These are offline inspection/copy
 budgets, not changes to database limits. Two transfer buffers, canonical reader
 scratch/metadata and a bounded manifest are used; no complete document index.
 
+Exact comparison uses Common Lisp `EQUALP` for complete typed octet buffers and
+the scalar loop for a final partial prefix, so stale scratch bytes are excluded.
+The [comparison campaign](../../spikes/results/2026-11-01-backup-comparison/README.md)
+records the local gain and the rejected, slower `MISMATCH` variant. It measures
+this comparison with cached file reads, separately from complete backup throughput.
+
 Library-only `:backend` and trusted `:observer` inject I/O and phase observation.
 Observer receives phase and a private copy of the optional filename, returns NIL,
 and may inject an error or foreign exit. `backup-error` retains original primary,
@@ -149,6 +155,7 @@ the deliberately allocating offline path has explicit scratch/transfer/file limi
 | Inventory/CRC/canonical gates before restore stage | Corrupt, missing, extra and changed suffix files; wrong UUID, exhausted budgets, held source lock; rejected backups create no destination stage |
 | Stored expected CRC remains authoritative during restore copy | `restore-checks-stored-CRC-against-corruption-after-verification`, with data damage injected after the initial gate |
 | Exact copy reads/EOF and CRC independent of chunk size | Large record across 4/8/16 KiB buffers, whole-file independent bitwise CRC, exact source/copy images, explicit read/write failures |
+| Complete-buffer comparison versus final partial prefix | Known equal and single-bit-different native files at byte/word/chunk edges; poisoned unused suffixes; short left/right files both reject |
 | Comparison requires both summaries and all bytes | Later legitimate source commit reports DIFFERENT; equal counts/CSN/length with different values also reports DIFFERENT |
 | Existing destination/stage and exclusive rename | File, empty directory, symlink, stage and a target created just before publication remain intact |
 | Primary or cleanup blocks success; publication state distinguishes outcomes | Exact injected write/read/flush/rename/close causes; recovery cleanup aggregate; parent-flush error retains published T/durable NIL; resources released, no retry |

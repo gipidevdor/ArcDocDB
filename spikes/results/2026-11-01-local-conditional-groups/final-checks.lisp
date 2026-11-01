@@ -1,0 +1,5 @@
+;;;; C4 final result links and whitespace; product qualification is frozen and complete.
+(require :asdf)
+(uiop:run-program '("/opt/homebrew/bin/sbcl" "--script" "tools/check-links.lisp" ".") :output t :error-output t)
+(uiop:run-program '("git" "diff" "--check") :output t :error-output t)
+(format t "~S~%" '(:kind :conditional-group-final-artifact-check :status :passed))

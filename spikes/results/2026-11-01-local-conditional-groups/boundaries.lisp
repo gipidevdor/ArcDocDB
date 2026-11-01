@@ -1,0 +1,45 @@
+;;;; C4 supplemental false-operand and client-frame-boundary fixtures; no timing or engine mutation.
+(require :asdf)
+(setf asdf:*compile-file-warnings-behaviour* :error asdf:*compile-file-failure-behaviour* :error)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(load "tools/evidence-storage.lisp")
+(defparameter *boundary-driver* *load-truename*)
+(in-package #:arcdocdb.local.wire.tests)
+(let* ((member (conditional-wire-member 3 (bytes 1) 0))
+       (cases (list (list :get-opcode (bytes #x81 #x83 0 #x41 1 0) 1)
+                    (list :unknown-mutation (bytes #x81 #x83 2 #x41 1 0) 1)
+                    (list :put-missing-document (bytes #x81 #x83 1 #x41 1 0) 1)
+                    (list :delete-extra-document (bytes #x81 #x84 3 #x41 1 0 #x41 #xf6) 1)
+                    (list :nine-members (apply #'join (bytes #x89) (loop repeat 9 collect member)) 5)
+                    (list :document-over-budget (join (bytes #x81) (conditional-wire-member 1 (bytes 1) 0 (get-document 60001))) 5))))
+  (dolist (case cases)
+    (multiple-value-bind (status count work) (conditional-wire-decode (request 7 (second case)))
+      (is (= status (third case))) (is (zerop count)) (conditional-work-cleared work))
+    (format t "ok boundary ~A~%" (first case))))
+(in-package #:arcdocdb.local.server.tests)
+(multiple-value-bind (client stats) (scripted-group-client (bytes) :conditional-groups t)
+  (let* ((tokens (csn-output)) (flags (bytes #xf6))
+         (operations (vector (e:crea-operazione-scrittura :put (bytes 1) (arcdocdb.local.wire.tests::get-document 60000)))))
+    (unwind-protect
+         (progn
+           (setf (l::local-client-limit client) 4096)
+           (signals arcdocdb.conditions:resource-exhausted
+             (l:client-write-group-if client operations (explicit-if-u64 0) tokens flags))
+           (is (and (= 1 (l::local-client-next-id client)) (zerop (funcall stats)) (eq :ready (l::local-client-state client))))
+           (is (every (lambda (n) (= 999 n)) tokens)) (is (= #xf6 (aref flags 0))) (explicit-if-client-cleared client)
+           (setf (svref operations 0) (e:crea-operazione-scrittura :put (bytes 1) flags))
+           (signals arcdocdb.conditions:invalid-argument
+             (l:client-write-group-if client operations (explicit-if-u64 0) tokens flags))
+           (signals arcdocdb.conditions:invalid-argument
+             (l:client-write-group-if client operations (l::local-client-read-spans client) tokens (bytes 204)))
+           (signals arcdocdb.conditions:invalid-argument
+             (l:client-write-group-if client (explicit-if-operations 2) (explicit-if-u64 0 0) tokens (bytes 204)))
+           (is (and (= 1 (l::local-client-next-id client)) (zerop (funcall stats)) (eq :ready (l::local-client-state client))))
+           (is (every (lambda (n) (= 999 n)) tokens)) (is (= #xf6 (aref flags 0)))
+           (format t "ok boundary client-frame-and-three-output-refusals~%"))
+      (l:close-local client))))
+(in-package #:cl-user)
+(format t "~S~%" (list :kind :explicit-if-boundaries :status :passed :cases 10
+                        :driver-sha256 (arcdocdb.evidence:file-sha256 *boundary-driver*)
+                        :limits '(:supplemental-fixed-fixtures :not-timing :not-mcdc-qualification)))

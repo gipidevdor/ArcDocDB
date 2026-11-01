@@ -1,0 +1,5 @@
+(("spikes/out/4002522867-command-76089-0/" "benchmark/")
+ ("spikes/out/4002522968-command-77459-0/" "benchmark-2.6.10/")
+ ("spikes/out/4002523248-command-80265-0/" "get-self-test/")
+ ("spikes/out/4002523423-command-82888-0/" "get-benchmark/")
+ ("spikes/out/4002523094-command-78545-0/" "development-get-wrapper-asdf/"))

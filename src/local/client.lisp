@@ -55,26 +55,30 @@
       (decode-local-envelope buffer 4 end :space (local-client-space client)))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
-(declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t) (:read-groups t) (:versions t)) local-client) connect-local))
-(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend (write-groups nil) (read-groups nil) (versions nil))
+(declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t) (:read-groups t) (:versions t) (:conditional-groups t)) local-client) connect-local))
+(defun connect-local (path &key (max-frame 65536) (clock #'get-internal-real-time) io-backend
+                              (write-groups nil) (read-groups nil) (versions nil) (conditional-groups nil))
   "Pre: explicit Unix path and trusted monotonic clock. Post: owned client after verified WELCOME.
 No data operation during handshake; exact optional capabilities and deadline precede READY. Every incomplete exit closes ownership."
   (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock)
-               (typep write-groups 'boolean) (typep read-groups 'boolean) (typep versions 'boolean))
+               (typep write-groups 'boolean) (typep read-groups 'boolean) (typep versions 'boolean) (typep conditional-groups 'boolean))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-configuration))
   (%native-check-backend io-backend)
   (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend
-                                    :write-groups write-groups :read-groups read-groups :versions versions :waiter (make-local-waiter 1 io-backend)))
+                                    :write-groups write-groups :read-groups read-groups :versions versions
+                                    :conditional-groups conditional-groups :waiter (make-local-waiter 1 io-backend)))
          (until (local-until (local-now clock) 5)) (complete nil))
     (unwind-protect
      (handler-case
         (progn
           (setf (local-client-socket client) (connect-local-socket path until :clock clock))
-          (let ((size (encode-local-hello (local-client-output client) max-frame :write-groups write-groups :read-groups read-groups :versions versions)))
+          (let ((size (encode-local-hello (local-client-output client) max-frame :write-groups write-groups :read-groups read-groups
+                                        :versions versions :conditional-groups conditional-groups)))
             (transfer-local-client client (local-client-output client) 0 size :output until))
           (let ((envelope (receive-local-client client 4096 until)))
             (multiple-value-bind (frame inflight)
-                (decode-local-welcome (local-client-input client) envelope :write-groups write-groups :read-groups read-groups :versions versions)
+                (decode-local-welcome (local-client-input client) envelope :write-groups write-groups :read-groups read-groups
+                                      :versions versions :conditional-groups conditional-groups)
               (unless (and (<= 4096 frame (min 65536 max-frame)) (= inflight 1))
                 (error 'protocol-error :reason :local-client-negotiation))
               (setf (local-client-limit client) frame)))
@@ -87,9 +91,10 @@ No data operation during handshake; exact optional capabilities and deadline pre
           (error (cleanup) (push cleanup (local-client-cleanup-failures client))))))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
-(declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64 &optional (member nil 0 1 3))
+(declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64
+                         &optional (member nil 0 1 3) (or null b:octets))
                          (values t &optional t t)) finish-local-client-response))
-(defun finish-local-client-response (client id opcode count results until &optional version-operation)
+(defun finish-local-client-response (client id opcode count results until &optional version-operation applied)
   "Pre: one owned exchange awaiting its response. Post: fully correlated result, group output copied after complete validation.
 Malformed/rejected responses never expose partial group results; propagates protocol/authoritative rejection."
   (let ((envelope (receive-local-client client (local-client-limit client) until)))
@@ -98,6 +103,13 @@ Malformed/rejected responses never expose partial group results; propagates prot
     (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
       (error 'protocol-error :reason :local-client-response-id))
     (cond
+      ((and (= opcode +local-conditional-group-opcode+) (plusp count))
+       (let ((completed (decode-local-conditional-response (local-client-input client) envelope
+                          (local-client-group-csns client) (local-client-group-applied client) count)))
+         (when (>= (local-now (local-client-clock client)) until)
+           (error 'protocol-error :reason :local-client-deadline))
+         (replace results (local-client-group-csns client) :end1 count :end2 count)
+         (replace applied (local-client-group-applied client) :end1 count :end2 count) completed))
       ((and (= opcode +local-version-opcode+) version-operation)
        (multiple-value-prog1
            (decode-local-version-response (local-client-input client) envelope (local-client-space client) version-operation)
@@ -120,9 +132,10 @@ Malformed/rejected responses never expose partial group results; propagates prot
             (error 'protocol-error :reason :local-client-deadline)))))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
-(declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns) (member nil 0 1 3))
+(declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns)
+                         (member nil 0 1 3) (or null b:octets))
                          (values t &optional t t)) run-local-client-exchange))
-(defun run-local-client-exchange (client id size opcode &optional (count 0) results version-operation)
+(defun run-local-client-exchange (client id size opcode &optional (count 0) results version-operation applied)
   "Pre: READY owner and encoded/preflighted frame. Post: correlated terminal result or rejection, one ID consumed.
 First mutating send attempt makes errors OUTCOME-UNKNOWN; incomplete nonlocal exits close ownership without retry.
 Secondary cleanup errors are retained, never replace an existing nonlocal transfer. No pin/lease spans I/O."
@@ -137,11 +150,11 @@ Secondary cleanup errors are retained, never replace an existing nonlocal transf
          (handler-case
              (progn
                (transfer-local-client client (local-client-output client) 0 size :output until)
-               (multiple-value-prog1 (finish-local-client-response client id opcode count results until version-operation)
+               (multiple-value-prog1 (finish-local-client-response client id opcode count results until version-operation applied)
                  (setf (local-client-state client) :ready complete t)))
            (request-rejected (condition) (setf (local-client-state client) :ready complete t) (error condition))
            (error (condition) (fail-local-client client condition
-                               (or (not (null (member opcode '(1 3 4))))
+                               (or (not (null (member opcode '(1 3 4 7))))
                                    (and (= opcode +local-version-opcode+) (not (null (member version-operation '(1 3)))))))))
       (when (and (not complete) (not (eq :closed (local-client-state client))))
         (handler-case (close-local client)

@@ -25,6 +25,9 @@
 No engine capability; write descriptors or read-key copies remain only through dispatch and are cleared on every exit."
   (operations (make-array 8 :initial-element nil) :type simple-vector :read-only t)
   (csns (make-array 8 :element-type '(unsigned-byte 64) :initial-element 0) :type local-group-csns :read-only t)
+  (expected (make-array 8 :element-type '(unsigned-byte 64) :initial-element 0) :type local-group-csns :read-only t)
+  (conditions (make-array 8 :element-type '(unsigned-byte 8) :initial-element 0) :type b:octets :read-only t)
+  (applied (make-array 8 :element-type '(unsigned-byte 8) :initial-element 0) :type b:octets :read-only t)
   (spans (make-array 40 :element-type '(unsigned-byte 32) :initial-element 0)
          :type (simple-array (unsigned-byte 32) (*)) :read-only t))
 
@@ -34,4 +37,6 @@ No engine capability; write descriptors or read-key copies remain only through d
   "Pre: owning actor after last use, no asynchronous borrower. Post: no retained request or decoded CSN/span.
 Fixed arrays reused; no I/O, allocation, publication or retry."
   (fill (local-group-workspace-operations work) nil)
+  (fill (local-group-workspace-expected work) 0) (fill (local-group-workspace-conditions work) 0)
+  (fill (local-group-workspace-applied work) 0)
   (fill (local-group-workspace-csns work) 0) (fill (local-group-workspace-spans work) 0) nil)

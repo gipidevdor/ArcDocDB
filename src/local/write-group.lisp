@@ -37,7 +37,7 @@ Reads/PING/rejections/explicit groups drain prior writes; conditional dependenci
     (when (= 6 (envelope-code envelope))
       (dispatch-local-version-pending engine connection queue clock)
       (return-from dispatch-local-pending nil))
-    (when (and (member (envelope-code envelope) '(4 5))
+    (when (and (member (envelope-code envelope) '(4 5 7))
                (< (local-now clock) (local-connection-deadline connection)))
       (flush-local-write-queue engine queue clock)
       (if (>= (local-now clock) (local-connection-deadline connection))

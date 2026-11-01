@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Add verified current CSNs and optimistic conditional PUT/DELETE to the engine
+  and negotiated Unix client. Stale versions conflict before maintenance or WAL
+  effects; matching writes retain strong durability and unknown-outcome handling.
+  [Contract](docs/adr/0085-conditional-current-writes.md) and
+  [evidence](spikes/results/2026-11-01-conditional-writes/report.md).
+
 - Integrate negotiated Unix read groups with canonical GET, verified cache and
   automatic RAM/paged primary storage. Validate complete results and actual
   frame budgets; preserve order/absence and close incomplete ownership.

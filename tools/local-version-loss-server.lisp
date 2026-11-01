@@ -1,0 +1,13 @@
+;;;; C4: drop one constructed conditional response; real product startup, strong write and service ownership.
+(require :asdf)
+(asdf:load-asd (merge-pathnames "../arcdocdb.asd" *load-truename*))
+(let ((*standard-output* *error-output*)) (asdf:load-system "arcdocdb/local" :verbose nil))
+(let ((queue (symbol-function 'arcdocdb.local::queue-local-output)) (dropped nil))
+  (setf (symbol-function 'arcdocdb.local::queue-local-output)
+        (lambda (connection size kind now)
+          (let ((env (arcdocdb.local::local-connection-pending connection)))
+            (if (and (not dropped) (eq kind :response) env (= 6 (arcdocdb.local:envelope-code env)))
+                (progn (setf dropped t) (arcdocdb.local::close-local-connection connection)
+                       (format *error-output* "CONDITIONAL-RESPONSE-DROPPED~%") (finish-output *error-output*) nil)
+                (funcall queue connection size kind now)))))
+  (arcdocdb.local::server-cli-main (uiop:command-line-arguments)))

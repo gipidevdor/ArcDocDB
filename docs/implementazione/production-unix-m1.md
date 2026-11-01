@@ -33,6 +33,7 @@ increasing; no reuse or automatic retry after disconnect.
 | 3 DELETE | `key: bstr` | durable unsigned u64 CSN, even if already absent |
 | 4 WRITE-GROUP, explicitly negotiated | `[[1,key,document] or [3,key], ...]`, 1..8 members | exact increasing positive u64 CSN array |
 | 5 READ-GROUP, explicitly negotiated | `[key:bstr,...]`, 1..8 members | exact array of `[true,document:bstr]` or `[false,null]` |
+| 6 VERSION, explicitly negotiated | `[0,key]`, `[1,key,expected,document]` or `[3,key,expected]` | versioned GET or conditional strong write result |
 
 Default HELLO/WELCOME retain their original bytes and four commands.
 `connect-local :write-groups t` offers HELLO key `2: [4]`; the server then
@@ -42,11 +43,19 @@ Without negotiation, opcode 4 returns status 4 before engine admission.
 See [ADR-0083](../adr/0083-explicit-unix-write-groups.md).
 
 `connect-local :read-groups t` offers opcode 5. HELLO key 2 is the ordered
-nonempty subset `[4]`, `[5]` or `[4,5]`; WELCOME includes `[0,1,2,3]` followed
-by exactly that subset. Both options can be enabled together. The client checks
-both flags and the absolute deadline before READY; incomplete handshakes close
+nonempty subset of `[4,5,6]`; WELCOME includes `[0,1,2,3]` followed
+by exactly that subset. `:versions t` enables opcode 6 alongside either group option. The client checks
+all flags and the absolute deadline before READY; incomplete handshakes close
 ownership. Default and write-only bytes remain unchanged.
 See [ADR-0084](../adr/0084-explicit-unix-read-groups.md).
+
+Versioned GET returns `[true,CSN,document:bstr]` or `[false,0,null]`; conditional
+PUT/DELETE returns `[true,new-CSN]` or `[false,current-live-CSN]`. Expected zero
+tests absence. A conflict is status 0 and consumes no CSN/flush. Version operations
+drain earlier collected writes before comparison; conditional writes use the
+existing strong writer individually. Versioned GET requires at least 60,040 body
+bytes; other limits and mutation uncertainty remain unchanged.
+See [ADR-0085](../adr/0085-conditional-current-writes.md).
 
 Binary keys are 1 to 1024 bytes; documents are 1 to 60,000 bytes. A document
 contains one CBOR item with minimal headers/valid UTF-8, maximum

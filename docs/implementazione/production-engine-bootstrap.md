@@ -65,6 +65,16 @@ adds no Query Engine, CBOR extraction, or application document validation.
 The Unix session must apply its document contract before admission.
 The core introduces no alternative decoder or format.
 
+`leggi-documento-con-versione` returns status, copied byte count and verified
+current CSN (`0` for absence). `scrivi-documento-se-versione` and
+`cancella-documento-se-versione` compare the expected u64 token with the current
+live version and return `:applied/new-strong-CSN` or `:conflict/current-live-CSN`.
+Expected zero tests absence; positive tokens prevent stale overwrites even
+after delete/reinsert. Conflicts precede maintenance and WAL effects. These
+single-operation conditions reuse the serial writer, not transaction write sets
+or historical MVCC. The original GET still returns exactly two values.
+[Contract](../adr/0085-conditional-current-writes.md).
+
 The writer reuses batch, group, and scratch. Format/capacity preflight precedes
 the CSN, including load, key arena, slot credit, and index revision.
 Canonical preflight does not mutate the index or reserve concurrent resources:

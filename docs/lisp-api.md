@@ -65,6 +65,18 @@ reusing cache and automatic primary storage. This is one current serial view,
 without historical MVCC. Both group options can be enabled together.
 [Read-group contract](adr/0084-explicit-unix-read-groups.md).
 
+To prevent overwriting a newer value, connect with `:versions t` and call
+`(client-get-version client key)`. It returns `:found`, private document octets
+and the positive u64 commit CSN, or `:absent`, `nil` and `0`. Pass the token to
+`(client-put-if client key document expected)` or
+`(client-delete-if client key expected)`. The result is `:applied` and a new
+strong CSN, or `:conflict` and the current live CSN (`0` if absent). Expected
+`0` means insert only if currently absent; a stale positive version still
+conflicts after delete/reinsert. Conflicts consume no CSN or flush. All three
+capability options can be combined. Lost mutation responses remain
+`outcome-unknown`; do not retry without reconciling application intent.
+[Conditional operation contract](adr/0085-conditional-current-writes.md).
+
 For embedding within one serial actor, `arcdocdb.engine` exposes the M1 core.
 Its handles have thread ownership and lifecycle requirements. Consult the
 [current profile](implementazione/README.md), the

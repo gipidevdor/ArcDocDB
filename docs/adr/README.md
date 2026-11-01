@@ -198,3 +198,4 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0082](0082-bounded-group-append.md) | Bounded coalesced WAL append using existing exclusive M1 scratch | Incremental serial integration; independent SEALs and strong flush preserved |
 | [0083](0083-explicit-unix-write-groups.md) | Negotiated explicit Unix write groups for a single synchronous client | Incremental serial integration; independent outcomes, no implicit retry |
 | [0084](0084-explicit-unix-read-groups.md) | Negotiated serial read groups using canonical GET, cache and RAM/paged primary storage | Incremental M1 integration; complete results within one negotiated frame |
+| [0085](0085-conditional-current-writes.md) | Current CSN reads and optimistic conditional strong writes | Single-operation M1 compare and apply, optional Unix capability 6 |

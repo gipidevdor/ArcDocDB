@@ -1,0 +1,12 @@
+;;;; C4: strict compilation and targeted version/conditional integration.
+(require :asdf)
+(setf asdf:*compile-file-warnings-behaviour* :error asdf:*compile-file-failure-behaviour* :error)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(arcdocdb.local.wire.tests:run)
+(arcdocdb.local.server.tests:run)
+(dolist (test arcdocdb.engine.tests::*tests*)
+  (when (search "CONDITIONAL" (symbol-name test)) (funcall test) (format t "ok ~A~%" test)))
+(dolist (test arcdocdb.local.process.tests::*tests*)
+  (when (search "VERSION" (symbol-name test)) (funcall test) (format t "ok ~A~%" test)))
+(format t "~S~%" '(:kind :conditional-focused :status :passed))

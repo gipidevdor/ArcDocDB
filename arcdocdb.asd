@@ -238,7 +238,7 @@
                              (:file "compaction-write") (:file "compaction-verify") (:file "compaction-plan")
                              (:file "compaction-relocate") (:file "compaction-install") (:file "compaction") (:file "write")
                              (:file "write-group-index") (:file "write-group-legacy") (:file "write-group-plan")
-                             (:file "write-group-commit") (:file "write-group") (:file "read")))
+                             (:file "write-group-commit") (:file "write-group") (:file "read") (:file "conditional")))
                (:module "verify" :serial t
                 :components ((:file "package") (:file "types") (:file "read")
                              (:file "order") (:file "report") (:file "resources"))))
@@ -253,8 +253,9 @@
   :components ((:file "package") (:file "wire") (:file "group-types") (:file "native") (:file "state") (:file "readiness")
                (:file "group-read") (:file "group-build") (:file "group-dispatch")
                (:file "read-group-wire") (:file "read-group-dispatch")
+               (:file "version-wire") (:file "version-dispatch")
                (:file "dispatch") (:file "server") (:file "write-group") (:file "client") (:file "client-group")
-               (:file "client-read-group") (:file "cli")))
+               (:file "client-read-group") (:file "client-version") (:file "cli")))
 
 (defsystem "arcdocdb/tests"
   :description "Test di ArcDocDB."
@@ -416,12 +417,13 @@
                (:file "engine/write-group")
                (:file "engine/group-append")
                (:file "engine/active-arena")
+               (:file "engine/conditional")
                (:module "verify" :serial t
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))
                (:module "local" :serial t
-                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "native") (:file "server")
-                             (:file "explicit-group") (:file "client-group") (:file "read-group")
-                             (:file "processes") (:file "group-processes") (:file "read-group-processes"))))
+                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "native") (:file "server")
+                             (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version")
+                             (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.ci.tests '#:run)))

@@ -55,6 +55,7 @@ An admitted fault is not translated into busy; the service closes, preserving th
   (case (envelope-code envelope)
     (4 (local-dispatch-write-group engine connection envelope clock))
     (5 (local-dispatch-read-group engine connection envelope clock))
+    (6 (local-dispatch-version engine connection envelope clock))
     (otherwise (multiple-value-bind (status key document)
           (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
         (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)))))

@@ -57,7 +57,7 @@ into individual admissions; no admitted write, encoding failure or unknown outco
 Reads/PING/rejections/explicit groups drain prior writes as barriers; one decoder invocation per request."
   (let ((envelope (local-connection-pending connection)))
     (unless envelope (error 'arcdocdb.conditions:invariant-violation :reason :local-pending-envelope))
-    (when (and (member (envelope-code envelope) '(4 5))
+    (when (and (member (envelope-code envelope) '(4 5 6))
                (< (local-now clock) (local-connection-deadline connection)))
       (flush-local-write-queue engine queue clock)
       (if (>= (local-now clock) (local-connection-deadline connection))

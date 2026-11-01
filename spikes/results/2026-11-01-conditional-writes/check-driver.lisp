@@ -1,0 +1,13 @@
+;;;; C4: compile the measurement driver strictly without running timed work during qualification.
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(setf asdf:*compile-file-warnings-behaviour* :error)
+(asdf:load-system "arcdocdb/tests")
+(load "tools/evidence-storage.lisp")
+(let ((root (uiop:pathname-directory-pathname *load-truename*)))
+  (uiop:with-temporary-file (:pathname target :stream stream :keep nil)
+    (close stream)
+    (handler-bind ((warning (lambda (condition) (error "Measurement driver warning: ~A" condition))))
+      (multiple-value-bind (fasl warnings failure) (compile-file (merge-pathnames "bench.lisp" root) :output-file target)
+        (unless (and fasl (not warnings) (not failure)) (error "Measurement driver compilation failed"))))))
+(format t "~S~%" '(:kind :conditional-driver-check :status :passed :timed-work nil))

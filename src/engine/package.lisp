@@ -18,6 +18,7 @@
            #:politica-indice-automatico #:crea-politica-indice-automatico
            #:configura-budget-indice-motore #:statistiche-indice-motore #:motore #:apri-motore #:chiudi-motore #:stato-motore
            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore
+           #:leggi-documento-con-versione #:scrivi-documento-se-versione #:cancella-documento-se-versione
            #:opzione-indice-paginato #:crea-opzione-indice-paginato #:fonte-indice-motore #:modo-indice-motore
            #:costruisci-indice-paginato-motore #:attiva-indice-paginato-motore #:rinnova-indice-paginato-motore
            #:opzione-scoperta-indice #:crea-opzione-scoperta-indice

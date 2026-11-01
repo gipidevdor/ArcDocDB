@@ -35,7 +35,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
   (let ((socket (local-connection-socket connection)))
     (setf (local-connection-socket connection) nil (local-connection-state connection) :closed
           (local-connection-pending connection) nil (local-connection-write-groups connection) nil
-          (local-connection-read-groups connection) nil)
+          (local-connection-read-groups connection) nil (local-connection-versions connection) nil)
     (when socket (close-local-socket socket)))
   nil)
 
@@ -69,11 +69,13 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
           (declare (ignore inflight)) ; il profilo negozia sempre un solo lavoro in volo.
           (setf (local-connection-limit connection) (min 65536 frame)
                 (local-connection-write-groups connection) (envelope-write-groups envelope)
-                (local-connection-read-groups connection) (envelope-read-groups envelope))
+                (local-connection-read-groups connection) (envelope-read-groups envelope)
+                (local-connection-versions connection) (envelope-versions envelope))
           (queue-local-output connection
             (encode-local-welcome (local-connection-output connection) (local-connection-limit connection)
                                   :write-groups (local-connection-write-groups connection)
-                                  :read-groups (local-connection-read-groups connection))
+                                  :read-groups (local-connection-read-groups connection)
+                                  :versions (local-connection-versions connection))
             :welcome (local-now clock)))
         (let ((id (envelope-id envelope)))
           (unless (and (= 2 (envelope-kind envelope)) (< (local-connection-last-id connection) id))
@@ -143,7 +145,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
             (progn
               (setf (local-connection-socket slot) socket (local-connection-last-id slot) 0
                     (local-connection-limit slot) 4096 (local-connection-write-groups slot) nil
-                    (local-connection-read-groups slot) nil)
+                    (local-connection-read-groups slot) nil (local-connection-versions slot) nil)
               (reset-local-input slot now)
               (setf (local-connection-state slot) :hello (local-connection-deadline slot) (local-until now 5)))
             (close-local-socket socket)))

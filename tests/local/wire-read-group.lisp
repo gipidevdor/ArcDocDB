@@ -34,7 +34,7 @@
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (deftest test-REQ-IPC-002-read-group-capability-errors-and-option-preflight
   (dolist (offer (list (bytes #x80) (bytes #x82 5 4) (bytes #x82 5 5) (bytes #x82 4 4)
-                      (bytes #x82 4 6) (bytes #x83 4 5 6) (bytes #x81 3) (bytes #x81 #x18 5)))
+                      (bytes #x82 4 7) (bytes #x84 4 5 6 7) (bytes #x81 3) (bytes #x81 #x18 5)))
     (signals l:protocol-error (envelope (framed (body 0 0 0 (join (bytes #xa3 0 #x19 #x10 0 1 1 2) offer))))))
   (dolist (option '(1 :yes "true"))
     (signals arcdocdb.conditions:invalid-argument (l:connect-local "/not-opened" :read-groups option))

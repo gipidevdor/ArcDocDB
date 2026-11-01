@@ -3,9 +3,31 @@
 (in-package #:arcdocdb.engine)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CCH-002 REQ-CCH-004 REQ-MVC-006 REQ-AFF-008
+(declaim (ftype (function (motore g:contesto-get b:octets b:index (function () b:u64))
+                         (values (member :found) b:index b:u64 &optional)) leggi-candidato-verificato-motore))
+(defun leggi-candidato-verificato-motore (engine context target start clock)
+  "Pre: serial BUSY owner and canonical CANDIDATE. Post: copied value and positive CSN authorized together after completion.
+Candidate words are copied before resolver work reuses engine scratch; verification failures authorize neither value nor version."
+  (g:copia-candidato-get context (motore-words engine))
+  (let ((csn (aref (motore-words engine) 0)))
+    (unless (plusp csn) (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-zero-version))
+    (case (multiple-value-bind (source cache-status)
+              (if (motore-automatic-index engine) (read-automatic-record engine context)
+                  (gd:leggi-record-serie-get context (motore-controller engine)))
+            (unless (eq source :buffer-required) (registra-esito-cache-motore engine cache-status)) source)
+      ((:cache :segment) nil)
+      (:buffer-required (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-record-buffer))
+      (otherwise (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-source)))
+    (let* ((end (g:copia-valore-get context target start)) (copied (- end start)))
+      (multiple-value-bind (status size) (g:concludi-get context (funcall clock))
+        (unless (and (eq status :found) (= size copied) (plusp size))
+          (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-result))
+        (values :found size csn)))))
+
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CON-004 REQ-CMP-007 REQ-AFF-002 REQ-AFF-008 REQ-CCH-002 REQ-CCH-004
 (declaim (ftype (function (motore b:octets b:octets b:index)
-                         (values (member :found :absent) b:index &optional))
+                         (values (member :found :absent) b:index b:u64 &optional))
                 leggi-documento-corrente-motore))
 (defun leggi-documento-corrente-motore (engine key target start)
   "Pre: owner, MOTORE-BUSY true, validated inputs; canonical view and exclusive GET context.
@@ -27,23 +49,9 @@ Every exit abandons GET; a cleanup error does not replace the primary exit."
                   (multiple-value-bind (status size) (g:concludi-get context (funcall clock))
                     (unless (and (eq status :absent) (zerop size))
                       (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-absence))
-                    (values :absent 0)))
+                    (values :absent 0 0)))
                  (:candidate
-                  (case (multiple-value-bind (source cache-status)
-                            (if (motore-automatic-index engine) (read-automatic-record engine context)
-                                (gd:leggi-record-serie-get context (motore-controller engine)))
-                          (unless (eq source :buffer-required) (registra-esito-cache-motore engine cache-status))
-                          source)
-                    ((:cache :segment) nil)
-                    (:buffer-required
-                     (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-record-buffer))
-                    (otherwise
-                     (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-source)))
-                  (let* ((end (g:copia-valore-get context target start)) (copied (- end start)))
-                    (multiple-value-bind (status size) (g:concludi-get context (funcall clock))
-                      (unless (and (eq status :found) (= size copied) (plusp size))
-                        (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-result))
-                      (values :found size))))
+                  (leggi-candidato-verificato-motore engine context target start clock))
                  (:retry
                   (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-retry))
                  (otherwise
@@ -57,12 +65,13 @@ Every exit abandons GET; a cleanup error does not replace the primary exit."
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CON-004 REQ-AFF-002 REQ-AFF-004 REQ-LIM-001
 (declaim (ftype (function (motore b:octets b:octets &key (:start b:index))
-                         (values (member :found :absent) b:index &optional))
-                leggi-documento))
-(defun leggi-documento (engine key target &key (start 0))
+                         (values (member :found :absent) b:index b:u64 &optional))
+                leggi-documento-con-versione))
+(defun leggi-documento-con-versione (engine key target &key (start 0))
   "Pre: owner thread, READY engine; stable KEY and exclusive TARGET distinct from the key;
 START is an index in target, sufficient capacity for the value. Nonreentrant serial API.
-Post: (values :FOUND byte-copiati) in TARGET from START, or (:ABSENT 0) without modifying it.
+Post: (values :FOUND byte-count current-CSN) in TARGET from START, or (:ABSENT 0 0) without modifying it.
+The positive u64 version is authorized only after canonical record verification and GET completion.
 The default clock is the engine's no-argument function; no additional clock/I/O.
 Invalid input before GET; every error in the admitted request makes it FAULTED and propagates
 the same cause. On error, TARGET contents are not an authorized result."
@@ -95,3 +104,13 @@ the same cause. On error, TARGET contents are not an authorized result."
                                                 :reason :engine-read-unwind))
                (error (cleanup) (push cleanup (motore-cleanup-failures engine)))))
         (setf (motore-busy engine) nil)))))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CON-004 REQ-AFF-002 REQ-AFF-004 REQ-LIM-001
+(declaim (ftype (function (motore b:octets b:octets &key (:start b:index))
+                         (values (member :found :absent) b:index &optional)) leggi-documento))
+(defun leggi-documento (engine key target &key (start 0))
+  "Pre: READY serial owner, stable key, exclusive sufficiently large target and valid START.
+Post: exactly two values :FOUND/byte-count or :ABSENT/0; canonical GET admission and fault rules apply.
+The versioned API owns verification, copying and cleanup; no extra lookup or allocation here."
+  (multiple-value-bind (status size) (leggi-documento-con-versione engine key target :start start)
+    (values status size)))

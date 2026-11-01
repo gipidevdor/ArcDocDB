@@ -319,3 +319,13 @@ separates strong-flush cost, actual group density and wall throughput with the
 same before/after drivers. It includes RAM/paged, maintenance and limit-1
 controls; controlled bursts do not establish natural-arrival concurrency or
 power-loss guarantees. [C1 review and decision table](../../spikes/results/2026-11-01-disjoint-read-groups/review.md).
+
+
+Caller-owned grouped output is also available over the negotiated read-group
+operation: `client-get-group-into` packs documents into one fixed 65,536-byte
+caller arena and records per-key byte lengths (zero for absence) in a caller
+UB64 array. The shared complete response grammar precedes copying. Only a
+successful return authorizes the output; late failures can leave unconfirmed
+bytes. It preserves one current serial view, duplicate order and RAM/paged
+transparency. See the [API contract](../lisp-api.md#caller-owned-group-read-buffers)
+and [method and qualification](../../spikes/results/2026-11-01-client-group-buffer/report.md).

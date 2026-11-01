@@ -1,4 +1,4 @@
-;;; OWNER: immutable frame and exclusive fixed spans; no engine or peer capability.
+;;; OWNER: immutable frame, exclusive private spans and caller output; no engine or peer capability.
 (in-package #:arcdocdb.local)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
@@ -86,13 +86,13 @@ Validates embedded minimal CBOR before any document copy; malformed or over-budg
               (values (logior (ash start 32) size) next)))
       (otherwise (%wire-fail :local-read-group-boolean (1- cursor))))))
 
-;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-008
-(declaim (ftype (function (b:octets envelope cbor:spazio-cbor local-read-spans (integer 1 8)) simple-vector)
-                decode-local-read-group-response))
-(defun decode-local-read-group-response (buffer envelope space spans count)
-  "Pre: correlated complete RESPONSE and exclusive fixed span scratch. Post: new private document/NIL vector.
-Exact count/end, all booleans/nulls/documents validated before any document copy; errors expose no partial result.
-REQUEST-REJECTED requires a validated error/null; malformed success is PROTOCOL-ERROR."
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor local-read-spans (integer 1 8))
+                         (values b:index &optional)) %wire-read-group-response-spans))
+(defun %wire-read-group-response-spans (buffer envelope space spans count)
+  "Pre: correlated complete RESPONSE and exclusive fixed span scratch. Post: all verified spans and aggregate document bytes.
+Exact count/end and every boolean/null/minimal document precede copying; authoritative errors require exact NULL.
+Malformed success ->PROTOCOL-ERROR, short scratch ->INVALID-ARGUMENT; partial private scratch is not response authority."
   (%wire-envelope-input buffer envelope)
   (unless (= 3 (envelope-kind envelope)) (%wire-fail :local-expected-response))
   (unless (<= count (length spans))
@@ -100,13 +100,44 @@ REQUEST-REJECTED requires a validated error/null; malformed success is PROTOCOL-
   (when (plusp (envelope-code envelope))
     (unless (%wire-null-p buffer (envelope-payload-start envelope) (envelope-payload-end envelope)) (%wire-fail :local-error-payload))
     (error 'request-rejected :reason :local-request-rejected :status (envelope-code envelope)))
-  (let* ((end (envelope-payload-end envelope))
+  (let* ((end (envelope-payload-end envelope)) (total 0)
          (cursor (%wire-expect buffer (envelope-payload-start envelope) end 4 count)))
     (dotimes (i count)
       (multiple-value-bind (span next) (%wire-read-result-span buffer cursor end space)
-        (setf (aref spans i) span cursor next)))
+        (setf (aref spans i) span cursor next) (incf total (ldb (byte 32 0) span))))
     (unless (= cursor end) (%wire-fail :local-read-result-trailing cursor))
-    (let ((results (make-array count :initial-element nil)))
-      (dotimes (i count)
-        (let ((span (aref spans i)))
-          (when (plusp span) (setf (svref results i) (%wire-copy buffer (ldb (byte 32 32) span) (ldb (byte 32 0) span)))))) results)))
+    (unless (<= total +server-max-frame+)
+      (error 'arcdocdb.conditions:invariant-violation :reason :local-read-result-aggregate)) total))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor local-read-spans (integer 1 8)) simple-vector)
+                decode-local-read-group-response))
+(defun decode-local-read-group-response (buffer envelope space spans count)
+  "Pre: correlated complete RESPONSE and exclusive scratch. Post: original new vector of independent documents/NIL.
+Both read-group APIs share the complete response validator; no document copy precedes its successful return."
+  (%wire-read-group-response-spans buffer envelope space spans count)
+  (let ((results (make-array count :initial-element nil)))
+    (dotimes (i count)
+      (let ((span (aref spans i)))
+        (when (plusp span) (setf (svref results i) (%wire-copy buffer (ldb (byte 32 32) span) (ldb (byte 32 0) span)))))) results))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor local-read-spans (integer 1 8) b:octets b:index local-read-spans)
+                         (values (integer 1 8) b:index &optional)) decode-local-read-group-into))
+(defun decode-local-read-group-into (buffer envelope space spans count target start lengths)
+  "Pre: correlated immutable response, exclusive scratch and distinct validated caller outputs. Post: COUNT/total bytes.
+All response/document/alias/output-range checks precede packing documents and lengths; zero length means absence.
+Invalid output use ->INVALID-ARGUMENT; malformed/rejected frames preserve outputs. No vector allocation or wire loan."
+  (when (or (eq target buffer) (eq lengths spans))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-read-result-output-alias))
+  (unless (<= count (length lengths))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-read-result-lengths))
+  (b:check-range target start start)
+  (let ((total (%wire-read-group-response-spans buffer envelope space spans count)) (cursor start))
+    (b:check-range target start (+ start total))
+    (dotimes (i count)
+      (let* ((span (aref spans i)) (size (ldb (byte 32 0) span)) (offset (ldb (byte 32 32) span)))
+        (when (plusp size) (replace target buffer :start1 cursor :end1 (+ cursor size) :start2 offset :end2 (+ offset size)))
+        (incf cursor size)))
+    (dotimes (i count) (setf (aref lengths i) (ldb (byte 32 0) (aref spans i))))
+    (values count total)))

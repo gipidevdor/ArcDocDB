@@ -133,6 +133,10 @@ No data operation during handshake; exact optional capabilities and deadline pre
         (handler-case (close-local client)
           (error (cleanup) (push cleanup (local-client-cleanup-failures client))))))))
 
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-008
+(declaim (ftype (function (local-client envelope (integer 1 8) (or null b:octets) b:index (or null local-read-spans) b:u64)
+                         (values t &optional t)) finish-local-client-read-group))
+
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64
                          &optional (member nil 0 1 3) (or null b:octets) (or null b:octets) b:index)
@@ -170,10 +174,7 @@ Malformed/rejected responses never expose partial group results; propagates prot
             (error 'protocol-error :reason :local-client-deadline))
           (replace results (local-client-group-csns client) :end1 count :end2 count) count))
       ((and (= opcode +local-read-group-opcode+) (plusp count))
-       (let ((documents (decode-local-read-group-response (local-client-input client) envelope
-                          (local-client-space client) (local-client-read-spans client) count)))
-         (when (>= (local-now (local-client-clock client)) until)
-           (error 'protocol-error :reason :local-client-deadline)) documents))
+       (finish-local-client-read-group client envelope count read-target read-start results until))
       (t (multiple-value-prog1
             (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
           (when (>= (local-now (local-client-clock client)) until)

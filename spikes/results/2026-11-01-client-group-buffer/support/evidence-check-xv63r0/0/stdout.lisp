@@ -1,0 +1,1 @@
+#.(progn (with-open-file (s "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-9HQtcu/case-32-worker-protocol-read-eval/MUST-NOT-EVALUATE" :direction :output) (write-line "BAD" s)) '(:status :ok))

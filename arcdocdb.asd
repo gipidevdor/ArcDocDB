@@ -444,9 +444,9 @@
                (:module "local" :serial t
                 :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "native") (:file "socket-buffer") (:file "server")
                              (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version") (:file "conditional-group")
-                             (:file "explicit-conditional-group") (:file "disjoint-read") (:file "client-get-into") (:file "client-receive")
+                             (:file "explicit-conditional-group") (:file "disjoint-read") (:file "client-get-into") (:file "client-receive") (:file "client-read-group-into")
                              (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes")
                              (:file "conditional-group-processes") (:file "explicit-conditional-processes") (:file "disjoint-read-processes")
-                             (:file "client-get-into-processes"))))
+                             (:file "client-get-into-processes") (:file "client-read-group-into-processes"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.ci.tests '#:run)))

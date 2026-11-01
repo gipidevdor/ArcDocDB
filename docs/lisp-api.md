@@ -92,6 +92,30 @@ reusing cache and automatic primary storage. This is one current serial view,
 without historical MVCC. Both group options can be enabled together.
 [Read-group contract](adr/0084-explicit-unix-read-groups.md).
 
+<a id="caller-owned-group-read-buffers"></a>
+### Reuse grouped read output
+
+With the same `:read-groups t` connection, call
+`(client-get-group-into client keys target lengths :count count :start start)`.
+It returns `count` and the total document-byte count. Reserve 65,536 bytes in a
+simple `(unsigned-byte 8)` target from `start` (default `0`), and at least `count`
+entries in an exclusive simple `(unsigned-byte 64)` lengths array. Present
+documents occupy consecutive slices in key order; each length is its positive
+byte count, or zero for absence. Duplicate keys produce duplicate slices. A
+CBOR null document has length one. An all-absent group leaves target unchanged
+and writes zero lengths. Unselected bytes and length entries stay unchanged.
+
+The fixed grant covers aggregate documents above 60,000 bytes without reserving
+one maximum-sized buffer per key. Selected keys and private client buffers must
+not alias caller outputs. Complete preflight precedes ID consumption and I/O;
+complete response/document validation precedes copying. Only successful return
+authorizes both outputs: late error, deadline or nonlocal exit can leave
+unconfirmed bytes and lengths. A whole-group rejection preserves both outputs
+and READY; other incomplete reads close without retry. No document/result vector
+is allocated by this copy path; per-frame protocol allocation remains. The
+[checked example](../examples/local-roundtrip.lisp) uses one target for both APIs.
+
+
 To prevent overwriting a newer value, connect with `:versions t` and call
 `(client-get-version client key)`. It returns `:found`, private document octets
 and the positive u64 commit CSN, or `:absent`, `nil` and `0`. Pass the token to

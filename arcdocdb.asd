@@ -430,7 +430,7 @@
                 :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
                              (:file "observer") (:file "cli") (:file "processes")))
                (:module "local" :serial t
-                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "native") (:file "server")
+                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "native") (:file "socket-buffer") (:file "server")
                              (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version") (:file "conditional-group")
                              (:file "explicit-conditional-group")
                              (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes")

@@ -28,6 +28,10 @@ existing cleanup and unknown-outcome semantics. Shutdown still closes only owned
 resources; no wire opcode, durable record, scheduler or per-client thread is added.
 A trusted injected backend may implement `:poll(buffer,count,ms)` for fault tests.
 
+Socket acquisition also verifies [full-frame kernel buffer grants](buffer-socket-local-m1.md).
+This addresses small Unix stream defaults separately from readiness waiting.
+Option syscalls occur only before FD handoff; the one-step-per-slot actor is unchanged.
+
 ## Verification decisions
 
 | Decision | Required checks |

@@ -152,6 +152,12 @@ its actual input/output interest. No fixed 1 ms delay is imposed per request.
 Partial progress does not renew the deadline. A slow client loses
 its own connection; others continue through the actor loop.
 
+Before handoff, new and accepted sockets reserve at least one complete M1 frame
+in each kernel buffer, preserving larger grants and verifying any increase.
+The bounded acquisition operation reduces fragmentation from small OS defaults;
+request scheduling, short-I/O handling and deadlines remain unchanged.
+[Buffer ownership/error contract](buffer-socket-local-m1.md).
+
 Explicit absolute path, maximum 100 UTF-8 bytes, no NUL. The existing runtime
 directory has mode 0700 and is owned by the service UID, with protected ancestors without symlinks or
 group/other writes; the socket has mode 0600. Root and the service UID are trusted.

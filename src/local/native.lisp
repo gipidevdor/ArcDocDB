@@ -63,6 +63,16 @@ Ownership: no effects; UNSUPPORTED-FORMAT before acquiring an FD."
 #+darwin (defconstant +native-so-error+ #x1007)
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 #+linux (defconstant +native-so-error+ 4)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+#+darwin (defconstant +native-so-send-buffer+ #x1001)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+#+linux (defconstant +native-so-send-buffer+ 7)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+#+darwin (defconstant +native-so-receive-buffer+ #x1002)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+#+linux (defconstant +native-so-receive-buffer+ 8)
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+(defconstant +native-frame-buffer-bytes+ 65540)
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 ;; sys/fcntl.h Darwin e asm-generic/fcntl.h Linux: flag FD, distinto da O_CLOEXEC.
 (defconstant +native-fd-cloexec+ 1)
@@ -111,6 +121,10 @@ Ownership: no effects; UNSUPPORTED-FORMAT before acquiring an FD."
 (sb-alien:define-alien-routine ("getsockopt" %native-getsockopt) sb-alien:int
   (fd sb-alien:int) (level sb-alien:int) (option sb-alien:int)
   (value (* sb-alien:int)) (size (* sb-alien:unsigned-int)))
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(sb-alien:define-alien-routine ("setsockopt" %native-setsockopt) sb-alien:int
+  (fd sb-alien:int) (level sb-alien:int) (option sb-alien:int)
+  (value (* sb-alien:int)) (size sb-alien:unsigned-int))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (native-fd native-octets fixnum fixnum)
@@ -200,14 +214,42 @@ Ownership: two local alien scalars, no I/O buffer copied."
   #-(or darwin linux) (%native-fail :local-native-platform :socket-error))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
+(declaim (ftype (function (native-fd fixnum) (values integer fixnum &optional)) %native-buffer-size)
+         (ftype (function (native-fd fixnum (integer 1 2147483647))
+                          (values integer fixnum &optional)) %native-set-buffer)
+         (ftype (function (t &optional t) null) %native-configure-buffers))
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(defun %native-buffer-size (fd option)
+  "Pre: owned socket and qualified buffer option. Post: effective grant or captured errno.
+Ownership: two local alien scalars, no retained pointers or request-path syscall."
+  #+(or darwin linux)
+  (sb-alien:with-alien ((value sb-alien:int 0) (size sb-alien:unsigned-int 4))
+    (let ((n (%native-getsockopt fd +native-sol-socket+ option (sb-alien:addr value) (sb-alien:addr size))))
+      (if (= n -1) (values -1 (sb-alien:get-errno))
+          (if (and (= n 0) (= size 4)) (values value 0)
+              (%native-fail :local-buffer-option-size :socket-buffer)))))
+  #-(or darwin linux) (%native-fail :local-native-platform :socket-buffer))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(defun %native-set-buffer (fd option bytes)
+  "Pre: exclusive new socket, qualified option and positive int grant. Post: one setsockopt result/errno.
+Ownership: stack-local int borrowed only for the syscall; no retry, wait or global sysctl change."
+  #+(or darwin linux)
+  (sb-alien:with-alien ((value sb-alien:int bytes))
+    (let ((n (%native-setsockopt fd +native-sol-socket+ option (sb-alien:addr value) 4)))
+      (values n (if (= n -1) (sb-alien:get-errno) 0))))
+  #-(or darwin linux) (%native-fail :local-native-platform :socket-buffer))
+
+;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-fd) (values integer fixnum &optional)) %native-configure))
 (defun %native-configure (fd)
-  "Pre: new exclusive FD. Post: CLOEXEC and NONBLOCK, preserving other flags.
+  "Pre: new exclusive socket FD. Post: CLOEXEC, NONBLOCK and full-frame kernel grants, preserving larger grants/flags.
 Ownership: the caller retains the FD even on failure; no global signal/umask changes."
   (sb-posix:fcntl fd sb-posix:f-setfd
                   (logior (sb-posix:fcntl fd sb-posix:f-getfd) +native-fd-cloexec+))
   (sb-posix:fcntl fd sb-posix:f-setfl
                   (logior (sb-posix:fcntl fd sb-posix:f-getfl) sb-posix:o-nonblock))
+  (%native-configure-buffers fd)
   (values 0 0))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
@@ -230,6 +272,15 @@ Ownership: POSIX syscalls only here; private metadata, FDs transferred only by t
                   (:accept (%native-accept (first arguments) (sb-sys:int-sap 0) (sb-sys:int-sap 0)))
                   (:listen (%native-listen (first arguments) 64))
                   (:socket-error (return-from %native-control (%native-socket-error (first arguments))))
+                  ((:send-buffer :receive-buffer)
+                   (return-from %native-control
+                     (%native-buffer-size (first arguments)
+                       (if (eq operation :send-buffer) +native-so-send-buffer+ +native-so-receive-buffer+))))
+                  ((:set-send-buffer :set-receive-buffer)
+                   (return-from %native-control
+                     (%native-set-buffer (first arguments)
+                       (if (eq operation :set-send-buffer) +native-so-send-buffer+ +native-so-receive-buffer+)
+                       (second arguments))))
                   (:poll (return-from %native-control
                            (arcdocdb.io::sonde-attesa-native (first arguments) (second arguments) (third arguments))))
                   (:wait-output (sb-sys:wait-until-fd-usable (first arguments) :output (second arguments) nil))
@@ -365,6 +416,25 @@ Ownership: no implicit FD close; no syscall retry."
   (multiple-value-bind (value errno) (apply #'%native-call backend operation arguments)
     (when (eql value -1) (%native-fail :local-native-syscall operation :errno errno))
     value))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(defun %native-configure-buffers (fd &optional backend)
+  "Pre: exclusive new socket and trusted injectable control backend. Post: both grants cover one M1 frame.
+Two bounded directions; larger grants preserved, smaller ones raised once and verified. No retry or wait.
+Ownership: caller retains FD on failure and closes it before exposure. Kernel grants are separate from Lisp buffers."
+  (%native-check-fd fd) (%native-check-backend backend)
+  (dolist (direction '(:send-buffer :receive-buffer))
+    (let ((grant (%native-required backend direction fd)))
+      (unless (typep grant '(integer 1 2147483647)) (%native-fail :local-buffer-grant :socket-buffer))
+      (when (< grant +native-frame-buffer-bytes+)
+        (unless (eql 0 (%native-required backend
+                         (if (eq direction :send-buffer) :set-send-buffer :set-receive-buffer)
+                         fd +native-frame-buffer-bytes+))
+          (%native-fail :local-buffer-set-result :socket-buffer))
+        (let ((effective (%native-required backend direction fd)))
+          (unless (and (typep effective '(integer 1 2147483647)) (>= effective +native-frame-buffer-bytes+))
+            (%native-fail :local-buffer-readback :socket-buffer))))))
+  nil)
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &key (:backend t)) (or null condition)) native-close))

@@ -22,7 +22,7 @@ read/write/conditional groups over a Unix socket.
 
 | Area | Starting point |
 |---|---|
-| Engine and local service | [M1 core](production-engine-bootstrap.md), [Unix socket](production-unix-m1.md) |
+| Engine and local service | [M1 core](production-engine-bootstrap.md), [Unix socket](production-unix-m1.md), [full-frame socket grants](buffer-socket-local-m1.md) |
 | Primary index | [Resident index](indice-primario.md), [automatic M1 backend](indice-automatico-operativo.md), [pages in the M1 GET path](indice-paginato-m1.md) |
 | Index images | [Building](costruzione-indice-m1.md), [activation](attivazione-indice-m1.md), [renewal](rinnovo-indice-m1.md), [maintenance](manutenzione-indice-m1.md) |
 | Committed overlay | [M1 location delta](delta-location-m1.md): bounded locations/tombstones and paged GET independent of resident lookup |

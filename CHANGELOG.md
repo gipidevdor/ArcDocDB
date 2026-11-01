@@ -7,6 +7,13 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Reserve and verify full-frame Unix socket kernel buffers before FD handoff,
+  preserving larger grants and existing short-I/O, fairness and cleanup rules.
+  Integrate owner-local histograms into the C4 service profiler to measure
+  fragmentation and actual completed throughput across 1/2/4/8 connections.
+  [Contract](docs/implementazione/buffer-socket-local-m1.md) and
+  [evidence](spikes/results/2026-11-01-unix-service-latency/report.md).
+
 - Expose independent conditional PUT/DELETE groups to one Unix client through
   negotiated opcode 7, with complete per-member outcomes and a shared strong flush.
   [Contract](docs/adr/0087-explicit-conditional-unix-groups.md) and

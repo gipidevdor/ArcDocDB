@@ -142,3 +142,9 @@ The [preregistered method](istogrammi-latenza-metodo.md) defines correctness,
 boundary, overflow, owner isolation, allocation and repeated-cost checks.
 Results retain exact source identities, parameters, original outputs and
 failures, without promoting component timing to database throughput.
+
+The [2026-11-01 qualification](../../spikes/results/2026-11-01-metrics-histograms/report.md)
+retains 23 dedicated cases on SBCL 2.6.9/2.6.10, the complete 2.6.9 product
+catalog, allocation assertions and all 120 repeated measurement windows.
+The default 2.6.9 accepted-update loop measured a median 14.99 ns/operation
+on the local Apple M4, including driver work; that is not engine throughput.

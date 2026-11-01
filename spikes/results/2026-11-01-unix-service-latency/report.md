@@ -105,4 +105,30 @@ free-space measurement. `_build`, this worktree's spike output and exact
 branches and shared Git storage were not cleaned. Final artifact/source checks
 run again after cleanup before publication.
 
+The final main reconciliation also includes the completed counter/aggregation
+component from `5c0a5a1` and the independently measured offline comparison from
+`dc8e3fc`. Warning-as-error product builds and affected metrics/backup/verifier/
+Unix suites passed on both runtimes; the later offline-only change received
+fresh forced builds and both offline suites on both runtimes. The final docs,
+CI and static audits passed again (568 documents, 1,188 HTML pages, 90,601 local
+links, 56 packages, 758 exported bindings and 670 prose contracts).
+
+Four final large-read controls reuse the exact original benchmark definitions,
+server and common adapter: format 2, resident/paged, one/eight connections,
+five windows of 400 rounds each, **36,000 checked GETs**. Results are 576.00/529.84
+MB/s with one connection and 764.75/728.99 MB/s with eight (resident/paged).
+Their source scope is the completed metric integration before the subsequent
+offline-only comparison change; no read/engine/transport source changed in that
+later update. All raw controls are retained, with the isolated C4 reader-scope
+failure and its corrected driver variant.
+
+The [final 1,750-file identity](late-main/source-identity.lisp) distinguishes
+earlier unchanged-source integration from the seven explicit backup extension
+paths and their fresh checks. Against `dc8e3fc`, the sole product difference is
+`src/local/native.lisp`, byte-identical to the native file in the earlier full
+runs. [Final closure](late-closure.lisp) verifies the new copies separately from
+the original archive. [Final cleanup](late-cleanup.lisp) removed four regenerated
+roots totaling another 159,262,841 logical bytes. These are cumulative removals
+of generated files across the two phases, not a net physical-space claim.
+
 [Preregistered method and amendment](method.md) · [Two C1 readings](review.md).

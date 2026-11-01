@@ -103,3 +103,20 @@ on the integrated tree. Rebuild/verify all docs and run the CI/source audits.
 Retain the earlier full-suite identity and the exact combined-source integration
 identity separately; do not relabel affected-suite integration as a second
 whole-repository full run. The server retains one transfer per slot/turn.
+
+During publication the other completed work advanced main again. Preserve the
+closed scope, merge committed `5c0a5a1` metrics/counter aggregation, and rerun the
+affected integration spike on both runtimes, docs, CI and static audits. Reuse
+the original trusted benchmark definitions without its all-case entry point for
+four 60,000-byte format-2 resident/paged 1/8-connection controls (five windows,
+400 rounds): unchanged original driver/server/common hashes, independent latency,
+CSN/version/server oracles and an explicitly hashed selection adapter. This is
+a selected final control, not another 66-case campaign.
+
+Then reconcile `dc8e3fc`'s offline-only exact-buffer comparison. Its seven
+changed non-result paths are explicit in the final identity; compare earlier
+sources outside exactly that set, and force fresh product builds plus the
+affected offline suites on both runtimes. Repeat final docs/CI/static audits.
+The final product difference against that upstream is only the already fully
+qualified Unix native file. Retain late command bytes and failed loader variant
+in their own closure, then clean only the newly regenerated owned paths.

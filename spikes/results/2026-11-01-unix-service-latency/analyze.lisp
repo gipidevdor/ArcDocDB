@@ -58,9 +58,10 @@
   (let* ((root (merge-pathnames (uiop:ensure-directory-pathname name) *here*))
          (start (data (merge-pathnames "started.lisp" root))) (done (data (merge-pathnames "completed.lisp" root)))
          (calibration (not (null (member (first (getf done :command)) '("--calibrate" "--self-test") :test #'equal))))
-         (small (equal (first (getf done :command)) "--self-test"))
+         (small (not (null (member (first (getf done :command)) '("--self-test" "--transport-self-test") :test #'equal))))
+         (transport (not (null (member (first (getf done :command)) '("--transport-check" "--transport-self-test") :test #'equal))))
          (rounds (if small 20 400)) (repeats (if small 2 (if calibration 6 5)))
-         (expected (if small 2 (if calibration 8 66))) (cases nil) (all nil) (server-all nil))
+         (expected (if transport 4 (if small 2 (if calibration 8 66)))) (cases nil) (all nil) (server-all nil))
     (ensure (and (eq :passed (getf done :status)) (= expected (getf done :cases))
                  (= (* expected repeats) (getf done :windows))))
     (loop for file in '("bench.lisp" "server.lisp" "common.lisp")
@@ -124,11 +125,12 @@
     ((and (= 3 (length args)) (equal (first args) "--compare"))
       (let ((before (campaign (second args))) (after (campaign (third args))) (comparisons nil))
         (ensure (equal (getf before :runtime) (getf after :runtime)) :same-runtime)
-        (loop for left in (getf before :cases) for right in (getf after :cases) do
-          (ensure (equal (getf left :key) (getf right :key)))
+        (loop for right in (getf after :cases)
+              for left = (find (getf right :key) (getf before :cases) :key (lambda (r) (getf r :key)) :test #'equal) do
+          (ensure left :matching-baseline)
           (push (list :key (getf left :key) :baseline left :candidate right
                   :throughput-gain (/ (getf right :median-operations-per-second) (getf left :median-operations-per-second))) comparisons))
-        (save (format nil "comparison-~A.lisp" (string-right-trim "/" (third args)))
+        (save (format nil "comparison-~A.lisp" (substitute #\- #\/ (string-right-trim "/" (third args))))
               (list :kind :unix-comparison :status :passed :before (public-summary before)
                     :after (public-summary after) :cases (reverse comparisons)))
         (format t "~S~%" (list :kind :unix-comparison :status :passed :cases (length comparisons)))))

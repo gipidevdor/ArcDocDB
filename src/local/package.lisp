@@ -6,7 +6,7 @@
   (:local-nicknames (#:b #:arcdocdb.binary) (#:cbor #:arcdocdb.cbor)
                    (#:e #:arcdocdb.engine))
   (:export #:serve-local #:connect-local #:close-local
-           #:client-put #:client-get #:client-delete #:client-ping
+           #:client-put #:client-get #:client-get-into #:client-delete #:client-ping
            #:client-write-group #:client-get-group
            #:client-write-group-if
            #:client-get-version #:client-put-if #:client-delete-if

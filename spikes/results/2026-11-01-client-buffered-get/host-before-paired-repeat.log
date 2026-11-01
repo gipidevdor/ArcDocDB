@@ -1,0 +1,787 @@
+  PID  PPID  %CPU %MEM STAT UCOMM
+    1     0   0.2  0.1 Ss   launchd         
+  473     1   0.0  0.0 S    AssetCacheLocato
+  551     1   0.1  0.2 Ss   logd            
+  554     1   0.0  0.0 Ss   UserEventAgent  
+  556     1   0.0  0.0 Ss   fseventsd       
+  557     1   0.0  0.0 Ss   mediaremoted    
+  561     1   0.0  0.0 Ss   systemstats     
+  565     1   0.0  0.0 Ss   configd         
+  567     1   0.0  0.0 Ss   powerd          
+  568     1   0.0  0.0 Ss   IOMFB_bics_daemo
+  572     1   0.0  0.0 Ss   remoted         
+  576     1   0.0  0.0 Ss   corespeechd_syst
+  578     1   0.0  0.0 Ss   watchdogd       
+  581     1   0.0  0.1 Ss   mds             
+  583     1   0.0  0.0 Ss   kernelmanagerd  
+  584     1   0.0  0.0 Ss   diskarbitrationd
+  588     1   0.0  0.0 Ss   syslogd         
+  590     1   0.0  0.0 Ss   thermalmonitord 
+  591     1   0.0  0.0 Ss   contextstored   
+  592     1   0.0  0.0 Ss   xprotectd       
+  593     1   0.4  0.1 Ss   opendirectoryd  
+  595     1   0.0  0.1 Ss   apsd            
+  596     1   0.0  0.0 Ss   launchservicesd 
+  597     1   0.0  0.0 Ss   timed           
+  598     1   0.0  0.0 Ss   usbmuxd         
+  599     1   0.0  0.0 Ss   securityd       
+  601     1   0.0  0.1 Ss   locationd       
+  602     1   0.0  0.0 Ss   nesessionmanager
+  604     1   0.0  0.0 Ss   autofsd         
+  605     1   0.0  0.1 Ss   dasd            
+  609     1   0.0  0.0 Ss   distnoted       
+  612     1   0.0  0.0 Ss   logind          
+  613     1   0.0  0.0 Ss   revisiond       
+  614     1   0.0  0.0 Ss   KernelEventAgent
+  616     1   0.0  0.0 Ss   usermanagerd    
+  618     1   0.0  0.1 Ss   bluetoothd      
+  619     1   0.3  0.0 Ss   notifyd         
+  621     1   0.0  0.0 Ss   corebrightnessd 
+  622     1   0.0  0.0 Ss   com.apple.cmio.r
+  625     1   0.0  0.4 Ss   WindowServer    
+  626     1   0.0  0.1 Ss   tccd            
+  628     1   0.0  0.0 Ss   cfprefsd        
+  629     1   0.0  0.3 Ss   loginwindow     
+  630     1   0.1  0.1 Ss   runningboardd   
+  658     1   0.0  0.0 Ss   coreservicesd   
+  661     1   0.0  0.1 Ss   trustd          
+  672     1   0.0  0.0 Ss   containermanager
+  675     1   0.0  0.0 Ss   analyticsd      
+  681     1   0.0  0.1 Ss   lsd             
+  682     1   0.0  0.1 Ss   mDNSResponder   
+  686     1   0.0  0.0 Ss   apfsd           
+  689     1   0.1  0.0 Ss   clocksyncd      
+  690     1   0.0  0.0 SNs  netbiosd        
+  693     1   0.0  0.0 Ss   biometrickitd   
+  694     1   0.0  0.0 Ss   PowerUIAgent    
+  697     1   0.0  0.1 Ss   authd           
+  699     1   0.0  0.0 S    distnoted       
+  700     1   0.0  0.0 Ss   airportd        
+  704     1   0.0  0.0 Ss   eligibilityd    
+  706     1   0.0  0.0 S    distnoted       
+  708     1   0.0  0.1 Ss   syspolicyd      
+  717     1   0.0  0.0 Ss   symptomsd       
+  724     1   0.0  0.0 Ss   backupd         
+  736     1   0.0  0.0 Ss   backgroundtaskma
+  742     1   0.0  0.0 Ss   biomed          
+  750     1   0.0  0.0 Ss   socketfilterfw  
+  751     1   0.0  0.0 Ss   com.apple.Driver
+  752     1   0.0  0.1 Ss   com.apple.Driver
+  753     1   0.0  0.0 Ss   com.apple.AppleU
+  757     1   0.0  0.0 Ss   mDNSResponderHel
+  758     1   0.0  0.0 Ss   suhelperd       
+  760     1   0.0  0.0 S    distnoted       
+  763     1   0.0  0.0 Ss   com.apple.cmio.v
+  765     1   0.0  0.0 Ss   cameracaptured  
+  767     1   0.0  0.0 Ss   UVCAssistant    
+  774     1   0.0  0.0 S    distnoted       
+  787     1   0.0  0.1 Ss   coreaudiod      
+  793     1   0.0  0.0 S    distnoted       
+  809     1   0.0  0.0 S    distnoted       
+  813     1   0.0  0.1 Ss   modelmanagerd   
+  818     1   0.0  0.0 Ss   audiomxd        
+  819     1   0.0  0.0 Ss   installcoordinat
+  822     1   0.0  0.0 S    distnoted       
+  823     1   0.0  0.1 Ss   searchpartyd    
+  830   561   0.0  0.0 S    systemstats     
+  841     1   0.0  0.0 S    distnoted       
+  845     1   0.0  0.0 Ss   com.docker.vmnet
+  847     1   0.0  0.0 Ss   appleeventsd    
+  848     1   0.0  0.0 Ss   IOUserBluetoothS
+  854     1   0.0  0.0 Ss   kdc             
+  859     1   0.0  0.3 Ss   mds_stores      
+  879     1   0.0  0.0 S    distnoted       
+  884     1   0.0  0.0 S    distnoted       
+  896     1   0.0  0.0 S    distnoted       
+  935     1   0.0  0.0 S    distnoted       
+  944     1   0.0  0.0 Ss   oahd            
+  949     1   0.0  0.0 Ss   ioupsd          
+  960     1   0.0  0.0 Ss   coreauthd       
+  962     1   0.0  0.0 S    cfprefsd        
+  965     1   0.0  0.0 Ss   tracd           
+  969     1   0.0  0.1 S    secd            
+  971     1   0.0  0.0 S    distnoted       
+  973     1   0.0  0.0 Ss   SubmitDiagInfo  
+  977     1   0.1  0.0 S    UserEventAgent  
+  982     1   0.0  0.0 S    audioaccessoryd 
+  985     1   0.0  0.0 S    universalaccessd
+  988     1   0.0  0.0 S    pboard          
+  990     1   0.0  0.0 S    containermanager
+  991     1   0.0  0.1 S    BiomeAgent      
+  992     1   0.0  0.0 S    lsd             
+  993     1   0.0  0.1 S    tccd            
+  995     1   0.0  0.0 S    usernotification
+  997     1   0.0  0.0 S    exchangesyncd   
+  999     1   0.0  0.1 S    nsurlsessiond   
+ 1002     1   0.0  0.2 S    usernoted       
+ 1003     1   0.0  0.1 S    rapportd        
+ 1005     1   0.0  0.1 S    trustd          
+ 1008     1   0.0  0.1 S    linkd           
+ 1009     1   0.0  0.0 S    AXVisualSupportA
+ 1010     1   0.0  0.1 S    identityservices
+ 1013     1   0.0  0.0 Ss   ctkd            
+ 1018     1   0.0  0.2 S    sharingd        
+ 1021     1   0.0  0.2 S    cloudd          
+ 1025     1   0.0  0.0 S    ContinuityCaptur
+ 1026     1   0.0  0.0 S    WiFiAgent       
+ 1030     1   0.0  0.0 S    migrationhelper 
+ 1032     1   0.0  0.1 S    knowledge-agent 
+ 1034     1   0.0  0.1 S    assistantd      
+ 1040     1   0.0  0.1 S    accountsd       
+ 1043     1   0.0  0.0 Ss   nearbyd         
+ 1045     1   0.0  0.1 S    imagent         
+ 1046     1   0.0  0.0 S    sharedfilelistd 
+ 1060     1   0.0  0.0 S    CMFSyncAgent    
+ 1072     1   0.0  0.0 Ss   filecoordination
+ 1073     1   0.0  0.0 S    distnoted       
+ 1074     1   0.0  0.1 S    akd             
+ 1089     1   0.0  0.3 S    bird            
+ 1090     1   0.0  0.2 S    fileproviderd   
+ 1095     1   0.0  0.6 S    corespotlightd  
+ 1096     1   0.0  0.1 S    MenuBarAgent    
+ 1100     1   0.0  0.1 S    WindowManager   
+ 1101     1   0.0  0.0 S    passd           
+ 1102     1   0.0  0.0 S    fontd           
+ 1103     1   0.0  0.0 S    distnoted       
+ 1105     1   0.0  0.1 S    WallpaperAgent  
+ 1106     1   0.0  0.0 S    fontworker      
+ 1108     1   0.0  0.0 S    AccessibilityUIS
+ 1110     1   0.0  0.0 Ss   adid            
+ 1117     1   0.0  0.1 S    chronod         
+ 1128     1   0.0  0.3 S    NotificationCent
+ 1131     1   0.0  0.0 S    ViewBridgeAuxili
+ 1133     1   0.0  0.1 S    UIKitSystem     
+ 1142     1   0.0  0.1 Ss   aned            
+ 1149     1   0.0  0.1 S    searchpartyusera
+ 1151     1   0.0  0.0 S    mediaremoteagent
+ 1153     1   0.0  0.0 S    avconferenced   
+ 1154     1   0.0  0.1 S    useractivityd   
+ 1161     1   0.0  0.0 Ss   fairplayd       
+ 1168     1   0.0  0.0 S    mediasharingd   
+ 1170     1   0.0  0.1 S    UniversalControl
+ 1177     1   0.0  0.1 SN   mdbulkimport    
+ 1183     1   0.0  0.1 S    siriactionsd    
+ 1187     1   0.0  0.1 S    duetexpertd     
+ 1189     1   0.0  0.0 Ss   WallpaperAerials
+ 1193     1   0.0  0.0 Ss   WallpaperImageEx
+ 1210     1   0.0  0.0 Ss   WallpaperSetting
+ 1211     1   0.0  0.0 Ss   NotificationsSet
+ 1212     1   0.0  0.0 Ss   ShortcutsWidgetE
+ 1213     1   0.0  0.0 Ss   SafariWidgetExte
+ 1214     1   0.0  0.1 Ss   PhotosReliveWidg
+ 1216     1   0.0  0.0 S    distnoted       
+ 1220     1   0.0  0.0 Ss   ScreenshotContro
+ 1225     1   0.0  0.0 Ss   CalendarWidgetEx
+ 1228     1   0.0  0.0 Ss   RemindersWidgetE
+ 1239     1   0.0  0.0 Ss   DisplaysSettings
+ 1247     1   0.0  0.1 Ss   macOS-WidgetExte
+ 1251     1   0.0  0.0 Ss   IntentsExtension
+ 1255     1   0.0  0.0 Ss   RemindersIntents
+ 1257     1   0.0  0.1 Ss   BatteriesAvocado
+ 1262     1   0.0  0.1 Ss   WeatherWidget   
+ 1267     1   0.0  0.0 S    findmydevice-use
+ 1270     1   0.0  0.1 Ss   ScreenTimeWidget
+ 1276     1   0.0  0.1 Ss   WeatherIntents  
+ 1277     1   0.0  0.1 Ss   FindMyWidgetPeop
+ 1278     1   0.0  0.1 Ss   HomeEnergyWidget
+ 1281     1   0.0  0.0 S    AirPlayUIAgent  
+ 1282     1   0.0  0.1 Ss   ScreenTimeWidget
+ 1283     1   0.0  0.1 Ss   HomeWidgetIntent
+ 1286     1   0.0  0.0 Ss   com.apple.Notes.
+ 1287     1   0.0  0.0 Ss   ShortcutLiveActi
+ 1288     1   0.0  0.0 Ss   com.apple.Notes.
+ 1290     1   0.0  0.0 Ss   DesktopSettingsI
+ 1292     1   0.0  0.0 Ss   DockControls    
+ 1293     1   0.0  0.0 Ss   AccessibilitySet
+ 1296     1   0.0  0.0 Ss   AppearanceIntent
+ 1298     1   0.0  0.0 Ss   TipsWidgetExtens
+ 1300     1   0.0  0.0 Ss   TeamsWidgetExten
+ 1302     1   0.0  0.0 Ss   ControlCenterSet
+ 1303     1   0.0  0.0 Ss   WindowManagerCon
+ 1304     1   0.0  0.0 Ss   BluetoothSetting
+ 1306     1   0.0  0.0 Ss   WallpaperControl
+ 1307     1   0.0  0.0 Ss   SoundIntentsExte
+ 1310     1   0.0  0.0 Ss   DateTimeIntentsE
+ 1311     1   0.0  0.1 Ss   RecordWidgetExte
+ 1312     1   0.0  0.1 Ss   JournalWidgetsSe
+ 1316     1   0.0  0.3 S    Safari          
+ 1317     1   0.0  0.1 Ss   PodcastsWidget  
+ 1318     1   0.0  1.7 S    Mail            
+ 1321     1   0.0  0.4 S    Messages        
+ 1322     1   0.0  0.1 Ss   JournalWidgets  
+ 1324     1   0.0  0.1 S    Dock            
+ 1325     1   0.1  0.2 S    ControlCenter   
+ 1326     1   0.0  0.1 S    SystemUIServer  
+ 1327     1   0.0  0.4 S    Finder          
+ 1329     1   0.0  0.1 Ss   VoiceMemosSettin
+ 1337     1   0.0  0.0 Ss   automountd      
+ 1338     1   0.0  0.0 S    AMPDeviceDiscove
+ 1341     1   0.0  0.1 S    Siri AI         
+ 1349     1   0.0  0.0 S    ctkahp          
+ 1351     1   0.0  0.0 S    imklaunchagent  
+ 1353     1   0.0  0.0 S    CursorUIViewServ
+ 1360     1   0.0  0.0 Ss   PAH_Extension   
+ 1370     1   0.0  0.0 S    com.apple.Safari
+ 1371     1   0.0  0.1 Ss   WorldClockWidget
+ 1373     1   0.0  0.1 Ss   StocksWidget    
+ 1376     1   0.0  0.0 Ss   PeopleWidget_mac
+ 1379     1   0.0  0.0 Ss   com.apple.dock.e
+ 1380     1   0.0  0.1 Ss   com.apple.dock.e
+ 1381     1   0.0  0.0 Ss   Developer Widget
+ 1384     1   0.0  0.0 Ss   WordWidget_mac  
+ 1396     1   0.0  0.0 Ss   com.apple.CloudD
+ 1399     1   0.0  0.2 S    corespeechd     
+ 1406     1   0.0  0.0 Ss   MobileTimerInten
+ 1408     1   0.0  0.0 Ss   mds_stores      
+ 1450     1   0.0  0.0 S    diagnostics_agen
+ 1464     1   0.0  0.0 Ss   CVMServer       
+ 1469     1   0.0  0.0 Ss   com.apple.WebKit
+ 1470     1   0.0  0.1 Ss   macOS-Safari    
+ 1471     1   0.0  0.1 Ss   macOS-SafariRead
+ 1512 18551   0.0  0.0 S    node            
+ 1513 18551   0.0  0.0 S    node_repl       
+ 1514 18551   0.0  0.0 S    node_repl       
+ 1530  1512   0.0  0.0 S    node_repl       
+ 1601     1   0.0  0.0 Ss   PowerPointWidget
+ 1674     1   0.0  0.0 Ss   parentalcontrols
+ 1680     1   0.0  0.0 S    Siri            
+ 1681     1   0.0  0.0 S    icdd            
+ 1682     1   0.0  0.0 S    PasswordsMenuBar
+ 1687     1   0.0  0.2 S    WeatherMenu     
+ 1689     1   0.0  0.0 S    TextInputMenuAge
+ 1690     1   0.0  0.1 S    com.microsoft.te
+ 1696     1   0.0  0.1 Ss   FindMyWidgetItem
+ 1697     1   0.0  0.1 S    HP Diagnose & Fi
+ 1710     1   0.0  0.0 Ss   ExcelWidget_mac 
+ 1803     1   0.0  0.0 S    UserNotification
+ 1805     1   0.0  0.0 S    distnoted       
+ 1880     1   0.0  0.0 S    peopled         
+ 1885     1   0.0  0.0 Ss   ClassKitAppInten
+ 1892     1   0.0  0.0 Ss   WallpaperDynamic
+ 1893     1   0.0  0.0 Ss   WallpaperGradien
+ 1894     1   0.0  0.0 Ss   WallpaperLegacyE
+ 1895     1   0.0  0.0 Ss   NeptuneOneWallpa
+ 1896     1   0.0  0.0 Ss   WallpaperSequoia
+ 1899     1   0.0  0.0 Ss   WallpaperMacinto
+ 1900     1   0.0  0.0 Ss   WallpaperSonomaE
+ 1963     1   0.0  0.1 Ss   HomeWidget      
+ 1967     1   0.0  0.0 Ss   CalendarIntentsE
+ 2011     1   0.0  0.0 S    mdwrite         
+ 2080     1   0.0  0.1 Ss   gamepolicyd     
+ 2172     1   0.0  0.0 Ss   CrashReporterSup
+ 2174     1   0.0  0.0 Ss   PlaceholderSetti
+ 2176     1   0.0  0.0 Ss   SiriNCService   
+ 2182     1   0.0  0.0 S    distnoted       
+ 2219     1   0.0  0.0 S    distnoted       
+ 2220     1   0.0  0.0 SN   mdbulkimport    
+ 2222     1   0.0  0.0 S    lsd             
+ 2676     1   0.0  0.0 S    DiskUnmountWatch
+ 2810     1   0.0  0.0 Ss   MouseIntentsExte
+ 2843     1   0.0  0.0 Ss   SettingsImportEx
+ 2845     1   0.0  0.0 Ss   TimeMachineSetti
+ 2847     1   0.0  0.0 Ss   ClassroomDeviceE
+ 2848     1   0.0  0.0 Ss   SiriSetupSetting
+ 2867     1   0.0  0.0 Ss   SoftwareUpdateSe
+ 2868     1   0.0  0.0 Ss   ScreenTimeAppInt
+ 2869     1   0.0  0.0 Ss   GameCenterSettin
+ 2870     1   0.0  0.0 Ss   KeyboardSettings
+ 2871     1   0.0  0.0 Ss   InternationalSet
+ 2872     1   0.0  0.0 Ss   PasswordSettings
+ 2873     1   0.0  0.0 Ss   StartupDiskWidge
+ 2895     1   0.0  0.0 Ss   FamilyIntents   
+ 2904     1   0.0  0.0 Ss   AppleAccountInte
+ 2913     1   0.0  0.0 Ss   VpnSettingsInten
+ 2929     1   0.0  0.0 Ss   AccessibilitySet
+ 2956     1   0.0  0.0 Ss   TrackpadIntentsE
+ 2957     1   0.0  0.0 Ss   SpotlightSetting
+ 2959     1   0.0  0.0 Ss   StorageSettingsI
+ 2960     1   0.0  0.0 Ss   DoNotDisturbAppI
+ 2961     1   0.0  0.0 Ss   ProfilesSettings
+ 2962     1   0.0  0.0 Ss   GameControllerSe
+ 2963     1   0.0  0.0 Ss   BiometricsAndPas
+ 2964     1   0.0  0.0 Ss   AccountsUISettin
+ 2965     1   0.0  0.0 Ss   AirDropHandoffIn
+ 2968     1   0.0  0.0 Ss   WiFiMacSettingsI
+ 2969     1   0.0  0.0 Ss   PrefPaneSearchIn
+ 2991     1   0.0  0.0 Ss   CDsAndDvDsSettin
+ 3010     1   0.0  0.0 Ss   BatterySettingsI
+ 3011     1   0.0  0.0 Ss   com.apple.WebKit
+ 3013     1   0.0  0.0 Ss   com.apple.WebKit
+ 3016     1   0.0  0.0 Ss   com.apple.WebKit
+ 3023     1   0.0  0.1 Ss   com.apple.WebKit
+ 3026     1   0.0  0.0 Ss   TGOnDeviceInfere
+ 3027     1   0.0  0.0 S    distnoted       
+ 3028     1   0.0  0.1 Ss   TGOnDeviceInfere
+ 3032     1   0.0  0.0 Ss   GenerativeExperi
+ 3034     1   0.0  0.0 Ss   com.apple.mail.S
+ 3035     1   0.0  0.3 Ss   TGOnDeviceInfere
+ 3180     1   0.0  0.0 Ss   com.apple.Notes.
+ 3530     1   0.0  0.0 S    SafariLaunchAgen
+ 3534     1   0.0  0.0 Ss   findmydeviced   
+ 3625     1   0.0  0.0 S    RemoteManagement
+ 3626     1   0.0  0.0 Ss   remotemanagement
+ 3629     1   0.0  0.0 Ss   SafariConfigurat
+ 3630     1   0.0  0.0 Ss   SecuritySubscrib
+ 3634     1   0.0  0.0 Ss   InteractiveLegac
+ 3636     1   0.0  0.0 Ss   SecuritySubscrib
+ 3638     1   0.0  0.0 Ss   InteractiveLegac
+ 3639     1   0.0  0.0 Ss   ScreenSharingSub
+ 3642     1   0.0  0.0 Ss   LegacyProfilesSu
+ 3643     1   0.0  0.0 Ss   ScreenSharingSub
+ 3645     1   0.0  0.0 Ss   PasscodeSettings
+ 3647     1   0.0  0.0 Ss   LegacyProfilesSu
+ 3649     1   0.0  0.0 Ss   DiskManagementSu
+ 3650     1   0.0  0.0 Ss   PasscodeSettings
+ 3651     1   0.0  0.0 Ss   ManagedPreferenc
+ 3653     1   0.0  0.0 Ss   AccountSubscribe
+ 3655     1   0.0  0.0 Ss   SoftwareUpdateSu
+ 3657     1   0.0  0.0 Ss   DeviceConfigurat
+ 3658     1   0.0  0.0 Ss   MigrationSubscri
+ 3660     1   0.0  0.0 S    DeviceConfigurat
+ 3661     1   0.0  0.0 Ss   systemmigrationd
+ 3663     1   0.0  0.0 Ss   deviceconfigurat
+ 3664     1   0.0  0.0 Ss   ManagedAppsSubsc
+ 3666     1   0.0  0.0 Ss   iconservicesagen
+ 3668     1   0.0  0.0 S    managedappdistri
+ 3669     1   0.0  0.0 Ss   iconservicesd   
+ 3671     1   0.0  0.0 Ss   DeviceConfigurat
+ 3673     1   0.0  0.0 Ss   ManagedAppsSubsc
+ 3674     1   0.0  0.0 Ss   NetworkExtension
+ 3675     1   0.0  0.0 Ss   managedappdistri
+ 3676     1   0.0  0.0 Ss   NetworkExtension
+ 3677     1   0.0  0.0 Ss   ManagementTestSu
+ 3678     1   0.0  0.0 Ss   ManagementTestSu
+ 3679     1   0.0  0.0 Ss   ASConfigurationS
+ 3681     1   0.0  0.0 Ss   ManagedConfigura
+ 3682     1   0.0  0.0 Ss   ManagedSettingsS
+ 3684     1   0.0  0.0 Ss   AssetCacheSubscr
+ 3685     1   0.0  0.0 Ss   ExtensibleSSOSub
+ 3687     1   0.0  0.0 Ss   AssetCacheManage
+ 3689     1   0.0  0.0 Ss   ExtensibleSSOSub
+ 4097     1   0.0  0.0 S    replayd         
+ 4480     1   0.0  0.0 S    spotlightknowled
+ 4687     1   0.0  0.0 S    ContextStoreAgen
+ 4693     1   0.0  0.0 S    findmylocateagen
+ 4793     1   0.0  0.0 S    assessmentagent 
+ 4835     1   0.0  0.0 Ss   countryd        
+ 4866     1   0.0  0.0 S    feedbackd       
+ 4896     1   0.0  0.0 S    SidecarRelay    
+ 5129     1   0.0  0.0 Ss   logd_helper     
+ 5131     1   0.0  0.0 S    MTLAssetUpgrader
+ 5132     1   0.0  0.0 S    swcd            
+ 5133     1   0.0  0.0 S    MENotificationAg
+ 5134     1   0.0  0.0 Ss   SetStoreUpdateSe
+ 5137     1   0.0  0.0 S    iconservicesagen
+ 5142     1   0.0  0.0 Ss   com.apple.siri.e
+ 5145     1   0.0  0.0 S    triald          
+ 5148     1   0.0  0.0 Ss   TrialArchivingSe
+ 5178     1   0.0  0.0 Ss   ContainerMetadat
+ 5181     1   0.0  0.0 S    siriappintentsd 
+ 5203     1   0.0  0.0 Ss   AirPlayXPCHelper
+ 5205     1   0.0  0.0 S    intelligenceflow
+ 5208     1   0.0  0.0 S    intelligencecont
+ 5261     1   0.0  0.0 S    axassetsd       
+ 5262     1   0.0  0.0 S    pbs             
+ 5271     1   0.0  0.0 Ss   sandboxd        
+ 5300     1   0.0  0.0 S    commerce        
+ 5497     1   0.0  0.0 Ss   PCCAgentClientEx
+ 5574     1   0.0  0.0 S    familycircled   
+ 5577     1   0.0  0.0 S    ctkd            
+ 5589     1   0.0  0.0 Ss   nfcd            
+ 5597     1   0.0  0.0 Ss   NFStorageServer 
+ 6073 18551   0.0  0.0 S    node_repl       
+ 6166     1   0.0  0.1 Ss   com.apple.WebKit
+ 6674     1   0.0  0.0 Ss   VDCAssistant    
+ 6783     1   0.0  0.0 S    distnoted       
+ 6790     1   0.0  0.0 Ss   GSSCred         
+ 7324     1   0.0  0.0 S    SafariBookmarksS
+ 7355     1   0.0  0.6 S    suggestd        
+ 7383     1   0.0  0.1 Ss   coreduetd       
+ 8168 80519   0.0  0.0 S    node            
+ 8169 80519   0.0  0.1 S    node            
+ 8170 80519   0.0  0.2 S    codex           
+ 8203     1   0.0  0.0 S    geoanalyticsd   
+ 9548     1   0.0  0.1 S    generativeexperi
+ 9977 59381   0.0  0.0 Ss   disclaimer      
+ 9978  9977   0.3  0.7 S    claude          
+11744     1   0.0  0.1 S    IMDPersistenceAg
+11793     1   0.0  0.1 S    textunderstandin
+11794     1   0.0  0.0 Ss   SetStoreUpdateSe
+12995 59381   0.0  0.0 Ss   disclaimer      
+12996 12995   0.4  0.8 S    claude          
+14083     1   0.0  0.0 S    dmd             
+14601     1   0.0  0.0 S    ScopedBookmarkAg
+14611     1   0.0  0.0 Ss   aneuserd        
+14675 18551   0.0  0.0 S    node_repl       
+14676 18551   0.0  0.0 S    node            
+14677 18551   0.0  0.1 S    node            
+14678 18551   0.0  0.0 S    node_repl       
+14679 18551   0.0  0.0 S    node            
+14685 14679   0.0  0.0 S    node_repl       
+15124     1   0.0  0.1 Ss   com.apple.podcas
+17419 59381   0.0  0.1 S    Claude Helper (R
+17605     1   0.0  0.0 Ss   sharedfilelistd 
+18354     1   0.0  0.0 S    intelligencetask
+18381     1   0.0  0.1 S    deleted         
+18383     1   0.0  0.0 Ss   deleted_helper  
+18386     1   0.0  0.0 Ss   triald_system   
+18387     1   0.0  0.0 Ss   AssetCache      
+18388     1   0.0  0.0 S    geodMachServiceB
+18389     1   0.0  0.0 Ss   system_installd 
+18390     1   0.0  0.0 Ss   installd        
+18391     1   0.0  0.0 Ss   cloudd          
+18395     1   0.0  0.0 Ss   AssetCacheTether
+18396     1   0.0  0.0 Ss   TrialArchivingSe
+18449     1   0.1  2.0 S    ChatGPT         
+18454     1   0.0  0.0 S    browser_crashpad
+18456     1   0.0  0.0 S    browser_crashpad
+18474 18449   0.0  0.3 S    Codex (Service) 
+18477 18449   0.0  0.3 S    Codex (Service) 
+18484 18449   0.0  0.1 S    Codex (Service) 
+18544 18449   0.0  0.1 S    bare-modifier-mo
+18549 18449   0.0  0.2 S    Codex (Renderer)
+18550 18449   0.6  5.9 S    Codex (Renderer)
+18551 18449   3.2  2.5 R    codex           
+18552 18449   0.1  0.5 S    Codex (Service) 
+18579 18449   0.0  0.1 S    Codex (Service) 
+18623     1   0.0  0.0 Ss   com.apple.Safari
+18626 18449   0.0  0.2 S    SkyComputerUseSe
+18648 18449   0.0  0.3 S    Codex (Renderer)
+18666     1   0.0  0.0 S    com.apple.CoreSi
+18667     1   0.0  0.1 S    CoreDeviceServic
+18668     1   0.0  0.0 Ss   simdiskimaged   
+18669     1   0.0  0.0 S    SimulatorTrampol
+18671     1   0.0  0.1 S    remotepairingd  
+18674     1   0.0  0.0 Ss   fskitd          
+18675     1   0.0  0.0 S    fskit_agent     
+18678     1   0.0  0.0 Ss   DeviceFS        
+18683     1   0.0  0.0 Ss   DeviceFS        
+18695     1   0.0  0.0 S    businessservices
+18697     1   0.0  0.0 Ss   MessagesBlastDoo
+18698     1   0.0  0.7 S    contactsd       
+18699 18449   0.0  0.0 S    node            
+18710 18449   0.0  0.1 S    codex           
+18711 18449   0.0  1.3 S    Codex (Renderer)
+18714     1   0.0  0.0 Ss   SetStoreUpdateSe
+18715     1   0.0  0.0 Ss   SetStoreUpdateSe
+18716     1   0.0  0.8 S    mediaanalysisd  
+18720 18449   0.0  0.2 S    Codex (Renderer)
+18726 18449   0.0  0.3 S    Codex (Renderer)
+18963 18449   0.0  0.1 S    Codex (Renderer)
+19122 18626   0.0  0.1 S    CUALockScreenGua
+19776 18551   0.0  0.0 S    node_repl       
+19777 18551   0.0  0.0 S    node_repl       
+19778 18551   0.0  0.0 S    node            
+19779 18551   0.0  0.0 S    node            
+19780 18551   0.0  0.0 S    node            
+19823 19779   0.0  0.0 S    node_repl       
+19949 18551   0.0  0.0 S    node            
+19950 18551   0.0  0.0 S    node            
+20170     1   0.0  0.0 Ss   findmybeaconingd
+20228 18551   0.8  0.2 S    codex-code-mode-
+20418     1   0.0  0.1 S    icloudmailagent 
+20438     1   0.0  0.1 S    maild           
+20468     1   0.0  0.0 Ss   com.apple.WebKit
+20536     1   0.0  0.0 Ss   com.apple.WebKit
+20588     1   0.0  0.0 Ss   osanalyticshelpe
+21576     1   0.0  0.1 S    com.apple.Safari
+24101 18551   0.0  0.0 S    node            
+24102 18551   0.0  0.0 S    node            
+24103 18551   0.0  0.0 S    node_repl       
+24104 18551   0.0  0.0 S    node            
+24110 24104   0.0  0.0 S    node_repl       
+24349     1   0.0  0.0 Ss   com.apple.WebKit
+25055     1   0.0  0.0 Ss   QuickLookUIServi
+26607     1   0.0  0.0 Ss   com.apple.Safari
+26630     1   0.0  0.1 S    CoreServicesUIAg
+26662     1   0.0  0.0 Ss   rtcreportingd   
+26677     1   0.0  0.0 S    networkservicepr
+26678     1   0.0  0.0 Ss   nehelper        
+26680     1   0.0  0.0 S    neagent         
+26692     1   0.0  0.0 Ss   storagekitd     
+26711     1   0.0  0.1 S    com.apple.quickl
+26740     1   0.0  0.0 S    proactived      
+26743     1   0.0  0.0 Ss   IntelligencePlat
+26752     1   0.0  0.0 Ss   TGOnDeviceInfere
+26771     1   0.0  0.0 Ss   mobileactivation
+28133     1   0.0  0.0 Ss   taskgated       
+30388     1   0.0  0.0 S    FeatureAccessAge
+30421     1   0.0  0.1 S    homeenergyd     
+30422     1   0.0  0.1 S    dataaccessd     
+30423     1   0.0  0.1 S    calaccessd      
+30424     1   0.0  0.0 S    communicationtru
+30781     1   0.0  0.1 S    mlhostd         
+30783     1   0.0  0.0 S    recentsd        
+30804     1   0.0  0.0 S    keyboardservices
+30866     1   0.0  0.0 S    bash            
+30868 30866   0.0  0.1 S    perl            
+30876     1   0.0  0.0 S    postersyncd     
+30878 83830   0.0  0.0 Ss   postgres        
+30891     1   0.0  0.0 Ss   com.apple.WebKit
+30892     1   0.0  0.0 Ss   com.apple.WebKit
+30893     1   0.0  0.0 S    com.apple.access
+30894     1   0.0  0.0 Ss   com.apple.WebKit
+30896     1   0.0  0.0 S    AudioComponentRe
+30898     1   0.0  0.0 Ss   ecosystemanalyti
+30899     1   0.0  0.0 Ss   ecosystemd      
+30900     1   0.0  0.1 S    GamePolicyAgent 
+30901     1   0.0  0.0 Ss   com.apple.audio.
+30902     1   0.0  0.0 Ss   diagnosticservic
+30969     1   0.0  0.0 S    devicecheckd    
+31170     1   0.0  0.0 S    naturallanguaged
+31368     1   0.0  0.0 Ss   symptomsd-diag  
+31369     1   0.0  0.0 S    com.apple.geod  
+31370     1   0.0  0.0 S    secinitd        
+31371     1   0.0  0.0 S    cfprefsd        
+31372     1   0.0  0.0 S    trustd          
+31374     1   0.0  0.0 S    containermanager
+31375     1   0.0  0.0 S    com.apple.geod  
+31376     1   0.0  0.0 S    secinitd        
+31377     1   0.0  0.0 S    cfprefsd        
+31378     1   0.0  0.0 S    trustd          
+31379     1   0.0  0.0 S    containermanager
+31864     1   0.0  0.0 S    transparencyd   
+31867     1   0.0  0.0 S    ProtectedCloudKe
+32313     1   0.0  0.0 Ss   seputil         
+32314     1   0.0  0.0 Ss   online-auth-agen
+32318     1   0.0  0.0 Ss   softwareupdated 
+32319     1   0.0  0.0 Ss   com.apple.Mobile
+32423     1   0.0  0.0 S    amsengagementd  
+32572     1   0.0  0.1 S    ScreenTimeSettin
+32573     1   0.0  0.0 S    FamilyControlsAg
+32713 18551   0.0  0.1 S    node            
+32714 18551   0.0  0.1 S    node_repl       
+32715 18551   0.0  0.1 S    node            
+32716 18551   0.0  0.1 S    node            
+32749 32715   0.0  0.1 S    node_repl       
+32881     1   0.0  0.0 Ss   SetStoreUpdateSe
+34500     1   0.0  0.0 Ss   MessagesBlastDoo
+34649     1   0.0  0.0 S    com.apple.toneli
+34650     1   0.0  0.0 Ss   SetStoreUpdateSe
+34651     1   0.0  0.0 S    sociallayerd    
+34652     1   0.0  0.1 Ss   Messages Assista
+34657     1   0.0  0.1 S    siriinferenced  
+34685     1   0.0  0.2 Ss   SiriSuggestionsB
+34694     1   0.0  0.1 S    textcomposerd   
+34697     1   0.0  0.3 S    textcontextd    
+34764     1   0.0  0.1 S    managedcorespotl
+36115 18551   0.0  0.0 S    node            
+36116 18551   0.0  0.0 S    node_repl       
+36145     1   0.0  0.0 Ss   systemstatusd   
+36240 36115   0.0  0.0 S    node_repl       
+37764     1   0.0  0.0 Ss   XprotectService 
+38551     1   0.0  0.0 Ss   securityd_system
+38697     1   0.0  0.6 Ss   Intents         
+38755     1   0.0  0.1 Ss   XProtectBridgeSe
+39882     1   0.0  0.1 Ss   TextThumbnailExt
+40124     1   0.0  0.0 S    BTLEServerAgent 
+42066     1   0.0  0.0 Ss   mediaanalysisd-a
+42105     1   0.0  0.1 S    mdworker_shared 
+42153     1   0.0  0.1 S    com.apple.iCloud
+42359     1   0.0  0.1 S    parsecd         
+42361     1   0.0  0.1 S    pkd             
+42362     1   0.0  0.1 S    itunescloudd    
+42363     1   0.0  0.0 S    containermanager
+42365     1   0.0  0.1 S    trustd          
+42368     1   0.0  0.1 S    mdworker_shared 
+42376     1   0.0  0.0 S    biomesyncd      
+42896     1   0.0  0.0 Ss   peakpowermanager
+43087 18551   0.4  0.0 Ss   zsh             
+43100 43087   0.0  0.0 R    ps              
+43985     1   0.0  0.1 S    callservicesd   
+45455 18551   0.0  0.0 S    node            
+45459 18551   0.0  0.0 S    node            
+47327 18551   0.0  0.0 S    node            
+47328 18551   0.0  0.0 S    node            
+47329 18551   0.0  0.1 S    node            
+47330 18551   0.0  0.0 S    node_repl       
+47331 18551   0.0  0.0 S    node_repl       
+47336 47328   0.0  0.0 S    node_repl       
+48570 59381   0.0  0.1 S    Claude Helper   
+49501     1   0.0  0.0 Ss   WirelessRadioMan
+49782     1   0.0  0.0 S    CommCenter      
+49786     1   0.0  0.0 S    ReportCrash     
+49790     1   0.0  0.0 Ss   coresymbolicatio
+49791     1   0.0  0.0 Ss   ReportCrash     
+49883     1   0.0  0.0 S    ScreenTimeAgent 
+49885     1   0.0  0.0 S    ManagedSettingsA
+50064     1   0.0  0.0 Ss   SetStoreUpdateSe
+50147 18551   0.0  0.0 S    node            
+50148 18551   0.0  0.0 S    node            
+50149 18551   0.0  0.0 S    node_repl       
+50150 18551   0.0  0.0 S    node            
+50151 18551   0.0  0.0 S    node_repl       
+50204 50147   0.0  0.0 S    node_repl       
+50754     1   0.0  0.0 Ss   mobileassetd    
+50793     1   0.0  0.0 Ss   com.apple.WebKit
+50851     1   0.0  0.1 S    com.apple.geod  
+51644 18551   0.0  0.0 S    node_repl       
+51645 18551   0.0  0.0 S    node            
+51646 18551   0.0  0.0 S    node            
+51650 18551   0.0  0.0 S    node            
+51691     1   0.0  0.0 Ss   cloudtelemetryd 
+51700 51646   0.0  0.0 S    node_repl       
+54224     1   0.0  0.0 Ss   com.apple.WebKit
+54225     1   0.0  0.0 Ss   com.apple.WebKit
+54237     1   0.0  0.0 Ss   com.apple.WebKit
+54238     1   0.0  0.0 Ss   com.apple.WebKit
+54247     1   0.0  0.0 S    WidgetRenderer_A
+54250     1   0.0  0.0 Ss   PrintCenterWidge
+54986     1   0.0  0.0 S    speechmaintenanc
+55010     1   0.0  0.0 S    ModelCatalogAgen
+56023     1   0.0  0.0 Ss   QuickLookUIServi
+56526     1   0.0  0.0 Ss   amfid           
+57234     1   0.0  0.0 S    donotdisturbd   
+57798     1   0.0  0.0 S    replicatord     
+57805     1   0.0  0.0 S    StatusKitAgent  
+58945     1   0.0  0.0 Ss   FPCKService     
+59381     1   0.1  0.8 S    Claude          
+59387     1   0.0  0.0 S    chrome_crashpad_
+59388 59381   0.0  0.2 S    Claude Helper   
+59390 59381   0.0  0.2 S    Claude Helper   
+59417 59381   0.0  0.1 S    Claude Helper (R
+59430 59381   0.0  3.6 S    Claude Helper (R
+59444 59381   0.0  0.2 S    Claude Helper   
+59448 59381   0.0  0.2 S    Claude Helper   
+59482     1   0.0  0.1 S    homed           
+59568 59381   0.0  0.1 S    Claude Helper   
+59961     1   0.0  0.4 S    hybridsearchd   
+59962     1   0.0  0.0 S    siriknowledged  
+60294     1   0.0  0.1 S    pkd             
+61111     1   0.0  0.0 Ss   com.apple.appkit
+61135     1   0.0  0.2 S    spotlightknowled
+61208     1   0.0  0.0 Ss   PerfPowerTelemet
+61757     1   0.0  0.1 S    translationd    
+62741     1   0.0  0.0 Ss   ThemeWidgetContr
+64706     1   0.0  0.0 S    coreautha       
+67404     1   0.0  0.0 S    AuthenticationSe
+67412     1   0.0  0.0 S    keychainsharingm
+67440     1   0.0  0.1 Ss   LocalAuthenticat
+67523     1   0.0  0.0 S    PasswordBreachAg
+68213     1   0.0  0.0 S    Keychain Circle 
+68235 59381   0.0  0.1 S    Claude Helper   
+68236 59381   0.0  0.1 S    Claude Helper   
+68283 59381   0.0  0.0 Ss   disclaimer      
+68288 68283   0.2  0.9 S    claude          
+68349 59381   0.0  0.0 Ss   disclaimer      
+68350 68349   0.4  1.2 S    claude          
+68724     1   0.0  0.0 Ss   ospredictiond   
+69426     1   0.0  0.0 Ss   modelcatalogd   
+70455 18551   0.0  0.0 S    node_repl       
+70686     1   0.0  0.0 S    analyticsagent  
+70688     1   0.0  0.0 S    secinitd        
+70689     1   0.0  0.1 S    CoreLocationAgen
+70690     1   0.0  0.1 S    amsaccountsd    
+70691     1   0.0  0.1 S    photolibraryd   
+72126 59381   0.0  0.1 S    Claude Helper   
+72768     1   0.0  0.0 S    appleaccountd   
+72835     1   0.0  0.1 S    syncdefaultsd   
+72872 18551   0.0  0.0 S    node_repl       
+72873 18551   0.0  0.0 S    node            
+72890 72873   0.0  0.0 S    node_repl       
+73146     1   0.0  0.0 Ss   audioanalyticsd 
+73438     1   0.0  0.0 Ss   systemsoundserve
+73446     1   0.0  0.0 Ss   SetStoreUpdateSe
+74154     1   0.0  0.0 S    liveactivitiesd 
+74155     1   0.0  0.0 S    BackgroundTaskMa
+74164     1   0.0  0.0 Ss   smd             
+74574     1   0.0  0.0 Ss   sysmond         
+74584     1   0.0  0.1 Ss   DockHelper      
+74589     1   0.0  0.0 S    inputanalyticsd 
+74625     1   0.0  0.0 Ss   backupd-helper  
+74647     1   0.0  0.0 Ss   nsurlsessiond   
+74656     1   0.0  0.0 S    webprivacyd     
+74664     1   0.0  0.0 S    ShortcutsViewSer
+74765     1   0.0  0.0 S    UsageTrackingAge
+75655     1   0.0  0.0 S    followupd       
+76203     1   0.0  0.0 Ss   ScreenTimeSettin
+76435 59381   0.0  0.1 S    Claude Helper (R
+76601     1   0.0  0.0 S    cdpd            
+76602     1   0.0  0.1 S    routined        
+76604     1   0.0  0.0 S    localizationswit
+76605     1   0.0  0.0 S    milod           
+76606     1   0.0  0.0 Ss   AppleCredentialM
+76607     1   0.0  0.0 Ss   softwareupdated 
+76611     1   0.0  0.0 Ss   SetStoreUpdateSe
+76612     1   0.0  0.0 Ss   SetStoreUpdateSe
+76618     1   0.0  0.0 Ss   keybagd         
+76873     1   0.0  0.0 Ss   powerexperienced
+77551     1   0.0  0.1 S    Autoupdate      
+77552     1   0.0  0.2 S    Updater         
+78153     1   0.0  0.0 S    tipsd           
+78459     1   0.0  0.1 Ss   AppSSODaemon    
+80229 18551   0.0  0.0 S    node            
+80230 18551   0.0  0.0 S    node_repl       
+80231 18551   0.0  0.0 S    node            
+80232 18551   0.0  0.0 S    node_repl       
+80233 18551   0.0  0.0 S    node            
+80289 80229   0.0  0.0 S    node_repl       
+80385     1   0.0  0.0 S    heard           
+80508 18551   0.0  0.0 S    node_repl       
+80509 18551   0.0  0.0 S    node            
+80510 18551   0.0  0.0 S    node_repl       
+80511 18551   0.0  0.0 S    node            
+80512 18551   0.0  0.0 S    node            
+80519 80512   0.0  0.0 S    node_repl       
+80575 18551   0.0  0.0 S    node            
+80577 18551   0.0  0.0 S    node            
+80579 18551   0.0  0.0 S    node_repl       
+80580 18551   0.0  0.0 S    node_repl       
+80581 18551   0.0  0.0 S    node            
+80645 80575   0.0  0.0 S    node_repl       
+80825     1   0.0  0.0 Ss   com.apple.CodeSi
+80853 18551   0.0  0.0 S    node            
+80854 18551   0.0  0.0 S    node            
+80855 18551   0.0  0.0 S    node            
+80856 18551   0.0  0.0 S    node_repl       
+80857 18551   0.0  0.0 S    node_repl       
+80908 80853   0.0  0.0 S    node_repl       
+82611     1   0.0  0.0 Ss   extensionkitserv
+83569     1   0.0  0.0 S    coreauthd       
+83830     1   0.0  0.0 Ss   postgres        
+83831 83830   0.0  0.0 Ss   postgres        
+83832 83830   0.0  0.0 Ss   postgres        
+83833 83830   0.0  0.0 Ss   postgres        
+83834 83830   0.0  0.0 Ss   postgres        
+83835 83830   0.0  0.0 Ss   postgres        
+83837 83830   0.0  0.0 Ss   postgres        
+83838 83830   0.0  0.0 Ss   postgres        
+83839 83830   0.0  0.0 Ss   postgres        
+84372     1   0.0  0.0 S    contentlinkingd 
+84377     1   0.0  0.0 S    com.apple.hiserv
+84577     1   0.0  0.0 S    talagentd       
+84891 59381   0.0  0.3 S    Claude Helper (R
+85237     1   0.0  0.0 Ss   com.apple.Authen
+86019     1   0.0  0.4 S    AppleSpell      
+86405     1   0.0  0.1 S    AppSSOAgent     
+86656     1   0.0  0.0 Ss   MTLCompilerServi
+86820     1   0.0  0.1 Ss   ServiceExtension
+87205     1   0.0  0.0 S    mbuseragent     
+90362     1   0.0  0.1 S    LinkedNotesUISer
+91292     1   0.0  0.1 Ss   PerfPowerService
+92893 18449   0.0  0.1 S    Codex (Renderer)
+92911 18551   0.0  0.0 S    node            
+92912 18551   0.0  0.0 S    node_repl       
+92913 18551   0.0  0.0 S    node            
+92914 18551   0.0  0.0 S    node            
+92928 92911   0.0  0.0 S    node_repl       
+98104     1   0.0  0.0 Ss   LookupViewServic
+99190     1   0.0  0.0 Ss   wifip2pd        
+59569 59568   0.0  0.0 Ss+  zsh             
+59598     1   0.0  0.0 S    zsh             
+59618 59598   0.0  0.0 S    gitstatusd-darwi
+68251 59568   0.0  0.0 Ss+  zsh             
+68285     1   0.0  0.0 S    zsh             
+68308 68285   0.0  0.0 S    gitstatusd-darwi
+47558 59568   0.0  0.0 Ss+  zsh             
+65016     1   0.0  0.0 S    zsh             
+65153 65016   0.0  0.0 S    gitstatusd-darwi
+67059 59568   0.0  0.0 Ss+  zsh             
+67155     1   0.0  0.0 S    zsh             
+67173 67155   0.0  0.0 S    gitstatusd-darwi
+13045 59568   0.0  0.0 Ss+  zsh             
+13088     1   0.0  0.0 S    zsh             
+13109 13088   0.0  0.0 S    gitstatusd-darwi
+39350 59568   0.0  0.0 Ss+  zsh             
+39383     1   0.0  0.0 S    zsh             
+39436 39383   0.0  0.0 S    gitstatusd-darwi

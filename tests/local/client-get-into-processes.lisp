@@ -1,0 +1,63 @@
+;;;; Public caller-buffer reads across both formats, primary modes, SIGKILL and recovery.
+(in-package #:arcdocdb.local.process.tests)
+(defmacro with-buffered-primary ((mode) &body body)
+  `(let ((old (uiop:getenv "ARCDOCDB_BUFFERED_MODE")))
+     (unwind-protect (progn (sb-posix:setenv "ARCDOCDB_BUFFERED_MODE" (string-downcase (symbol-name ,mode)) 1) ,@body)
+       (if old (sb-posix:setenv "ARCDOCDB_BUFFERED_MODE" old 1) (sb-posix:unsetenv "ARCDOCDB_BUFFERED_MODE")))))
+(defun check-into-value (client key out document)
+  (fill out #xa5)
+  (check (equal (list :found (length document)) (multiple-value-list (l:client-get-into client key out :start 4))) "Into result")
+  (check (not (mismatch document out :start2 4 :end2 (+ 4 (length document)))) "Into document")
+  (dotimes (i 4) (check (= #xa5 (aref out i)) "Into prefix"))
+  (loop for i from (+ 4 (length document)) below (length out) do (check (= #xa5 (aref out i)) "Into tail")))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-LIM-003 REQ-REC-001 REQ-AFF-008
+(deftest test-REQ-IPC-002-get-into-real-formats-primary-modes-and-SIGKILL-reopen
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "into-runtime/")) (stage 910)
+           (small (decode-hex "182A")) (large (arcdocdb.local.wire.tests::get-document 60000)))
+       (dolist (version '(1 2)) (dolist (mode '(:resident :paged))
+         (scenario :get-into version
+           (lambda ()
+             (with-buffered-primary (mode)
+               (let ((data (subdirectory (format nil "into-v~D-~A/" version mode)))
+                     (out (make-array 60008 :element-type '(unsigned-byte 8) :initial-element #xa5)))
+                 (multiple-value-bind (server socket)
+                     (start-server data runtime version (incf stage) :create t :script "tools/local-buffered-get-server.lisp")
+                   (let ((client (l:connect-local (namestring socket) :versions t)))
+                     (unwind-protect
+                          (progn
+                            (check (= 1 (l:client-put client (decode-hex *key-one*) small)) "Into seed")
+                            (check-into-value client (decode-hex *key-one*) out small)
+                            (check (= 2 (l:client-put client (decode-hex *key-two*) large)) "Into large seed")
+                            (check-into-value client (decode-hex *key-two*) out large)
+                            (multiple-value-bind (status copied) (l:client-get client (decode-hex *key-two*))
+                              (check (eq :found status) "Legacy read status") (fill out #xa5)
+                              (check (equalp copied large) "Legacy copy borrowed the output"))
+                            (check (= 3 (l:client-delete client (decode-hex *key-one*))) "Into delete")
+                            (check (equal '(:absent 0) (multiple-value-list (l:client-get-into client (decode-hex *key-one*) out :start 4))) "Into absence")
+                            (check (every (lambda (n) (= n #xa5)) out) "Absence changed output") (l:client-ping client))
+                       (l:close-local client)))
+                   (let ((client (l:connect-local (namestring socket) :max-frame 4096)) (seen nil))
+                     (unwind-protect
+                          (progn (handler-case (l:client-get-into client (decode-hex *key-two*) out :start 4)
+                                   (l:request-rejected (cause) (check (= 5 (l:rejection-status cause)) "Wrong frame rejection") (setf seen t)))
+                                 (check seen "Small frame unexpectedly accepted") (l:client-ping client)
+                                 (check (every (lambda (n) (= n #xa5)) out) "Rejection changed output"))
+                       (l:close-local client)))
+                   (stop-server server sb-posix:sigkill :get-into-strong-confirmed))
+                 (multiple-value-bind (server socket)
+                     (start-server data runtime version (incf stage) :script "tools/local-buffered-get-server.lisp")
+                   (let ((client (l:connect-local (namestring socket) :versions t)))
+                     (unwind-protect
+                          (progn
+                            (check-into-value client (decode-hex *key-two*) out large)
+                            (check (equal '(:absent 0) (multiple-value-list (l:client-get-into client (decode-hex *key-one*) out :start 4))) "Recovered absence")
+                            (check (not (mismatch large out :start2 4 :end2 60004)) "Recovered absence changed prior value")
+                            (multiple-value-bind (status value token) (l:client-get-version client (decode-hex *key-two*))
+                              (check (and (eq status :found) (equalp value large) (= 2 token)) "Recovered version"))
+                            (check (= 4 (l:client-put client (decode-hex *key-three*) small)) "Reads consumed a CSN")
+                            (check-into-value client (decode-hex *key-three*) out small))
+                       (l:close-local client)))
+                   (stop-server server sb-posix:sigterm :get-into-recovered))))))))))))

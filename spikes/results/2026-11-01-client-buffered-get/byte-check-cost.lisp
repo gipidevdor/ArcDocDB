@@ -1,0 +1,18 @@
+;;;; C4: exact, allocation-free validation on distinct buffers, using ordinary bounds checks.
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+(defun exact-prefix-p (a b size)
+  (declare (type (simple-array (unsigned-byte 8) (*)) a b) (type fixnum size))
+  (and (= (length a) size) (<= size (length b))
+       (dotimes (i size t) (unless (= (aref a i) (aref b i)) (return nil)))))
+(dolist (size '(1024 60000))
+  (let* ((a (make-array size :element-type '(unsigned-byte 8) :initial-element 117))
+         (b (make-array 60000 :element-type '(unsigned-byte 8) :initial-element 117))
+         (copy (copy-seq a)) (view (make-array size :element-type '(unsigned-byte 8) :displaced-to b)))
+    (dolist (method (list (cons :equalp-distinct (lambda () (equalp a copy)))
+                         (cons :equalp-view (lambda () (equalp a view)))
+                         (cons :typed-prefix (lambda () (exact-prefix-p a b size)))))
+      (let ((start (get-internal-real-time)) (allocated (sb-ext:get-bytes-consed)))
+        (dotimes (i 1000) (unless (funcall (cdr method)) (error "Byte validation failed")))
+        (let ((elapsed (- (get-internal-real-time) start)) (bytes (- (sb-ext:get-bytes-consed) allocated)))
+          (format t "~S size=~D us/call=~,2F allocated=~D~%" (car method) size
+                  (/ (* 1d6 elapsed) internal-time-units-per-second 1000) bytes))))))

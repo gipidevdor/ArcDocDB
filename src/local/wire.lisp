@@ -473,10 +473,11 @@ Ownership: copies to caller; no engine operation or durable reservation."
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (b:octets envelope cbor:spazio-cbor)
-                         (values (member :found :absent) (or null b:octets) &optional)) %wire-get-result))
-(defun %wire-get-result (buffer envelope space)
-  "Pre: structurally valid GET response. Post: :FOUND private copy or :ABSENT NIL.
-PROTOCOL-ERROR for invalid boolean/null/document; no copy before all checks."
+                         (values (member :found :absent) b:index b:index &optional)) %wire-get-spans))
+(defun %wire-get-spans (buffer envelope space)
+  "Pre: successful structurally valid GET response, immutable input and exclusive scratch.
+Post: FOUND/content-offset/byte-count or ABSENT/0/0 after complete minimal CBOR validation.
+Private borrowed spans expire with input reuse; no copy or allocation. Invalid boolean/null/document ->PROTOCOL-ERROR."
   (let* ((end (envelope-payload-end envelope))
          (cursor (%wire-expect buffer (envelope-payload-start envelope) end 4 2)))
     (unless (< cursor end) (%wire-fail :local-get-boolean cursor))
@@ -486,12 +487,36 @@ PROTOCOL-ERROR for invalid boolean/null/document; no copy before all checks."
       (if (= flag #xf4)
           (progn
             (unless (%wire-null-p buffer cursor end) (%wire-fail :local-get-absent cursor))
-            (values :absent nil))
+            (values :absent 0 0))
           (multiple-value-bind (start size finish) (%wire-bstr buffer cursor end)
             (unless (= finish end) (%wire-fail :local-get-trailing finish))
             (unless (zerop (%wire-document-status buffer start finish space))
               (%wire-fail :local-get-document start))
-            (values :found (%wire-copy buffer start size)))))))
+            (values :found start size))))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor)
+                         (values (member :found :absent) (or null b:octets) &optional)) %wire-get-result))
+(defun %wire-get-result (buffer envelope space)
+  "Pre: successful GET response with stable input. Post: original independent document copy or ABSENT/NIL.
+The allocating and caller-buffer paths share one complete GET grammar before any copy."
+  (multiple-value-bind (status start size) (%wire-get-spans buffer envelope space)
+    (values status (when (eq status :found) (%wire-copy buffer start size)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-AFF-008
+(declaim (ftype (function (t t t t) null) %wire-response-input))
+(defun %wire-response-input (buffer envelope space opcode)
+  "Pre: client-correlated immutable response. Post: bound input, valid scratch/opcode, RESPONSE kind and success status.
+An authoritative status requires exact NULL before REQUEST-REJECTED; malformed errors remain PROTOCOL-ERROR. No mutation."
+  (%wire-envelope-input buffer envelope)
+  (unless (and (typep space 'cbor:spazio-cbor) (typep opcode '(integer 0 65535)))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-response-input))
+  (unless (= (envelope-kind envelope) 3) (%wire-fail :local-expected-response))
+  (when (plusp (envelope-code envelope))
+    (unless (%wire-null-p buffer (envelope-payload-start envelope) (envelope-payload-end envelope))
+      (%wire-fail :local-error-payload (envelope-payload-start envelope)))
+    (error 'request-rejected :reason :local-request-rejected :status (envelope-code envelope)))
+  nil)
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values (or null b:u64 keyword) &optional (or null b:octets)))
@@ -500,21 +525,31 @@ PROTOCOL-ERROR for invalid boolean/null/document; no copy before all checks."
   "Pre: client-correlated RESPONSE, immutable input and exclusive scratch. Post: command result.
 PING NIL, PUT/DELETE positive u64 CSN, GET values :FOUND copy/:ABSENT NIL. Status 1..5 ->REQUEST-REJECTED.
 PROTOCOL-ERROR for incorrect shape even in errors; no retry or engine contact."
-  (%wire-envelope-input buffer envelope)
-  (unless (and (typep space 'cbor:spazio-cbor) (typep opcode '(integer 0 65535)))
-    (error 'arcdocdb.conditions:invalid-argument :reason :local-response-input))
-  (unless (= (envelope-kind envelope) 3) (%wire-fail :local-expected-response))
-  (let ((start (envelope-payload-start envelope)) (end (envelope-payload-end envelope))
-        (status (envelope-code envelope)))
-    (when (plusp status)
-      (unless (%wire-null-p buffer start end) (%wire-fail :local-error-payload start))
-      (error 'request-rejected :reason :local-request-rejected :status status))
+  (%wire-response-input buffer envelope space opcode)
+  (let ((start (envelope-payload-start envelope)) (end (envelope-payload-end envelope)))
     (case opcode
       (0 (unless (%wire-null-p buffer start end) (%wire-fail :local-ping-result start)) nil)
       ((1 3) (multiple-value-bind (csn next) (%wire-uint buffer start end #xffffffffffffffff)
                (unless (and (plusp csn) (= next end)) (%wire-fail :local-csn-result start)) csn))
       (2 (%wire-get-result buffer envelope space))
       (otherwise (%wire-fail :local-unsupported-success start)))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor b:octets b:index)
+                         (values (member :found :absent) b:index &optional)) decode-local-get-into))
+(defun decode-local-get-into (buffer envelope space target start)
+  "Pre: correlated response, stable input, exclusive distinct target and valid START.
+Post: fully verified document copied only into its exact target prefix; FOUND/size or ABSENT/0.
+Every grammar/status/range check precedes copying. No borrowed span or new document vector escapes."
+  (when (eq target buffer)
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-get-output-alias))
+  (b:check-range target start start)
+  (%wire-response-input buffer envelope space 2)
+  (multiple-value-bind (status offset size) (%wire-get-spans buffer envelope space)
+    (b:check-range target start (+ start size))
+    (when (eq status :found)
+      (replace target buffer :start1 start :end1 (+ start size) :start2 offset :end2 (+ offset size)))
+    (values status size)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (b:u64) (values (member 1 2 3 5 9) &optional)) %wire-head-size))

@@ -1,0 +1,15 @@
+;;;; C4: real production CLI and admission; force the selected primary budget before READY.
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(let ((*standard-output* *error-output*)) (asdf:load-system "arcdocdb/local"))
+(let ((open (symbol-function 'arcdocdb.engine:apri-motore)) (mode (uiop:getenv "ARCDOCDB_BUFFERED_MODE")))
+  (unless (member mode '("resident" "paged") :test #'equal) (error "Invalid buffered GET fixture mode"))
+  (setf (symbol-function 'arcdocdb.engine:apri-motore)
+        (lambda (&rest args)
+          (let ((engine (apply open args)))
+            (when (equal mode "paged")
+              (arcdocdb.engine:configura-budget-indice-motore engine
+                (getf (arcdocdb.engine:statistiche-indice-motore engine) :reserved-fixed)))
+            (unless (eq (if (equal mode "paged") :paged :resident) (arcdocdb.engine:modo-indice-motore engine))
+              (error "Wrong buffered GET primary mode")) engine)))
+  (arcdocdb.local::server-cli-main (uiop:command-line-arguments)))

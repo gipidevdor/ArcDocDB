@@ -92,9 +92,9 @@ No data operation during handshake; exact optional capabilities and deadline pre
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64
-                         &optional (member nil 0 1 3) (or null b:octets))
+                         &optional (member nil 0 1 3) (or null b:octets) (or null b:octets) b:index)
                          (values t &optional t t)) finish-local-client-response))
-(defun finish-local-client-response (client id opcode count results until &optional version-operation applied)
+(defun finish-local-client-response (client id opcode count results until &optional version-operation applied (read-target nil) (read-start 0))
   "Pre: one owned exchange awaiting its response. Post: fully correlated result, group output copied after complete validation.
 Malformed/rejected responses never expose partial group results; propagates protocol/authoritative rejection."
   (let ((envelope (receive-local-client client (local-client-limit client) until)))
@@ -103,6 +103,11 @@ Malformed/rejected responses never expose partial group results; propagates prot
     (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
       (error 'protocol-error :reason :local-client-response-id))
     (cond
+      ((and (= opcode 2) read-target)
+       (multiple-value-prog1
+           (decode-local-get-into (local-client-input client) envelope (local-client-space client) read-target read-start)
+         (when (>= (local-now (local-client-clock client)) until)
+           (error 'protocol-error :reason :local-client-deadline))))
       ((and (= opcode +local-conditional-group-opcode+) (plusp count))
        (let ((completed (decode-local-conditional-response (local-client-input client) envelope
                           (local-client-group-csns client) (local-client-group-applied client) count)))
@@ -133,9 +138,9 @@ Malformed/rejected responses never expose partial group results; propagates prot
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns)
-                         (member nil 0 1 3) (or null b:octets))
+                         (member nil 0 1 3) (or null b:octets) (or null b:octets) b:index)
                          (values t &optional t t)) run-local-client-exchange))
-(defun run-local-client-exchange (client id size opcode &optional (count 0) results version-operation applied)
+(defun run-local-client-exchange (client id size opcode &optional (count 0) results version-operation applied (read-target nil) (read-start 0))
   "Pre: READY owner and encoded/preflighted frame. Post: correlated terminal result or rejection, one ID consumed.
 First mutating send attempt makes errors OUTCOME-UNKNOWN; incomplete nonlocal exits close ownership without retry.
 Secondary cleanup errors are retained, never replace an existing nonlocal transfer. No pin/lease spans I/O."
@@ -150,7 +155,7 @@ Secondary cleanup errors are retained, never replace an existing nonlocal transf
          (handler-case
              (progn
                (transfer-local-client client (local-client-output client) 0 size :output until)
-               (multiple-value-prog1 (finish-local-client-response client id opcode count results until version-operation applied)
+               (multiple-value-prog1 (finish-local-client-response client id opcode count results until version-operation applied read-target read-start)
                  (setf (local-client-state client) :ready complete t)))
            (request-rejected (condition) (setf (local-client-state client) :ready complete t) (error condition))
            (error (condition) (fail-local-client client condition

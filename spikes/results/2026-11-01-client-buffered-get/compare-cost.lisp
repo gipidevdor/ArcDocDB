@@ -1,0 +1,18 @@
+;;;; C4: compare exact verification strategies before freezing the public-client campaign.
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+(defun typed-mismatch (a b end)
+  (declare (type (simple-array (unsigned-byte 8) (*)) a b) (type fixnum end))
+  (not (mismatch a b :end2 end)))
+(dolist (size '(1024 60000))
+  (let* ((a (make-array size :element-type '(unsigned-byte 8) :initial-element 117))
+         (b (make-array 60000 :element-type '(unsigned-byte 8) :initial-element 117))
+         (view (make-array size :element-type '(unsigned-byte 8) :displaced-to b)))
+    (dolist (method (list (cons :equalp-simple (lambda () (equalp a a)))
+                         (cons :equalp-view (lambda () (equalp a view)))
+                         (cons :typed-mismatch (lambda () (typed-mismatch a b size)))
+                         (cons :mismatch (lambda () (not (mismatch a b :end2 size))))))
+      (let ((start (get-internal-real-time)) (allocated (sb-ext:get-bytes-consed)))
+        (dotimes (i 1000) (unless (funcall (cdr method)) (error "Verification mismatch")))
+        (format t "~S size=~D us/call=~,2F allocated=~D~%" (car method) size
+                (/ (* 1d6 (- (get-internal-real-time) start)) internal-time-units-per-second 1000)
+                (- (sb-ext:get-bytes-consed) allocated))))))

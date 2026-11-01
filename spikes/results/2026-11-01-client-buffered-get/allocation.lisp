@@ -1,0 +1,52 @@
+;;;; C4: same-thread reported allocation; legacy and caller-buffer APIs alternate on the same live client.
+(require :asdf)
+(with-open-file (in (merge-pathnames "bench.lisp" *load-truename*))
+  (loop for form = (let ((*read-eval* nil)) (read in nil :eof)) do
+    (when (eq form :eof) (error "Missing benchmark entry"))
+    (when (and (consp form) (eq (first form) 'let*)) (return)) (eval form)))
+(in-package #:buffered-get-bench)
+(let* ((args (uiop:command-line-arguments)) (*output* (merge-pathnames (uiop:ensure-directory-pathname (first args)) *here*))
+       (*copies* nil) (finish (symbol-function 'p::finish-children)) (rows nil) (stage 0)
+       (copying (read-adapter :copy)) (buffered (read-adapter :into)))
+  (ensure (and (= 1 (length args)) (not (probe-file *output*))))
+  (u::save-new (merge-pathnames "started.lisp" *output*)
+    (list :kind :buffered-allocation-started :runtime (lisp-implementation-version)
+          :driver-sha256 (arcdocdb.evidence:file-sha256 *load-truename*) :rounds 500 :windows-per-API 5
+          :scope :same-thread-public-API-including-byte-validation))
+  (setf (symbol-function 'p::finish-children) (lambda () (funcall finish) (copy-logs)))
+  (unwind-protect
+       (p::call-with-run
+        (lambda ()
+          (let ((runtime (p::subdirectory "runtime/")))
+            (dolist (mode '(:resident :paged)) (dolist (size '(1024 60000))
+              (incf stage)
+              (multiple-value-bind (server socket) (launch-server runtime mode stage)
+                (let ((client (l:connect-local (namestring socket) :versions t))
+                      (key (make-array 1 :element-type '(unsigned-byte 8) :initial-element 42))
+                      (target (make-array 60000 :element-type '(unsigned-byte 8))) (expected (document size)))
+                  (unwind-protect
+                       (progn
+                         (ensure (= 1 (l:client-put client key expected)))
+                         (dolist (function (list copying buffered)) (dotimes (i 100) (checked-read function client key target expected)))
+                         (dotimes (rep 5)
+                           (dolist (api (if (evenp rep) '(:copy :into) '(:into :copy)))
+                             (let ((function (if (eq api :copy) copying buffered)))
+                               (sb-ext:gc :full t)
+                               (let ((before (sb-ext:get-bytes-consed)) (gc sb-ext:*gc-run-time*) (id (l::local-client-next-id client)))
+                                 (dotimes (i 500) (checked-read function client key target expected))
+                                 (let ((allocated (- (sb-ext:get-bytes-consed) before)) (gc-ticks (- sb-ext:*gc-run-time* gc)))
+                                   (ensure (= (+ id 500) (l::local-client-next-id client)))
+                                   (let ((row (list :kind :buffered-allocation-window :mode mode :document-bytes size :api api :window rep
+                                                    :operations 500 :allocated-bytes allocated :gc-cpu-ticks gc-ticks
+                                                    :ticks-per-second internal-time-units-per-second)))
+                                     (u::save-new (merge-pathnames (format nil "windows/~D-~D-~A.lisp" stage rep api) *output*) row)
+                                     (push row rows)))))))
+                         (multiple-value-bind (status value token) (l:client-get-version client key)
+                           (ensure (and (eq status :found) (equalp value expected) (= 1 token)) :allocation-version)))
+                    (l:close-local client)))
+                (p::stop-server server sb-posix:sigterm :allocation-completed)))))))
+    (setf (symbol-function 'p::finish-children) finish))
+  (u::save-new (merge-pathnames "completed.lisp" *output*)
+    (list :kind :buffered-allocation-campaign :status :passed :cases stage :windows (length rows) :operations (* 500 (length rows))
+          :runtime (lisp-implementation-version) :copies (reverse *copies*) :rows (reverse rows)))
+  (format t "~S~%" (list :kind :buffered-allocation-campaign :status :passed :cases stage :windows (length rows))))

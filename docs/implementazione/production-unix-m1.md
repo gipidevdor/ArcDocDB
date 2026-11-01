@@ -137,6 +137,16 @@ Transient allocations are serial within the actor rather than queued.
 The client verifies the document with fixed call-local scratch.
 The profile claims neither nonallocation nor an RSS ceiling.
 
+The exported `client-get-into` accepts an exclusive caller-owned simple octet
+buffer with a complete 60,000-byte grant from its optional offset. It returns
+FOUND/byte-count or ABSENT/0 using ordinary GET and the same shared complete
+response/document validation as `client-get`. No new document vector is allocated;
+the existing envelope/protocol work remains. Absence and surrounding bytes are
+unchanged. Only successful return authorizes the copied prefix; post-copy
+failure may leave unconfirmed bytes. See the [public buffer contract](../lisp-api.md#caller-owned-read-buffers),
+[C1 review](../../spikes/results/2026-11-01-client-buffered-get/review.md) and
+[measurements and qualification](../../spikes/results/2026-11-01-client-buffered-get/report.md).
+
 The runtime directory is exclusively locked until service close:
 the profile permits one listener per directory, even with different names.
 All ancestors are kept open and their identities rechecked; root and

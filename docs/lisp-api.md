@@ -17,7 +17,7 @@ temporary storage and runtime directories. It starts the service, connects throu
 a Unix socket and checks these operations through exported APIs:
 
 1. PUT a document and receive its commit sequence number.
-2. GET the key and compare the returned bytes with the document.
+2. GET the key using both an independent copy and a reusable caller buffer.
 3. Stop the service and reopen the same storage with the same identities.
 4. GET the persisted document, then DELETE it and check that GET reports absence.
 
@@ -40,6 +40,31 @@ cleanup operations. Follow a symbol to its source-derived signature and contract
 `client-get` returns either `:found` with copied document bytes, or `:absent` with
 `nil`. Mutations return a commit sequence number on success. A lost mutation
 response can produce `outcome-unknown`; the client does not retry transparently.
+
+<a id="caller-owned-read-buffers"></a>
+## Reuse a read buffer
+
+`(client-get-into client key target :start start)` returns `:found` and the
+document byte count, or `:absent` and `0`. Allocate `target` once as a simple
+`(unsigned-byte 8)` array with at least 60,000 bytes remaining from `start`
+(default `0`). A successful result occupies exactly that prefix; surrounding
+bytes stay unchanged. Absence leaves the whole buffer unchanged.
+
+Keep the key and target stable and exclusive through the call. The target must
+differ from the key and the client's private input/output arrays. Output shape,
+capacity, key, ID and outgoing-frame refusals precede transmission and ID
+consumption. The ordinary GET wire operation works with the existing server and
+requires no capability negotiation. RAM/paged selection remains transparent.
+
+This path validates the complete response and document, then copies into caller
+storage without allocating a document vector. Per-frame protocol allocation
+remains. Only a successful return authorizes the copied prefix: an error,
+deadline or nonlocal exit after copying can leave unconfirmed bytes in the
+target. Authoritative rejection keeps the client reusable; other incomplete
+reads close without retry. The [checked example](../examples/local-roundtrip.lisp)
+exercises both APIs, restart and absence.
+
+## Grouped and conditional operations
 
 To share a strong flush across writes from one client, connect with
 `:write-groups t`, then call

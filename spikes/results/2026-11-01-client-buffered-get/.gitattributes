@@ -1,0 +1,3 @@
+# Preserve retained terminal bytes, including whitespace.
+*.stdout -text -whitespace
+*.stderr -text -whitespace

@@ -74,13 +74,13 @@ after delete/reinsert. Conflicts precede maintenance and WAL effects. These
 single-operation conditions reuse the serial writer, not transaction write sets
 or historical MVCC. The original GET still returns exactly two values.
 [Contract](../adr/0085-conditional-current-writes.md).
-The service's internal conditional group path validates that no condition depends
+The shared conditional group path validates that no condition depends
 on an earlier operation key, probes through the same primary lookup, and passes
 only applicable operations to the existing strong group writer. All-conflict
 cohorts perform no writer preflight or maintenance. Private projection scratch
-survives ACTIVE rotation and clears on every exit; no public engine API or
-transaction write set is added. [Decision](../adr/0086-conditional-same-turn-group-commit.md).
-The negotiated explicit conditional Unix group reuses this same internal path
+survives ACTIVE rotation and clears on every exit. The mixed service collector
+keeps its private flag-based entry. [Decision](../adr/0086-conditional-same-turn-group-commit.md).
+The negotiated explicit conditional Unix group uses the public conditional engine entry
 for one synchronous client, after complete distinct-key/frame validation and a
 barrier. It never splits a capacity refusal into individual admissions.
 [Service contract](../adr/0087-explicit-conditional-unix-groups.md).
@@ -242,6 +242,29 @@ A fixed per-ACTIVE workspace contains eight one-record batches; the existing
 single-write API reuses batch zero. Extra batch buffers and planning/event arrays
 are separate from the index/cache grants and are released with the handle.
 [Verification and measurements](../../spikes/results/2026-10-31-engine-group-commit/report.md).
+
+### Conditional engine groups
+
+`(scrivi-gruppo-documenti-se-versione engine operations expected tokens applied
+:count n)` exposes the same conditional projection and strong group writer to an
+embedded serial owner. Select 1..8 distinct-key descriptors and a stable simple
+`(unsigned-byte 64)` expected-token array. Zero tests absence. Reserve separate
+exclusive simple u64 token and octet applied arrays, each with at least `n`
+entries. Success returns the applied count and fills both prefixes: applied byte
+`1` accompanies a new strong CSN; `0` accompanies the current live CSN or zero
+for absence. Unselected output entries and expected tokens stay unchanged.
+
+The whole prefix, aliases and distinct keys are checked before any probe. An
+all-conflict group skips writer capacity, rotation, maintenance and flushing.
+Applicable members share the existing strong flush with independent SEALs and
+FIFO publication; a crash may recover a sealed prefix. This is not a transaction.
+Known input/capacity refusal preserves outputs. Admitted failure faults admission
+and authorizes no output; callers reconcile uncertainty before deliberate retry.
+
+NIL at the private flag boundary means all members are conditional, avoiding a
+new condition array or allocation. Existing mixed service flags retain their
+semantics. The explicit Unix group calls this public engine entry, with unchanged
+wire and negotiation. [Integration method](../../spikes/results/2026-11-02-engine-conditional-groups/method.md).
 
 ## Bounded ACTIVE metadata
 

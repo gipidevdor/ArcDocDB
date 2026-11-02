@@ -24,9 +24,9 @@ Only unadmitted READY capacity refusal gives status 2; no split/retry. Encoding/
                       (check-local-read-group-deadline connection clock)
                       (let ((completed
                               (handler-case
-                                  (e::scrivi-gruppo-con-condizioni engine (local-group-workspace-operations work)
-                                    (local-group-workspace-conditions work) (local-group-workspace-expected work)
-                                    (local-group-workspace-csns work) (local-group-workspace-applied work) count)
+                                  (e:scrivi-gruppo-documenti-se-versione engine (local-group-workspace-operations work)
+                                    (local-group-workspace-expected work) (local-group-workspace-csns work)
+                                    (local-group-workspace-applied work) :count count)
                                 (arcdocdb.conditions:resource-exhausted (condition)
                                   (unless (eq :ready (e:stato-motore engine)) (error condition)) nil))))
                         (if completed

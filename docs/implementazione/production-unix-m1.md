@@ -63,6 +63,14 @@ validates the complete response and original deadline before copying either
 output prefix. Lost/malformed/late mutating results are `outcome-unknown`, with
 no implicit retry. [ADR-0087](../adr/0087-explicit-conditional-unix-groups.md).
 
+The explicit conditional dispatcher calls the exported
+`arcdocdb.engine:scrivi-gruppo-documenti-se-versione`, also available to an
+embedded serial owner. Both entries share complete engine validation,
+conditional projection, strong commit and result copying. NIL at the private
+flag boundary represents all-conditional inputs without a new per-engine array.
+The mixed same-turn collector keeps its explicit flag vector.
+[Engine contract](production-engine-bootstrap.md#conditional-engine-groups).
+
 Versioned GET returns `[true,CSN,document:bstr]` or `[false,0,null]`; conditional
 PUT/DELETE returns `[true,new-CSN]` or `[false,current-live-CSN]`. Expected zero
 tests absence. A conflict is status 0 and consumes no CSN/flush. Version operations

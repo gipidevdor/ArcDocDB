@@ -182,3 +182,20 @@ Its handles have thread ownership and lifecycle requirements. Consult the
 [local service guide](implementazione/production-unix-m1.md) and the
 [code reference coverage](code-reference.md) before selecting an interface.
 Package export status alone does not establish thread safety or production maturity.
+
+### Embed conditional write groups
+
+Within the owning serial actor, call
+`(arcdocdb.engine:scrivi-gruppo-documenti-se-versione engine operations expected
+tokens applied :count count)`. Reuse the same descriptors and simple u64/u8
+array layout as the conditional Unix client. The selected 1..8 keys must be
+distinct. Default count selects the whole simple operation vector.
+
+Success returns the applied count, writing `1/new strong CSN` or
+`0/current live CSN` into the output prefixes. Expected zero tests absence;
+output tails and expected tokens stay unchanged. All-conflict groups perform no
+writer maintenance or flush. A capacity refusal preserves both outputs and
+never splits the group. Each applied record has an independent SEAL; interrupted
+admission may recover a prefix. This is not a transaction or automatic retry.
+The Unix dispatcher uses this same public engine boundary.
+[Full engine contract](implementazione/production-engine-bootstrap.md#conditional-engine-groups).

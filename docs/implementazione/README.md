@@ -36,7 +36,7 @@ read/write/conditional groups over a Unix socket.
 | Explicit client groups | [Negotiated write groups](../adr/0083-explicit-unix-write-groups.md), one synchronous client sharing a strong flush |
 | Grouped point reads | [Negotiated read groups](../adr/0084-explicit-unix-read-groups.md), one complete current serial vector using canonical GET/cache/RAM/paged storage |
 | Reusable client output | [Single GET](../lisp-api.md#caller-owned-read-buffers), [grouped GET](../lisp-api.md#caller-owned-group-read-buffers) and [versioned GET](../lisp-api.md#caller-owned-versioned-read-buffers), full preflight grant and shared verified document decoding |
-| Conditional client groups | [Negotiated conditional groups](../adr/0087-explicit-conditional-unix-groups.md), independent conditions and individual results for one synchronous client |
+| Conditional groups | [Engine entry](production-engine-bootstrap.md#conditional-engine-groups) and [negotiated Unix groups](../adr/0087-explicit-conditional-unix-groups.md), sharing independent conditions, strong commit and individual results |
 | Group append | [Bounded byte coalescing](../adr/0082-bounded-group-append.md), reusing exclusive engine scratch with unchanged seals and flush |
 | ACTIVE metadata | [Typed append-only arena](../adr/0081-active-append-metadata.md), fixed startup charge and immutable acquired prefixes |
 | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |

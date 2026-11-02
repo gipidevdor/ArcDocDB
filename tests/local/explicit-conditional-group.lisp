@@ -3,6 +3,24 @@
 (defun explicit-if-operations (&optional (count 3))
   (let ((ops (make-array count)))
     (dotimes (i count ops) (setf (svref ops i) (e:crea-operazione-scrittura :put (bytes (1+ i)) (bytes #xf6))))))
+
+;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-WAL-006
+(deftest test-REQ-IPC-002-explicit-if-uses-exported-conditional-engine-boundary
+  (with-engine (engine root :create t)
+    (let ((original (symbol-function 'e:scrivi-gruppo-documenti-se-versione)) (calls 0)
+          (connection (explicit-if-connection)))
+      (unwind-protect
+           (progn
+             (setf (symbol-function 'e:scrivi-gruppo-documenti-se-versione)
+                   (lambda (handle operations expected tokens applied &key count)
+                     (is (eq handle engine)) (is (= 3 count)) (incf calls)
+                     (funcall original handle operations expected tokens applied :count count)))
+             (let ((end (l::local-dispatch engine connection
+                          (explicit-if-envelope connection (explicit-if-operations) (explicit-if-u64 0 99 0)))))
+               (multiple-value-bind (completed tokens flags) (explicit-if-result connection end 3)
+                 (is (= 2 completed)) (is (equalp #(1 0 2) tokens)) (is (equalp #(1 0 1) flags))))
+             (is (= 1 calls)) (arcdocdb.engine.tests::check-frontier engine 2) (explicit-if-cleared connection))
+        (setf (symbol-function 'e:scrivi-gruppo-documenti-se-versione) original)))))
 (defun explicit-if-u64 (&rest values) (apply #'arcdocdb.local.wire.tests::conditional-u64 values))
 (defun explicit-if-connection (&key (limit 8) (negotiated t) (deadline 100))
   (l::make-local-connection :limit 65536 :group-limit limit :conditional-groups negotiated :state :pending :deadline deadline))

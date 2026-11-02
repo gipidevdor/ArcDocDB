@@ -327,12 +327,14 @@ its own ID, CSN and SEAL; every response follows the shared strong flush and
 complete publication. The wire shape and one-in-flight limit remain unchanged.
 No timer waits to fill a group, and an isolated write follows the existing path.
 
-Logical slot order is preserved. An ordinary valid GET with full response credit
-may copy its canonical value before preceding queued writes when its exact key
+Logical slot order is preserved. An ordinary valid GET (credit 60032) or negotiated versioned GET (credit
+60040) may copy its canonical value and, for the latter, verified record CSN before preceding queued writes when its exact key
 differs from every queued mutation. A later write to its key remains after that
-read. Same-key GET, PING, versioned/explicit operations and rejections drain the
-queue. [ADR-0088](../adr/0088-independent-get-write-groups.md) records the changed
-physical read/fault order and unchanged unknown-outcome rules. No response is
+read. Same-key GET, PING, explicit operations and rejections drain the
+queue. Conditional mutations retain exact dependency barriers. [ADR-0088](../adr/0088-independent-get-write-groups.md) records the changed
+physical read/fault order and unchanged unknown-outcome rules;
+[ADR-0089](../adr/0089-independent-versioned-get-write-groups.md) extends the rule
+to versioned GET without changing its value/token checks. No response is
 sent until dispatch completes the final strong group; failure closes all peers.
 Fresh absolute-deadline checks remove expired commands before admission. Only
 an unadmitted capacity refusal may split into individually admitted requests;

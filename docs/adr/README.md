@@ -202,3 +202,4 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0086](0086-conditional-same-turn-group-commit.md) | Share strong flush across independent ready conditional writes | Same-key barriers, conflict filtering and unchanged opcode-6 results |
 | [0087](0087-explicit-conditional-unix-groups.md) | Explicit independent conditional groups for one Unix client | Negotiated opcode 7, individual results and one covering strong flush |
 | [0088](0088-independent-get-write-groups.md) | Preserve same-turn write groups across independent ordinary GETs | Exact dependencies, canonical copied reads and strong completion before sends |
+| [0089](0089-independent-versioned-get-write-groups.md) | Preserve same-turn write groups across independent versioned GETs | Canonical value/CSN pairs and unchanged strong/failure boundaries |

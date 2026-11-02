@@ -34,15 +34,14 @@ to original operations with conditions rechecked. Admitted/encoder failures are 
   "Pre: decoded ordinary command, exclusive actor and stable queued keys. Post: GET may precede this disjoint write prefix.
 Only a valid READY GET with full response credit and a nonempty independent queue qualifies; at most eight exact comparisons.
 The canonical read copies into private output. Dispatch must drain all writes before any socket send (ADR-0088)."
-  (and (zerop status) (= 2 (envelope-code (local-connection-pending connection)))
-       (>= (local-connection-limit connection) 60032) (eq :ready (e:stato-motore engine))
-       (plusp (local-write-queue-count queue)) (not (null key)) (not (queued-local-key-p queue key))))
+  (and (= 2 (envelope-code (local-connection-pending connection)))
+       (independent-local-read-key-p engine connection queue status key 60032)))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-LIM-003
 (declaim (ftype (function (e:motore local-connection local-write-queue function) null) dispatch-local-pending))
 (defun dispatch-local-pending (engine connection queue clock)
   "Pre: full frame and admitted request ID in actor slot order. Post: queued write or immediate checked command.
-Only independent ordinary GETs may precede queued writes; other reads/PING/rejections/explicit groups drain them.
+Only independent ordinary/versioned GETs may precede queued writes; other reads/PING/rejections/explicit groups drain them.
 Same-key reads and conditional dependencies remain barriers. No response is sent inside dispatch."
   (let ((envelope (local-connection-pending connection)))
     (unless envelope (error 'arcdocdb.conditions:invariant-violation :reason :local-pending-envelope))

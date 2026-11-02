@@ -8,6 +8,7 @@
       (send (symbol-function 'arcdocdb.local::native-send-span))
       (mode (uiop:getenv "ARCDOCDB_DISJOINT_MODE"))
       (failure (uiop:getenv "ARCDOCDB_DISJOINT_FAILURE"))
+      (versioned (equal "versioned" (uiop:getenv "ARCDOCDB_DISJOINT_READ")))
       (armed nil) (strong nil) (slots nil) (flushes 0))
   (flet ((early-copy ()
            (unless (and (eq :response (arcdocdb.local::local-connection-state (aref slots 1)))
@@ -18,7 +19,7 @@
             (let ((pending (count :pending connections :key #'arcdocdb.local::local-connection-state)))
               (when (or (zerop pending) (= pending 3))
                 (when (= pending 3)
-                  (unless (equal '(1 2 1) (loop for i below 3 collect
+                  (unless (equal (if versioned '(1 6 1) '(1 2 1)) (loop for i below 3 collect
                     (arcdocdb.local:envelope-code (arcdocdb.local::local-connection-pending (aref connections i)))))
                     (error "DISJOINT-COHORT wrong order"))
                   (setf armed t slots connections))

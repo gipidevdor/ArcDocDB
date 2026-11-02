@@ -36,6 +36,27 @@ No wait, renewed deadline or data CSN; output scratch is cleared, references bey
     (when (equalp key (e::operazione-scrittura-key (svref (local-write-queue-operations queue) i)))
       (return t))))
 
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-WAL-002 REQ-LIM-003
+(declaim (inline independent-local-read-key-p))
+(declaim (ftype (function (e:motore local-connection local-write-queue (integer 0 5) (or null b:octets)
+                                  (member 60032 60040)) boolean) independent-local-read-key-p))
+(defun independent-local-read-key-p (engine connection queue status key minimum)
+  "Pre: decoded read, serial owner and stable queued keys. Post: valid full-credit read is independent of this nonempty prefix.
+At most eight exact binary comparisons; no admission, allocation or I/O. Errors: none under these preconditions."
+  (and (zerop status) (>= (local-connection-limit connection) minimum) (eq :ready (e:stato-motore engine))
+       (plusp (local-write-queue-count queue)) (not (null key)) (not (queued-local-key-p queue key))))
+
+;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-WAL-002 REQ-LIM-003
+(declaim (ftype (function (e:motore local-connection local-write-queue (member 0 1 5) (or null b:octets)
+                                  (member 0 1 3)) boolean) independent-local-version-get-p))
+(defun independent-local-version-get-p (engine connection queue code key operation)
+  "Pre: decoded version request and exclusive actor. Post: only negotiated opcode 6 GET may precede disjoint writes (ADR-0089).
+The canonical read copies value and verified CSN into private output; the turn must finish strongly before sending.
+No mutation/conflict prediction or global CSN substitution. Errors: none under these preconditions."
+  (and (zerop operation) (local-connection-versions connection)
+       (= 6 (envelope-code (local-connection-pending connection)))
+       (independent-local-read-key-p engine connection queue code key 60040)))
+
 ;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-WAL-002 REQ-LIM-003
 (declaim (ftype (function (e:motore local-connection local-write-queue function (member :put :delete) b:octets
                                   (or null b:octets) boolean b:u64) null) enqueue-local-write))
@@ -89,8 +110,8 @@ Only fallback enters the engine again. Encoder failures after group commit never
 ;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-004
 (declaim (ftype (function (e:motore local-connection local-write-queue function) null) dispatch-local-version-pending))
 (defun dispatch-local-version-pending (engine connection queue clock)
-  "Pre: pending opcode 6, admitted ID. Post: independent conditional mutation queued or barrier completed after draining.
-One decode only for negotiated READY input; versioned GET, malformed/unnegotiated/unavailable requests are barriers."
+  "Pre: pending opcode 6, admitted ID. Post: conditional write queued or checked response copied without sending.
+One decode only for negotiated READY input; only independent full-credit versioned GET may preserve the write prefix."
   (let ((envelope (local-connection-pending connection)))
     (when (>= (local-now clock) (local-connection-deadline connection))
       (close-local-connection connection) (return-from dispatch-local-version-pending nil))
@@ -100,7 +121,8 @@ One decode only for negotiated READY input; versioned GET, malformed/unnegotiate
           (if (and (zerop code) (member operation '(1 3)))
               (enqueue-local-write engine connection queue clock (if (= 1 operation) :put :delete) key document t expected)
               (progn
-                (flush-local-write-queue engine queue clock)
+                (unless (independent-local-version-get-p engine connection queue code key operation)
+                  (flush-local-write-queue engine queue clock))
                 (check-local-read-group-deadline connection clock)
                 (queue-local-response connection
                   (local-dispatch-version-command engine connection (envelope-id envelope) code key document operation expected clock)

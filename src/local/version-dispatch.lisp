@@ -1,4 +1,4 @@
-;;; OWNER: serial service actor; prior writes drained, existing value/output buffers reserved.
+;;; OWNER: serial service actor; dependent prior writes drained, existing value/output buffers reserved.
 (in-package #:arcdocdb.local)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
@@ -21,7 +21,7 @@ Only the engine call is caught: later encoding/deadline failures cannot become a
 (declaim (ftype (function (e:motore local-connection b:u64 (member 0 1 5) (or null b:octets) (or null b:octets)
                                   (member 0 1 3) b:u64 (or null function)) b:index) local-dispatch-version-command))
 (defun local-dispatch-version-command (engine connection id code key document operation expected clock)
-  "Pre: whole decoded request and drained earlier writes. Post: checked version result or authoritative refusal.
+  "Pre: whole decoded request and drained dependent earlier writes. Post: checked version result or authoritative refusal.
 Shared by immediate dispatch and collector fallback; encoding remains outside the engine resource catch."
   (let ((out (local-connection-output connection)) (value (local-connection-value connection)))
     (cond
@@ -43,7 +43,7 @@ Shared by immediate dispatch and collector fallback; encoding remains outside th
 ;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-004
 (declaim (ftype (function (e:motore local-connection envelope &optional (or null function)) b:index) local-dispatch-version))
 (defun local-dispatch-version (engine connection envelope &optional clock)
-  "Pre: complete request and drained earlier writes. Post: versioned GET or conditional strong result.
+  "Pre: complete request and drained dependent earlier writes. Post: versioned GET or conditional strong result.
 Unnegotiated/unavailable requests reject before decode; no peer wait, retry or unknown-outcome downgrade."
   (cond
     ((not (local-connection-versions connection)) (encode-local-response (local-connection-output connection) (envelope-id envelope) 4))

@@ -1,5 +1,23 @@
 (in-package #:arcdocdb.io.tests)
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-readiness-native-disabled-fds-without-SAP-allocation
+  (dolist (capacity '(1 9))
+    (let* ((wait (arcdocdb.io::crea-attesa-io capacity)) (buffer (arcdocdb.io::attesa-io-buffer wait)))
+      (dotimes (i 100)
+        (multiple-value-bind (count errno) (arcdocdb.io::sonde-attesa-native buffer capacity 0)
+          (is (zerop count)) (is (zerop errno))))
+      (sb-ext:gc :full t)
+      (let ((before (sb-ext:get-bytes-consed)) (total 0))
+        (dotimes (i 10000)
+          (multiple-value-bind (count errno) (arcdocdb.io::sonde-attesa-native buffer capacity 0)
+            (is (zerop count)) (is (zerop errno)) (incf total count)))
+        (is (zerop (- (sb-ext:get-bytes-consed) before))) (is (zerop total)))
+      (dotimes (i capacity)
+        (is (= #xffffffff (arcdocdb.binary:leggi-u32 buffer (* i 8))))
+        (is (zerop (arcdocdb.binary:leggi-u16 buffer (+ (* i 8) 6)))))
+      (is (not (arcdocdb.io::attesa-io-busy wait))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (deftest test-REQ-IPC-002-readiness-domains-and-borrowed-fd-zero
   (dolist (n '(nil 0 10 1.5 1/2)) (signals invalid-argument (arcdocdb.io::crea-attesa-io n)))
   (signals invalid-argument (arcdocdb.io::crea-attesa-io 1 :backend t))

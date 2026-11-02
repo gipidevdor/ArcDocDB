@@ -1,6 +1,6 @@
 ;;;; Bounded client read-ahead: private retained bytes are never early response authority.
 (in-package #:arcdocdb.local.server.tests)
-(defun receive-fixture (wire &key steps (limit 65536) (clock (lambda () 0)) (input (l::local-buffer)) on-send on-recv)
+(defun receive-fixture (wire &key steps (limit 65536) (clock (lambda () 0)) (input (l::local-buffer)) on-send on-recv (read-groups nil))
   (let ((cursor 0) (calls 0) (sends 0) (polls 0) (requests nil))
     (let* ((backend (l::make-native-backend
                      :send (lambda (fd buffer start count)
@@ -22,7 +22,7 @@
                                 (is (eq op :poll)) (incf polls)
                                 (arcdocdb.binary:scrivi-u16 (first args) 6
                                   (arcdocdb.binary:leggi-u16 (first args) 4)) (values 1 0))))
-           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :limit limit :clock clock :input input
+           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :limit limit :clock clock :input input :read-groups read-groups
                      :io-backend backend :waiter (l::make-local-waiter 1 backend))))
       (values client (lambda () (list :calls calls :sends sends :polls polls :cursor cursor :requests (reverse requests)))))))
 (defun receive-stream (&rest frames) (apply #'concatenate '(vector (unsigned-byte 8)) frames))

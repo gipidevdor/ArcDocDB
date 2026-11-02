@@ -1,0 +1,11 @@
+;;;; C4: strict compile/load and existing native/actor/wire/client suites, excluding process campaigns.
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                         (unless (typep condition 'sb-kernel:redefinition-warning) (error "COD-01: ~A" condition)))))
+  (asdf:load-asd (truename "arcdocdb.asd")) (asdf:load-system "arcdocdb/tests"))
+(let ((count 0))
+  (dolist (name '("ARCDOCDB.IO.TESTS" "ARCDOCDB.LOCAL.NATIVE.TESTS" "ARCDOCDB.LOCAL.WIRE.TESTS" "ARCDOCDB.LOCAL.SERVER.TESTS"))
+    (let ((tests (symbol-value (find-symbol "*TESTS*" name))))
+      (dolist (test (reverse tests)) (funcall test) (incf count))))
+  (format t "~S~%" (list :kind :unix-buffer-focused :status :passed :tests count)))

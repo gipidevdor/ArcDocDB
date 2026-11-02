@@ -59,8 +59,9 @@ The client may retain coalesced wire bytes in its fixed input buffer; each
 response still requires its own request, correlation and fresh deadline checks.
 
 This path validates the complete response and document, then copies into caller
-storage without allocating a document vector. Per-frame protocol allocation
-remains. Only a successful return authorizes the copied prefix: an error,
+storage without allocating a document vector. The response envelope is consumed
+within the call; no wire view escapes. Error handling and numeric conversions
+retain their existing allocation behavior. Only a successful return authorizes the copied prefix: an error,
 deadline or nonlocal exit after copying can leave unconfirmed bytes in the
 target. Authoritative rejection keeps the client reusable; other incomplete
 reads close without retry. The [checked example](../examples/local-roundtrip.lisp)
@@ -112,7 +113,8 @@ complete response/document validation precedes copying. Only successful return
 authorizes both outputs: late error, deadline or nonlocal exit can leave
 unconfirmed bytes and lengths. A whole-group rejection preserves both outputs
 and READY; other incomplete reads close without retry. No document/result vector
-is allocated by this copy path; per-frame protocol allocation remains. The
+is allocated by this copy path, and the response envelope is consumed within the
+call. See the [scope and measured allocation](../spikes/results/2026-11-01-client-scoped-envelope/report.md). The
 [checked example](../examples/local-roundtrip.lisp) uses one target for both APIs.
 
 

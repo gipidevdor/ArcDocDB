@@ -145,6 +145,20 @@ No receive buffer grows, and close consumes both unread offsets. The server's
 prefix-first admission and one-step actor schedule are unchanged. See the
 [method and qualification](../../spikes/results/2026-11-01-client-receive/report.md).
 
+The synchronous client consumes each response envelope within a fixed private
+call lifetime after I/O completes. One validator serves this path and the public
+`decode-local-envelope`, which continues to return a fresh persistent read-only
+object. Pending server requests keep persistent envelopes. The full numeric u64
+ID uses two read-only u32 fixnum fields so the private client view has no raw
+structure slots on ARM64. The view and its consumer never escape, including
+error and nonlocal exits; copied results retain their existing ownership.
+This removes the envelope's managed allocation, without a universal
+nonallocation claim for numeric conversions, documents or failures. See the
+[method, checks and measurements](../../spikes/results/2026-11-01-client-scoped-envelope/report.md).
+The native `poll` entry is inlined at the I/O boundary so its borrowed pointer
+does not require a temporary managed object. ABI, count/errno, timeout and pin
+scope stay unchanged; native zero-timeout checks cover one and nine disabled FDs.
+
 
 The exported `client-get-into` accepts an exclusive caller-owned simple octet
 buffer with a complete 60,000-byte grant from its optional offset. It returns

@@ -7,6 +7,8 @@
 (sb-alien:define-alien-type readiness-pollfd
   (sb-alien:struct readiness-pollfd (fd sb-alien:int) (events sb-alien:short) (revents sb-alien:short)))
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
+(declaim (inline %readiness-poll))
+;;; REQ: REQ-IPC-002 REQ-AFF-004
 (sb-alien:define-alien-routine ("poll" %readiness-poll) sb-alien:int
   (fds sb-alien:system-area-pointer)
   (count #+darwin sb-alien:unsigned-int #-darwin sb-alien:unsigned-long) (milliseconds sb-alien:int))

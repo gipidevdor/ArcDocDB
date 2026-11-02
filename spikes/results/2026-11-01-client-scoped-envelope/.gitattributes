@@ -1,0 +1,9 @@
+# Preserve all retained evidence bytes through Git checkout and publication.
+* -text
+# Terminal and fixture whitespace is original evidence.
+*.stdout -whitespace
+*.stderr -whitespace
+support/** -whitespace
+# Frozen probe and source variants retain their original whitespace.
+*.source -whitespace
+probe.lisp -whitespace

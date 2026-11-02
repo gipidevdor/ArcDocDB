@@ -1,0 +1,109 @@
+;;;; Immutable envelope representation and bounded non-escaping client consumption.
+(in-package #:arcdocdb.local.wire.tests)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+(defun scoped-envelope-id (buffer space)
+  (flet ((consume (view) (l:envelope-id view)))
+    (declare (dynamic-extent #'consume))
+    (l::call-with-local-response-envelope buffer 0 (length buffer) space #'consume)))
+(defun scoped-envelope-fields (view)
+  (list (l:envelope-kind view) (l:envelope-id view) (l:envelope-code view)
+        (l:envelope-payload-start view) (l:envelope-payload-end view)
+        (l:envelope-max-frame view) (l:envelope-max-inflight view)
+        (l::envelope-write-groups view) (l::envelope-read-groups view)
+        (l::envelope-versions view) (l::envelope-conditional-groups view) (l::envelope-frame-limit view)))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-complete-u64-and-persistent-public-objects
+  (dolist (id (list 1 23 24 255 256 65535 65536 #xffffffff #x100000000
+                   (1- most-positive-fixnum) most-positive-fixnum (1+ most-positive-fixnum) #xffffffffffffffff))
+    (let* ((buffer (body 3 id 0 (bytes #xf6))) (space (cbor:crea-spazio-cbor))
+           (first (l:decode-local-envelope buffer 0 (length buffer) :space space))
+           (second (l:decode-local-envelope buffer 0 (length buffer) :space space)))
+      (is (not (eq first second))) (is (= id (l:envelope-id first)))
+      (is (= (ldb (byte 32 0) id) (l::envelope-id-low first)))
+      (is (= (ldb (byte 32 32) id) (l::envelope-id-high first)))
+      (is (equal (scoped-envelope-fields first)
+                 (l::call-with-local-response-envelope buffer 0 (length buffer) space #'scoped-envelope-fields)))
+      (is (= id (scoped-envelope-id buffer space)))
+      (sb-ext:gc :full t)
+      (is (= id (l:envelope-id first))) (is (equal (scoped-envelope-fields first) (scoped-envelope-fields second)))))
+  (dolist (accessor '(l:envelope-id l:envelope-kind l:envelope-code l:envelope-payload-start l:envelope-payload-end
+                     l:envelope-max-frame l:envelope-max-inflight l::envelope-id-low l::envelope-id-high))
+    (is (not (fboundp (list 'setf accessor)))))
+  (dolist (id (list -1 #x10000000000000000 nil :bad 1.0))
+    (signals type-error (l::%make-envelope :id id))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-all-handshake-fields-match-public-decoding
+  (dotimes (mask 16)
+    (dolist (kind '(0 1))
+      (let* ((out (output)) (space (cbor:crea-spazio-cbor))
+             (options (list :write-groups (logbitp 0 mask) :read-groups (logbitp 1 mask)
+                            :versions (logbitp 2 mask) :conditional-groups (logbitp 3 mask)))
+             (end (if (zerop kind) (apply #'l:encode-local-hello out 17825792 options)
+                      (apply #'l:encode-local-welcome out 65536 options)))
+             (expected (l:decode-local-envelope out 4 end :space space)))
+        (is (= kind (l:envelope-kind expected))) (is (zerop (l:envelope-id expected)))
+        (is (equal (scoped-envelope-fields expected)
+                   (l::call-with-local-response-envelope out 4 end space #'scoped-envelope-fields)))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-rejects-complete-invalid-frames-before-consumer
+  (let ((space (cbor:crea-spazio-cbor)) (calls 0))
+    (dolist (buffer (list (bytes) (bytes #x85 1) (bytes #x84 1 3 1 0 #xf6)
+                         (bytes #x85 2 3 1 0 #xf6) (bytes #x85 1 4 1 0 #xf6)
+                         (body 3 0 0 (bytes #xf6)) (body 3 1 6 (bytes #xf6))
+                         (bytes #x85 1 3 #x18 1 0 #xf6) (bytes #x85 1 3 #x20 0 #xf6)
+                         (join (body 3 1 0 (bytes #xf6)) (bytes 0))
+                         (body 3 1 0 (bytes #x61 #xff))
+                         (body 3 1 0 (bytes #xa2 1 0 1 1))
+                         (body 3 1 0 (bytes #xa2 2 0 1 1))
+                         (body 3 1 0 (bytes #x81 #x81 #x81 #x81 #x81 #x81 #x81 #x81 #xf6))))
+      (signals l:protocol-error (l:decode-local-envelope buffer 0 (length buffer) :space space))
+      (signals l:protocol-error
+        (l::call-with-local-response-envelope buffer 0 (length buffer) space
+          (lambda (view) (declare (ignore view)) (incf calls))))
+      (is (zerop calls)))
+    (is (= 1 (scoped-envelope-id (body 3 1 0 (bytes #xf6)) space)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-nested-GC-and-independent-returned-document
+  (let* ((document (get-document 1024)) (buffer (body 3 23 0 (join (bytes #x82 #xf5) (bstr document))))
+         (other (body 3 24 0 (bytes #xf6))) (space (cbor:crea-spazio-cbor)) (other-space (cbor:crea-spazio-cbor)))
+    (multiple-value-bind (status copy)
+        (l::call-with-local-response-envelope buffer 0 (length buffer) space
+          (lambda (view)
+            (is (= 23 (l:envelope-id view))) (is (= 24 (scoped-envelope-id other other-space)))
+            (sb-ext:gc :full t) (is (= 23 (l:envelope-id view)))
+            (l:decode-local-response buffer view space 2)))
+      (is (eq :found status)) (is (equalp copy document))
+      (dotimes (i 128) (is (= 24 (scoped-envelope-id other other-space))))
+      (fill buffer 0) (sb-ext:gc :full t) (is (equalp copy document)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-error-throw-and-scratch-reuse
+  (let* ((buffer (body 3 1 0 (bytes #xf6))) (space (cbor:crea-spazio-cbor))
+         (primary (make-condition 'l:protocol-error :reason :scoped-test-primary)))
+    (is (= 37 (catch 'scoped-stop
+                (l::call-with-local-response-envelope buffer 0 (length buffer) space
+                  (lambda (view) (is (= 1 (l:envelope-id view))) (throw 'scoped-stop 37))))))
+    (let ((seen nil))
+      (handler-case
+          (l::call-with-local-response-envelope buffer 0 (length buffer) space
+            (lambda (view) (is (= 1 (l:envelope-id view))) (error primary)))
+        (l:protocol-error (condition) (setf seen condition)))
+      (is (eq primary seen)))
+    (sb-ext:gc :full t) (is (= 1 (scoped-envelope-id buffer space)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(deftest test-REQ-IPC-002-scoped-envelope-allocation-with-persistent-negative-control
+  (let* ((buffer (body 3 1 0 (bytes #xf6))) (space (cbor:crea-spazio-cbor)))
+    (dotimes (i 100) (is (= 1 (scoped-envelope-id buffer space))))
+    (sb-ext:gc :full t)
+    (let ((before (sb-ext:get-bytes-consed)) (sum 0))
+      (dotimes (i 10000) (incf sum (scoped-envelope-id buffer space)))
+      (is (zerop (- (sb-ext:get-bytes-consed) before))) (is (= 10000 sum)))
+    (sb-ext:gc :full t)
+    (let ((before (sb-ext:get-bytes-consed)) (sum 0))
+      (dotimes (i 10000) (incf sum (l:envelope-id (l:decode-local-envelope buffer 0 (length buffer) :space space))))
+      (is (plusp (- (sb-ext:get-bytes-consed) before))) (is (= 10000 sum)))))

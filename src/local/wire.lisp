@@ -43,13 +43,22 @@ Ownership: caller's condition, no mutation."
   (arcdocdb.conditions:error-reason condition))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
-(defstruct (envelope (:constructor %make-envelope)
-                     (:copier nil) (:predicate nil))
+(declaim (inline %make-envelope envelope-id))
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(defstruct (envelope
+             (:constructor %make-envelope
+               (&key buffer (kind 0) (id 0) (code 0) (payload-start 0) (payload-end 0)
+                     (max-frame 0) (max-inflight 0) (write-groups nil) (read-groups nil)
+                     (versions nil) (conditional-groups nil) (frame-limit 65536)
+                &aux (id-low (ldb (byte 32 0) (the b:u64 id)))
+                     (id-high (ldb (byte 32 32) (the b:u64 id)))))
+             (:copier nil) (:predicate nil))
   "Pre: private construction after verification. Post: fixed fields and buffer views.
-Ownership: caller's immutable buffer until final use; no implicit copy."
+Ownership: immutable buffer through final use; public objects persist, private scoped views never escape."
   (buffer nil :type (or null b:octets) :read-only t)
   (kind 0 :type (integer 0 3) :read-only t)
-  (id 0 :type b:u64 :read-only t)
+  (id-low 0 :type b:u32 :read-only t)
+  (id-high 0 :type b:u32 :read-only t)
   (code 0 :type b:u16 :read-only t)
   (payload-start 0 :type b:index :read-only t)
   (payload-end 0 :type b:index :read-only t)
@@ -60,6 +69,13 @@ Ownership: caller's immutable buffer until final use; no implicit copy."
   (versions nil :type boolean :read-only t)
   (conditional-groups nil :type boolean :read-only t)
   (frame-limit 65536 :type (integer 4096 17825792) :read-only t))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(declaim (ftype (function (envelope) (values b:u64 &optional)) envelope-id))
+(defun envelope-id (envelope)
+  "Pre: verified immutable envelope, within its owned lifetime. Post: original complete u64 ID, without truncation.
+Two u32 fixnum fields avoid raw structure slots on ARM64; no mutable storage or byte view is returned."
+  (logior (ash (envelope-id-high envelope) 32) (envelope-id-low envelope)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (keyword &optional t) nil) %wire-fail))
@@ -306,15 +322,16 @@ Ownership: no state; direction :EITHER or one of the two explicit directions."
   nil)
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
+(declaim (inline %wire-envelope-values call-with-local-response-envelope))
+;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t t &key (:space t) (:max-frame t) (:direction t) (:expected-kind t)
-                          (:last-id t) (:expected-id t)) (values envelope &optional)) decode-local-envelope))
-(defun decode-local-envelope (buffer start end &key (max-frame +server-max-frame+)
+                          (:last-id t) (:expected-id t)) (values (integer 0 3) b:u64 b:u16 b:index (integer 0 17825792)
+                                  (integer 0 16) boolean boolean boolean boolean &optional)) %wire-envelope-values))
+(defun %wire-envelope-values (buffer start end &key (max-frame +server-max-frame+)
                               (direction :either) expected-kind (last-id 0) expected-id space)
-  "Pre: BODY without prefix, caller's immutable buffer until final use of views.
-Post: verified fixed envelope, one bounded structure per frame; no object tree.
-PROTOCOL-ERROR for envelope/direction/ID/budget/trailing; INVALID-ARGUMENT for invalid API use.
-Ownership: exclusive SPACE reused; NIL creates fixed scratch, without a zero-allocation promise.
-MAX-FRAME is the negotiated limit, distinct from capacities declared in the handshake."
+  "Pre: external body/options and exclusive optional CBOR scratch. Post: fully validated immutable envelope fields.
+Range, budget, complete CBOR/order, kind/direction/ID and capacities precede return; no result object is constructed.
+Invalid API use ->INVALID-ARGUMENT; malformed frame ->PROTOCOL-ERROR. All work remains bounded by one frame."
   (%wire-range buffer start end)
   (%wire-limit max-frame)
   (%wire-decode-options direction expected-kind last-id expected-id)
@@ -337,10 +354,37 @@ MAX-FRAME is the negotiated limit, distinct from capacities declared in the hand
             (progn
               (when (> (- end start) +hello-limit+) (%wire-fail :local-hello-budget start))
               (%wire-capacities buffer payload end (= kind 1))) (values 0 0 nil nil nil))
-      (%make-envelope :buffer buffer :kind kind :id id :code code
-                      :payload-start payload :payload-end end :max-frame frame
-                      :max-inflight inflight :write-groups groups :read-groups reads :versions versions
-                      :conditional-groups conditional :frame-limit max-frame))))
+      (values kind id code payload frame inflight groups reads versions conditional))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(declaim (ftype (function (t t t &key (:space t) (:max-frame t) (:direction t) (:expected-kind t)
+                          (:last-id t) (:expected-id t)) (values envelope &optional)) decode-local-envelope))
+(defun decode-local-envelope (buffer start end &key (max-frame +server-max-frame+)
+                              (direction :either) expected-kind (last-id 0) expected-id space)
+  "Pre: external body/options, immutable buffer through final use. Post: new persistent verified envelope.
+Shared complete validation precedes construction; original error, direction, ID and capacity rules remain.
+Ownership: fresh immutable object on every call; optional SPACE is exclusive; no implicit document copy."
+  (multiple-value-bind (kind id code payload frame inflight groups reads versions conditional)
+      (%wire-envelope-values buffer start end :max-frame max-frame :direction direction :expected-kind expected-kind
+                             :last-id last-id :expected-id expected-id :space space)
+    (%make-envelope :buffer buffer :kind kind :id id :code code :payload-start payload :payload-end end
+                    :max-frame frame :max-inflight inflight :write-groups groups :read-groups reads :versions versions
+                    :conditional-groups conditional :frame-limit max-frame)))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(declaim (ftype (function (b:octets b:index b:index cbor:spazio-cbor (function (envelope) (values t &optional t t)))
+                         (values t &optional t t)) call-with-local-response-envelope))
+(defun call-with-local-response-envelope (buffer start end space consumer)
+  "Pre: complete immutable frame body, exclusive scratch, private CONSUMER that neither retains nor returns its envelope.
+Post: fully validated scoped view consumed synchronously; only copied values/scalars may escape through the consumer.
+Same complete validator and errors as public decoding. Fixed stack object, no raw slots, no new I/O or mutable state."
+  (multiple-value-bind (kind id code payload frame inflight groups reads versions conditional)
+      (%wire-envelope-values buffer start end :space space)
+    (let ((view (%make-envelope :buffer buffer :kind kind :id id :code code :payload-start payload :payload-end end
+                                :max-frame frame :max-inflight inflight :write-groups groups :read-groups reads
+                                :versions versions :conditional-groups conditional :frame-limit +server-max-frame+)))
+      (declare (dynamic-extent view))
+      (funcall consumer view))))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t) (values envelope &optional)) %wire-envelope-input))

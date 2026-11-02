@@ -442,9 +442,9 @@
                 :components ((:file "support") (:file "manifest") (:file "roundtrip") (:file "guards")
                              (:file "directory") (:file "faults") (:file "streaming") (:file "cli") (:file "processes")))
                (:module "local" :serial t
-                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "native") (:file "socket-buffer") (:file "server")
+                :components ((:file "wire") (:file "wire-group") (:file "wire-read-group") (:file "wire-version") (:file "wire-conditional-group") (:file "wire-scoped-envelope") (:file "native") (:file "socket-buffer") (:file "server")
                              (:file "explicit-group") (:file "client-group") (:file "read-group") (:file "version") (:file "conditional-group")
-                             (:file "explicit-conditional-group") (:file "disjoint-read") (:file "client-get-into") (:file "client-receive") (:file "client-read-group-into")
+                             (:file "explicit-conditional-group") (:file "disjoint-read") (:file "client-get-into") (:file "client-receive") (:file "client-read-group-into") (:file "client-scoped-envelope")
                              (:file "processes") (:file "group-processes") (:file "read-group-processes") (:file "version-processes")
                              (:file "conditional-group-processes") (:file "explicit-conditional-processes") (:file "disjoint-read-processes")
                              (:file "client-get-into-processes") (:file "client-read-group-into-processes"))))

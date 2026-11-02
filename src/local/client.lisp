@@ -80,11 +80,11 @@ At most four positive steps; waits retain the absolute deadline. EOF ->PROTOCOL-
   received)
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
-(declaim (ftype (function (local-client (integer 4096 65536) b:u64) (values envelope &optional)) receive-local-client))
-(defun receive-local-client (client limit until)
-  "Pre: one pending response, exclusive reserved input. Post: exactly one envelope, coalesced suffix retained privately.
-Initial recv may fill the negotiated grant; prefix bounds the exact body before decoding. No suffix is decoded early.
-Buffered completion still checks the absolute deadline; EOF/invalid prefix ->PROTOCOL-ERROR. No new buffer or retry."
+(declaim (ftype (function (local-client (integer 4096 65536) b:u64) (values b:index &optional)) receive-local-client-frame))
+(defun receive-local-client-frame (client limit until)
+  "Pre: one pending response and exclusive reserved input. Post: one complete frame end, with opaque suffix retained.
+Deadline, prefix/grant, exact body and EOF rules precede return; no envelope is constructed or suffix decoded early.
+Fixed buffers/offsets only; malformed input ->PROTOCOL-ERROR, bad private grant ->INVARIANT-VIOLATION."
   (when (and (< (local-client-input-consumed client) (local-client-input-received client))
              (>= (local-now (local-client-clock client)) until))
     (error 'protocol-error :reason :local-client-deadline))
@@ -95,7 +95,15 @@ Buffered completion still checks the absolute deadline; EOF/invalid prefix ->PRO
         (transfer-local-client client buffer received end :input until)
         (setf received end))
       (setf (local-client-input-consumed client) end (local-client-input-received client) received)
-      (decode-local-envelope buffer 4 end :space (local-client-space client)))))
+      end)))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (local-client (integer 4096 65536) b:u64) (values envelope &optional)) receive-local-client))
+(defun receive-local-client (client limit until)
+  "Pre: one pending response. Post: original persistent decoded envelope, for cold handshake/owned callers.
+Frame acquisition and validation retain existing errors, deadline and suffix rules; no scoped view escapes."
+  (let ((end (receive-local-client-frame client limit until)))
+    (decode-local-envelope (local-client-input client) 4 end :space (local-client-space client))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
 (declaim (ftype (function (t &key (:max-frame t) (:clock t) (:io-backend t) (:write-groups t) (:read-groups t) (:versions t) (:conditional-groups t)) local-client) connect-local))
@@ -138,47 +146,63 @@ No data operation during handshake; exact optional capabilities and deadline pre
                          (values t &optional t)) finish-local-client-read-group))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
+(declaim (inline finish-decoded-local-client-response))
+;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
+(declaim (ftype (function (local-client envelope b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64
+                         &optional (member nil 0 1 3) (or null b:octets) (or null b:octets) b:index)
+                         (values t &optional t t)) finish-decoded-local-client-response))
+(defun finish-decoded-local-client-response (client envelope id opcode count results until &optional version-operation applied (read-target nil) (read-start 0))
+  "Pre: verified response view within its owned/scoped lifetime. Post: correlated result, with output copied after validation.
+Never retains or returns ENVELOPE; only independent documents/scalars escape. Existing deadline/rejection errors propagate."
+  (when (>= (local-now (local-client-clock client)) until)
+    (error 'protocol-error :reason :local-client-deadline))
+  (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
+    (error 'protocol-error :reason :local-client-response-id))
+  (cond
+    ((and (= opcode 2) read-target)
+     (multiple-value-prog1
+         (decode-local-get-into (local-client-input client) envelope (local-client-space client) read-target read-start)
+       (when (>= (local-now (local-client-clock client)) until)
+         (error 'protocol-error :reason :local-client-deadline))))
+    ((and (= opcode +local-conditional-group-opcode+) (plusp count))
+     (let ((completed (decode-local-conditional-response (local-client-input client) envelope
+                        (local-client-group-csns client) (local-client-group-applied client) count)))
+       (when (>= (local-now (local-client-clock client)) until)
+         (error 'protocol-error :reason :local-client-deadline))
+       (replace results (local-client-group-csns client) :end1 count :end2 count)
+       (replace applied (local-client-group-applied client) :end1 count :end2 count) completed))
+    ((and (= opcode +local-version-opcode+) version-operation)
+     (multiple-value-prog1
+         (decode-local-version-response (local-client-input client) envelope (local-client-space client) version-operation)
+       (when (>= (local-now (local-client-clock client)) until)
+         (error 'protocol-error :reason :local-client-deadline))))
+    ((and (= opcode +local-write-group-opcode+) (plusp count))
+      (progn
+        (decode-local-group-response (local-client-input client) envelope (local-client-group-csns client) count)
+        (when (>= (local-now (local-client-clock client)) until)
+          (error 'protocol-error :reason :local-client-deadline))
+        (replace results (local-client-group-csns client) :end1 count :end2 count) count))
+    ((and (= opcode +local-read-group-opcode+) (plusp count))
+     (finish-local-client-read-group client envelope count read-target read-start results until))
+    (t (multiple-value-prog1
+          (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
+        (when (>= (local-now (local-client-clock client)) until)
+          (error 'protocol-error :reason :local-client-deadline))))))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:u16 (integer 0 8) (or null local-group-csns) b:u64
                          &optional (member nil 0 1 3) (or null b:octets) (or null b:octets) b:index)
                          (values t &optional t t)) finish-local-client-response))
 (defun finish-local-client-response (client id opcode count results until &optional version-operation applied (read-target nil) (read-start 0))
-  "Pre: one owned exchange awaiting its response. Post: fully correlated result, group output copied after complete validation.
-Malformed/rejected responses never expose partial group results; propagates protocol/authoritative rejection."
-  (let ((envelope (receive-local-client client (local-client-limit client) until)))
-    (when (>= (local-now (local-client-clock client)) until)
-      (error 'protocol-error :reason :local-client-deadline))
-    (unless (and (= 3 (envelope-kind envelope)) (= id (envelope-id envelope)))
-      (error 'protocol-error :reason :local-client-response-id))
-    (cond
-      ((and (= opcode 2) read-target)
-       (multiple-value-prog1
-           (decode-local-get-into (local-client-input client) envelope (local-client-space client) read-target read-start)
-         (when (>= (local-now (local-client-clock client)) until)
-           (error 'protocol-error :reason :local-client-deadline))))
-      ((and (= opcode +local-conditional-group-opcode+) (plusp count))
-       (let ((completed (decode-local-conditional-response (local-client-input client) envelope
-                          (local-client-group-csns client) (local-client-group-applied client) count)))
-         (when (>= (local-now (local-client-clock client)) until)
-           (error 'protocol-error :reason :local-client-deadline))
-         (replace results (local-client-group-csns client) :end1 count :end2 count)
-         (replace applied (local-client-group-applied client) :end1 count :end2 count) completed))
-      ((and (= opcode +local-version-opcode+) version-operation)
-       (multiple-value-prog1
-           (decode-local-version-response (local-client-input client) envelope (local-client-space client) version-operation)
-         (when (>= (local-now (local-client-clock client)) until)
-           (error 'protocol-error :reason :local-client-deadline))))
-      ((and (= opcode +local-write-group-opcode+) (plusp count))
-        (progn
-          (decode-local-group-response (local-client-input client) envelope (local-client-group-csns client) count)
-          (when (>= (local-now (local-client-clock client)) until)
-            (error 'protocol-error :reason :local-client-deadline))
-          (replace results (local-client-group-csns client) :end1 count :end2 count) count))
-      ((and (= opcode +local-read-group-opcode+) (plusp count))
-       (finish-local-client-read-group client envelope count read-target read-start results until))
-      (t (multiple-value-prog1
-            (decode-local-response (local-client-input client) envelope (local-client-space client) opcode)
-          (when (>= (local-now (local-client-clock client)) until)
-            (error 'protocol-error :reason :local-client-deadline)))))))
+  "Pre: one owned exchange awaiting a response. Post: full response consumed within one fixed private envelope lifetime.
+Consumer captures caller-owned state only and never exposes the view; errors/nonlocal exits unwind both stack objects.
+I/O completes before envelope construction; all previous correlation, deadline, copying and rejection rules remain."
+  (flet ((consume (envelope)
+           (finish-decoded-local-client-response client envelope id opcode count results until
+                                                version-operation applied read-target read-start)))
+    (declare (dynamic-extent #'consume))
+    (let ((end (receive-local-client-frame client (local-client-limit client) until)))
+      (call-with-local-response-envelope (local-client-input client) 4 end (local-client-space client) #'consume))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-AFF-004
 (declaim (ftype (function (local-client b:u64 b:index b:u16 &optional (integer 0 8) (or null local-group-csns)

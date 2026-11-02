@@ -1,0 +1,54 @@
+;;;; Synchronous results remain independent across ephemeral protocol views and GC.
+(in-package #:arcdocdb.local.server.tests)
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-AFF-008
+(deftest test-REQ-IPC-002-client-scoped-views-preserve-old-copies-after-stack-reuse
+  (let* ((document (arcdocdb.local.wire.tests::get-document 1024)) (docs (vector document nil document))
+         (keys (vector (bytes 1) (bytes 2) (bytes 1)))
+         (frames (append (list (into-reply document) (rg-into-reply docs 2) (rg-into-reply docs 3))
+                         (loop for id from 4 to 131 collect (receive-ping id))))
+         (stream (apply #'receive-stream frames)) (arena (rg-into-arena)) (lengths (rg-into-lengths)))
+    (multiple-value-bind (client stats) (receive-fixture stream :read-groups t)
+        (unwind-protect
+             (multiple-value-bind (status copy) (l:client-get client (bytes 1))
+               (is (eq :found status))
+               (let ((copies (l:client-get-group client keys)))
+                 (is (equalp copies docs)) (is (not (eq (svref copies 0) (svref copies 2))))
+                 (is (equal '(3 2048) (multiple-value-list (l:client-get-group-into client keys arena lengths :start 4))))
+                 (rg-into-guards arena lengths 4 docs)
+                 (dotimes (i 128) (is (null (l:client-ping client))))
+                 (fill (l::local-client-input client) 0) (fill arena 0) (sb-ext:gc :full t)
+                 (is (equalp copy document)) (is (equalp copies docs))
+                 (is (= 132 (l::local-client-next-id client))) (is (= 1 (getf (funcall stats) :calls)))))
+          (l:close-local client)) (receive-cleared client)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008
+(deftest test-REQ-IPC-002-client-scoped-response-IDs-cross-u32-and-fixnum-boundaries
+  (dolist (start (list #xfffffffe (1- most-positive-fixnum) #xfffffffffffffffe))
+    (let ((stream (receive-stream (receive-ping start) (receive-ping (1+ start)))))
+      (multiple-value-bind (client stats) (receive-fixture stream)
+        (setf (l::local-client-next-id client) start)
+        (unwind-protect
+             (progn (is (null (l:client-ping client))) (is (null (l:client-ping client)))
+                    (is (= (+ start 2) (l::local-client-next-id client)))
+                    (is (= 1 (getf (funcall stats) :calls))) (is (= 2 (getf (funcall stats) :sends))))
+          (l:close-local client)) (receive-cleared client)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-008 REQ-AFF-004
+(deftest test-REQ-IPC-002-client-scoped-response-survives-clock-GC-and-refuses-reentry
+  (let ((client nil) (collections 0) (refusals 0) (document (arcdocdb.local.wire.tests::get-document 1024))
+        (target (into-target)))
+    (multiple-value-bind (handle stats)
+        (receive-fixture (into-reply document)
+          :clock (lambda ()
+                   (when (and client (eq :busy (l::local-client-state client)))
+                     (incf collections) (sb-ext:gc :full t)
+                     (signals arcdocdb.conditions:invalid-argument (l:client-ping client)) (incf refusals)) 0))
+      (setf client handle)
+      (unwind-protect
+           (progn
+             (is (equal '(:found 1024) (multiple-value-list (l:client-get-into client (bytes 1) target :start 4))))
+             (is (plusp collections)) (is (= collections refusals)) (into-guards target 4 document)
+             (is (= 1 (getf (funcall stats) :calls))) (is (= 1 (getf (funcall stats) :sends)))
+             (is (= 2 (l::local-client-next-id client))) (is (eq :ready (l::local-client-state client))))
+        (l:close-local client)) (receive-cleared client)))))

@@ -170,6 +170,15 @@ failure may leave unconfirmed bytes. See the [public buffer contract](../lisp-ap
 [C1 review](../../spikes/results/2026-11-01-client-buffered-get/review.md) and
 [measurements and qualification](../../spikes/results/2026-11-01-client-buffered-get/report.md).
 
+`client-get-version-into` composes the same output grant with the existing
+`:versions t` capability. One verified current read returns status, copied byte
+count and CSN for subsequent conditional PUT/DELETE, without allocating a
+document vector. Persistent and caller-buffer versioned results share one full
+grammar/token/document validator; conditional mutation responses use it too.
+Absence returns ABSENT/0/0, and only a successful return authorizes copied bytes.
+See the [public contract](../lisp-api.md#caller-owned-versioned-read-buffers)
+and [integration method](../../spikes/results/2026-11-02-versioned-read-into/method.md).
+
 The runtime directory is exclusively locked until service close:
 the profile permits one listener per directory, even with different names.
 All ancestors are kept open and their identities rechecked; root and

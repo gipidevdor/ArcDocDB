@@ -23,6 +23,25 @@ Capability/input/frame/ID refusal precedes send. Conditional send failures are O
 The CSN belongs to the verified current value. No historical snapshot or retry; failed reads close without OUTCOME-UNKNOWN."
   (exchange-local-version client 0 key nil 0))
 
+;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-004 REQ-AFF-008
+(declaim (ftype (function (t t t &key (:start t))
+                         (values (member :found :absent) b:index b:u64 &optional)) client-get-version-into))
+(defun client-get-version-into (client key target &key (start 0))
+  "Pre: READY owner with :VERSIONS T, stable binary key and exclusive simple octet TARGET with a full 60,000-byte grant.
+TARGET differs from KEY and client input/output. State/capability/output/key/frame/ID refusals precede I/O and ID consumption.
+Post: FOUND/copied-byte-count/verified-current-CSN or ABSENT/0/0 with TARGET unchanged; surrounding bytes remain unchanged.
+Only successful return authorizes copied bytes; a post-copy deadline/failure/nonlocal exit can leave unconfirmed output.
+No target retention, document vector, historical snapshot or retry. Failed reads close without OUTCOME-UNKNOWN."
+  (esigi-local-client client :ready)
+  (unless (local-client-versions client)
+    (error 'arcdocdb.conditions:unsupported-format :reason :local-versions-not-negotiated))
+  (esigi-local-get-output client key target start)
+  (let ((id (local-client-next-id client)))
+    (unless (<= id #xffffffffffffffff)
+      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+    (let ((size (encode-local-version (local-client-output client) id 0 key nil 0 (local-client-limit client))))
+      (run-local-client-exchange client id size +local-version-opcode+ 0 nil 0 nil target start))))
+
 ;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-TXS-003 REQ-WAL-006
 (declaim (ftype (function (t t t t) (values (member :applied :conflict) b:u64 &optional)) client-put-if))
 (defun client-put-if (client key document expected)

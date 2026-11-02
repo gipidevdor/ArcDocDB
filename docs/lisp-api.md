@@ -18,8 +18,9 @@ a Unix socket and checks these operations through exported APIs:
 
 1. PUT a document and receive its commit sequence number.
 2. GET the key using both an independent copy and a reusable caller buffer.
-3. Stop the service and reopen the same storage with the same identities.
-4. GET the persisted document, then DELETE it and check that GET reports absence.
+3. GET its current version into the same buffer and conditionally update using that token.
+4. Stop the service and reopen the same storage with the same identities.
+5. GET the persisted document, then DELETE it and check that GET reports absence.
 
 The example uses canonical CBOR for the integer `42`, binary key bytes and fixed
 identities belonging only to its disposable directory. It removes that directory
@@ -129,6 +130,26 @@ conflicts after delete/reinsert. Conflicts consume no CSN or flush. These
 capability options can be combined. Lost mutation responses remain
 `outcome-unknown`; do not retry without reconciling application intent.
 [Conditional operation contract](adr/0085-conditional-current-writes.md).
+
+<a id="caller-owned-versioned-read-buffers"></a>
+### Reuse versioned read output
+
+With the same `:versions t` connection,
+`(client-get-version-into client key target :start start)` returns exactly
+`:found`, copied byte count and the verified positive u64 CSN, or `:absent`,
+`0` and `0`. It uses the same exclusive simple octet buffer, full 60,000-byte
+grant, alias restrictions and successful-return rules as
+[ordinary caller-buffer GET](#caller-owned-read-buffers). Complete response,
+token and document checks precede copying; absence leaves the target unchanged.
+
+The version and document come from one canonical engine read. Pass the token to
+`client-put-if` or `client-delete-if`; a competing update can cause a conflict,
+which must be handled by the caller. The client allocates no intermediate document
+vector and retains no target reference. There is no additional capability, wire
+operation, retry or historical snapshot. The persistent `client-get-version`
+continues to return an independent document copy. RAM/paged selection remains
+transparent. The [checked example](../examples/local-roundtrip.lisp) exercises
+this read/token/conditional-write path and verifies the version after reopening.
 
 The service can share a strong flush across already-ready independent conditional
 mutations and ordinary writes from different clients. Conditions depending on an

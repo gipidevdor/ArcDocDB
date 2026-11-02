@@ -1,0 +1,7 @@
+# Preserve exact retained evidence bytes through checkout and publication.
+* -text
+# Terminal output and frozen source variants retain original whitespace.
+*.stdout -whitespace
+*.stderr -whitespace
+*.source -whitespace
+support/** -whitespace

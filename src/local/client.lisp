@@ -173,7 +173,9 @@ Never retains or returns ENVELOPE; only independent documents/scalars escape. Ex
        (replace applied (local-client-group-applied client) :end1 count :end2 count) completed))
     ((and (= opcode +local-version-opcode+) version-operation)
      (multiple-value-prog1
-         (decode-local-version-response (local-client-input client) envelope (local-client-space client) version-operation)
+         (if (and (zerop version-operation) read-target)
+             (decode-local-version-into (local-client-input client) envelope (local-client-space client) read-target read-start)
+             (decode-local-version-response (local-client-input client) envelope (local-client-space client) version-operation))
        (when (>= (local-now (local-client-clock client)) until)
          (error 'protocol-error :reason :local-client-deadline))))
     ((and (= opcode +local-write-group-opcode+) (plusp count))

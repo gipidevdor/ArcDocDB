@@ -72,12 +72,13 @@ No I/O/engine call; impossible result shapes are invariants, never authoritative
       (unless (= cursor end) (error 'arcdocdb.conditions:invariant-violation :reason :local-version-response-end)) end)))
 
 ;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-AFF-004 REQ-AFF-008
-(declaim (ftype (function (b:octets envelope cbor:spazio-cbor (member 0 1 3)) (values keyword t &optional b:u64))
-                decode-local-version-response))
-(defun decode-local-version-response (buffer envelope space operation)
-  "Pre: correlated complete RESPONSE. Post: GET status/copied document/CSN or mutation status/CSN.
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor (member 0 1 3))
+                         (values (member :found :absent :applied :conflict) b:u64 b:index b:index &optional))
+                %wire-version-response-spans))
+(defun %wire-version-response-spans (buffer envelope space operation)
+  "Pre: correlated complete RESPONSE. Post: status/CSN/document-offset/size, zero spans except for a found GET.
 Exact shape, booleans, positive success token, absence zero/null, embedded CBOR and end verified before copying.
-Only valid error/null is REQUEST-REJECTED; malformed results are PROTOCOL-ERROR."
+Only valid error/null is REQUEST-REJECTED; malformed results are PROTOCOL-ERROR. Borrowed spans never escape input ownership."
   (%wire-envelope-input buffer envelope)
   (unless (= 3 (envelope-kind envelope)) (%wire-fail :local-expected-response))
   (let ((end (envelope-payload-end envelope)) (cursor (envelope-payload-start envelope)))
@@ -94,8 +95,35 @@ Only valid error/null is REQUEST-REJECTED; malformed results are PROTOCOL-ERROR.
                 (multiple-value-bind (start size finish) (%wire-bstr buffer next end)
                   (unless (and (= finish end) (zerop (%wire-document-status buffer start end space)))
                     (%wire-fail :local-version-document))
-                  (values :found (%wire-copy buffer start size) version))
+                  (values :found version start size))
                 (progn (unless (and (zerop version) (%wire-null-p buffer next end)) (%wire-fail :local-version-absence))
-                       (values :absent nil 0)))
+                       (values :absent 0 0 0)))
             (progn (unless (= next end) (%wire-fail :local-version-trailing))
-                   (values (if success :applied :conflict) version)))))))
+                   (values (if success :applied :conflict) version 0 0)))))))
+
+;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-AFF-004 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor (member 0 1 3)) (values keyword t &optional b:u64))
+                decode-local-version-response))
+(defun decode-local-version-response (buffer envelope space operation)
+  "Pre: correlated complete RESPONSE and exclusive scratch. Post: original persistent GET copy/CSN or mutation status/CSN.
+The shared complete validator precedes allocation; protocol and authoritative rejection conditions propagate unchanged."
+  (multiple-value-bind (status version offset size) (%wire-version-response-spans buffer envelope space operation)
+    (if (zerop operation)
+        (values status (when (eq status :found) (%wire-copy buffer offset size)) version)
+        (values status version))))
+
+;;; REQ: REQ-IPC-002 REQ-TXS-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-004 REQ-AFF-008
+(declaim (ftype (function (b:octets envelope cbor:spazio-cbor b:octets b:index)
+                         (values (member :found :absent) b:index b:u64 &optional)) decode-local-version-into))
+(defun decode-local-version-into (buffer envelope space target start)
+  "Pre: correlated versioned GET, immutable input and exclusive distinct target. Post: FOUND/size/CSN or ABSENT/0/0.
+Shared complete grammar/token/document validation and output bounds precede the exact copy; no document allocation.
+Alias/range errors propagate before copying; malformed/rejected responses never modify TARGET or expose borrowed spans."
+  (when (eq target buffer)
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-get-output-alias))
+  (b:check-range target start start)
+  (multiple-value-bind (status version offset size) (%wire-version-response-spans buffer envelope space 0)
+    (b:check-range target start (+ start size))
+    (when (eq status :found)
+      (replace target buffer :start1 start :end1 (+ start size) :start2 offset :end2 (+ offset size)))
+    (values (the (member :found :absent) status) size version)))

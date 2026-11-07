@@ -15,9 +15,7 @@ Output is copied only after full validation and is not authorized on incomplete 
   (unless (and (typep count '(integer 1 8)) (typep results 'local-group-csns) (<= count (length results))
                (not (eq results (local-client-group-csns client))))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-group-result-output))
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (unwind-protect
          (let ((size (encode-local-write-group (local-client-output client) id operations count
                                                (local-client-space client) (local-client-limit client))))

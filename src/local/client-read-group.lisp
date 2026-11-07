@@ -13,9 +13,7 @@ One current serial view; no historical MVCC, split, downgrade or mutation uncert
   (esigi-local-client client :ready)
   (unless (local-client-read-groups client)
     (error 'arcdocdb.conditions:unsupported-format :reason :local-read-groups-not-negotiated))
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (unwind-protect
          (let ((size (encode-local-read-group (local-client-output client) id keys count (local-client-limit client))))
            (run-local-client-exchange client id size +local-read-group-opcode+ count))
@@ -80,9 +78,7 @@ One current serial view, including duplicate keys. Fixed private spans are clear
     (error 'arcdocdb.conditions:invalid-argument :reason :local-read-group-keys))
   (check-local-read-group-arena target lengths start count)
   (check-local-read-group-output-aliases client keys count target lengths)
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (unwind-protect
          (let ((size (encode-local-read-group (local-client-output client) id keys count (local-client-limit client))))
            (run-local-client-exchange client id size +local-read-group-opcode+ count lengths nil nil target start))

@@ -9,16 +9,21 @@
          (restore "ARCDOCDB_DISJOINT_MODE" old-mode) (restore "ARCDOCDB_DISJOINT_FAILURE" old-failure)))))
 (defun disjoint-send (client opcode key)
   (let* ((buffer (l::local-client-output client)) (id (l::local-client-next-id client))
-         (end (if (= 6 opcode) (l::encode-local-version buffer id 0 key nil 0 65536)
-                  (l::encode-local-request buffer id opcode key (when (= 1 opcode) (decode-hex "F6"))))))
+         (end (case opcode
+                (5 (l::encode-local-read-group buffer id (vector key key) 2 65536))
+                (6 (l::encode-local-version buffer id 0 key nil 0 65536))
+                (otherwise (l::encode-local-request buffer id opcode key (when (= 1 opcode) (decode-hex "F6")))))))
     (incf (l::local-client-next-id client))
     (l::transfer-local-client client buffer 0 end :output (deadline 30))))
 (defun disjoint-receive (client opcode)
   (let ((env (l::receive-local-client client 65536 (deadline 30))))
     (check (= (l:envelope-id env) (1- (l::local-client-next-id client))) "Disjoint response ID")
     (multiple-value-list
-      (if (= 6 opcode) (l::decode-local-version-response (l::local-client-input client) env (l::local-client-space client) 0)
-          (l::decode-local-response (l::local-client-input client) env (l::local-client-space client) opcode)))))
+      (case opcode
+        (5 (l::decode-local-read-group-response (l::local-client-input client) env (l::local-client-space client)
+                                               (l::local-client-read-spans client) 2))
+        (6 (l::decode-local-version-response (l::local-client-input client) env (l::local-client-space client) 0))
+        (otherwise (l::decode-local-response (l::local-client-input client) env (l::local-client-space client) opcode))))))
 (defun disjoint-recovered (socket failure)
   (let ((client (l:connect-local (namestring socket) :versions t)) (frontier 0))
     (unwind-protect
@@ -35,32 +40,36 @@
       (l:close-local client))))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-WAL-006 REQ-REC-001 REQ-AFF-004 REQ-IDX-013
-(defun run-disjoint-real-turns (versioned)
+(defun run-disjoint-real-turns (read-kind)
   (call-with-run
    (lambda ()
-     (let ((runtime (subdirectory (if versioned "disjoint-v-runtime/" "disjoint-runtime/")))
-           (stage (if versioned 1010 810)))
+     (let* ((versioned (eq read-kind t)) (grouped (eq read-kind :group))
+            (label (cond (grouped "grouped") (versioned "version") (t "ordinary")))
+            (opcode (cond (grouped 5) (versioned 6) (t 2)))
+            (runtime (subdirectory (format nil "disjoint-~A-runtime/" label)))
+            (stage (cond (grouped 1210) (versioned 1010) (t 810))))
        (dolist (version '(1 2)) (dolist (mode '(:resident :paged)) (dolist (failure '(:none :before :after))
          (scenario :disjoint-turn version
            (lambda ()
              (with-disjoint-environment (mode failure)
-               (let ((data (subdirectory (format nil "disjoint-~A-v~D-~A-~A/" (if versioned "version" "ordinary") version mode failure)))
+               (let ((data (subdirectory (format nil "disjoint-~A-v~D-~A-~A/" label version mode failure)))
                      (clients (make-array 3 :initial-element nil)))
                  (multiple-value-bind (server socket)
                      (start-server data runtime version (incf stage) :create t :script "tools/local-disjoint-server.lisp"
                                    :expected-failure (not (eq failure :none)))
                    (unwind-protect
                         (progn
-                          (dotimes (i 3) (setf (aref clients i) (l:connect-local (namestring socket) :versions versioned)))
+                          (dotimes (i 3) (setf (aref clients i) (l:connect-local (namestring socket) :versions versioned :read-groups grouped)))
                           (disjoint-send (aref clients 0) 1 (automatic-local-key 0))
-                          (disjoint-send (aref clients 1) (if versioned 6 2) (automatic-local-key 1))
+                          (disjoint-send (aref clients 1) opcode (automatic-local-key 1))
                           (disjoint-send (aref clients 2) 1 (automatic-local-key 1))
                           (dotimes (i 3)
                             (if (eq failure :none)
-                                (check (equal (case i (0 '(1)) (1 (if versioned '(:absent nil 0) '(:absent nil))) (2 '(2)))
-                                              (disjoint-receive (aref clients i) (if (= i 1) (if versioned 6 2) 1))) "Disjoint serial result")
+                                (check (equalp (case i (0 '(1)) (1 (cond (grouped (list #(nil nil)))
+                                                                                       (versioned '(:absent nil 0)) (t '(:absent nil)))) (2 '(2)))
+                                               (disjoint-receive (aref clients i) (if (= i 1) opcode 1))) "Disjoint serial result")
                                 (let ((failed nil))
-                                  (handler-case (disjoint-receive (aref clients i) (if (= i 1) (if versioned 6 2) 1))
+                                  (handler-case (disjoint-receive (aref clients i) (if (= i 1) opcode 1))
                                     (l:protocol-error () (setf failed t)) (arcdocdb.conditions:io-fault () (setf failed t)))
                                   (check failed "Disjoint failed turn leaked a response")))))
                      (dotimes (i 3) (when (aref clients i) (l:close-local (aref clients i)))))
@@ -87,4 +96,11 @@
   (let ((old (uiop:getenv "ARCDOCDB_DISJOINT_READ")))
     (unwind-protect
          (progn (sb-posix:setenv "ARCDOCDB_DISJOINT_READ" "versioned" 1) (run-disjoint-real-turns t))
+      (if old (sb-posix:setenv "ARCDOCDB_DISJOINT_READ" old 1) (sb-posix:unsetenv "ARCDOCDB_DISJOINT_READ")))))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-WAL-006 REQ-REC-001 REQ-AFF-004 REQ-IDX-013
+(deftest test-REQ-WAL-006-disjoint-real-read-group-strong-failure-and-SIGKILL-recovery
+  (let ((old (uiop:getenv "ARCDOCDB_DISJOINT_READ")))
+    (unwind-protect
+         (progn (sb-posix:setenv "ARCDOCDB_DISJOINT_READ" "grouped" 1) (run-disjoint-real-turns :group))
       (if old (sb-posix:setenv "ARCDOCDB_DISJOINT_READ" old 1) (sb-posix:unsetenv "ARCDOCDB_DISJOINT_READ")))))

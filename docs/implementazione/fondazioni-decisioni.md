@@ -16,7 +16,7 @@ REQ in their name. This table alone does not certify MC/DC coverage.
 | `checked-header`: PUT over budget | valid record with full/reduced budget; control types allowed: `REQ-LIM-001-document-boundaries`, `REQ-FOR-003-control-record-shapes` |
 | `u64-equal-p`: low and high word | both equal, only low word different, only high word different: `REQ-FOR-004-u64-both-words` |
 | `key-equal-p`: length and contents | both equal, different length, single different byte: `REQ-AFF-002-index-identity` |
-| `check-outcome`: end, type, low/high TXID, CSN | valid test; end beyond record; PUT type; separate changes to each TXID and CSN word with repaired CRCs: `REQ-FOR-004-prepared-outcome`, `REQ-FOR-004-outcome-provenance-fields`, `REQ-FOR-004-u64-both-words` |
+| `check-outcome-parole`: end, type, low/high TXID, CSN | valid test; end beyond record; PUT type; separate changes to each TXID and CSN word with repaired CRCs: `REQ-FOR-004-prepared-outcome`, `REQ-FOR-004-outcome-provenance-fields`, `REQ-FOR-004-u64-both-words` |
 | `verifica-put`: end, type, flags, key | valid case and individual mismatches: `REQ-AFF-002-index-identity`, `REQ-LIM-001-semantic-boundaries` |
 | `check-seal`: file, start, frontier, count, checksum | each field mutated, with valid header/body CRCs: `REQ-FOR-003-batch-seal-semantic-corruption` |
 | `verifica-lotto`: record count, bytes, u64 offset, file-id per log | each guard rejected separately; segment with ID, control/multiseries with zero: `REQ-LIM-003-batch-budgets`, `REQ-FOR-003-sealed-batches` |

@@ -254,15 +254,6 @@ Signals INVALID-ARGUMENT for an incorrect range; does not modify inputs."
        (loop for i from start below end for j from 0
              always (= (aref buffer i) (aref key j)))))
 
-;;; REQ: REQ-FOR-004
-(declaim (ftype (function (octets index index integer octets index u64) null) check-outcome))
-(defun check-outcome (buffer start end version put-buffer put-start csn)
-  "Pre: proof from the same segment according to the owning resolver.
-Post: intact OUTCOME, matching TXID and CSN. Signals CORRUPTION-DETECTED otherwise.
-Does not independently prove membership in a committed batch: that is the resolver's responsibility."
-  (check-outcome-parole buffer start end version put-buffer put-start
-                        (ldb (byte 32 32) csn) (ldb (byte 32 0) csn)))
-
 ;;; REQ: REQ-FOR-004 REQ-AFF-002
 (declaim (ftype (function (octets index index integer octets index u32 u32) null)
                 check-outcome-parole))

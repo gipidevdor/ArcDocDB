@@ -38,9 +38,7 @@ No result is authorized on incomplete exit; no split, downgrade or automatic ret
   (unless (local-client-conditional-groups client)
     (error 'arcdocdb.conditions:unsupported-format :reason :local-conditional-groups-not-negotiated))
   (check-local-conditional-outputs client operations expected tokens applied count)
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (unwind-protect
          (let ((size (encode-local-conditional-group (local-client-output client) id operations expected count
                        (local-client-space client) (local-client-limit client))))

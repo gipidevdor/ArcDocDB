@@ -38,37 +38,49 @@ The canonical read copies into private output. Dispatch must drain all writes be
        (independent-local-read-key-p engine connection queue status key 60032)))
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-LIM-003
+(declaim (ftype (function (e:motore local-connection envelope local-write-queue function) null) dispatch-local-command-pending))
+(defun dispatch-local-command-pending (engine connection envelope queue clock)
+  "Pre: owned admitted frame on the ordinary command path, stable collector prefix. Post: queued write or checked private response.
+Exact dependencies and existing fresh clock samples precede admission/copy; no send or renewed request deadline."
+  (if (>= (local-now clock) (local-connection-deadline connection))
+      (close-local-connection connection)
+      (multiple-value-bind (status key document)
+          (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
+        (if (and (zerop status) (member (envelope-code envelope) '(1 3)) (eq :ready (e:stato-motore engine)))
+            (enqueue-local-write engine connection queue clock (if (= 1 (envelope-code envelope)) :put :delete) key document nil 0)
+            (progn
+              (unless (independent-local-get-p engine connection queue status key)
+                (flush-local-write-queue engine queue clock))
+              (if (>= (local-now clock) (local-connection-deadline connection))
+                  (close-local-connection connection)
+                  (queue-local-response connection
+                    (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)
+                    clock)))))) nil)
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-LIM-003
 (declaim (ftype (function (e:motore local-connection local-write-queue function) null) dispatch-local-pending))
 (defun dispatch-local-pending (engine connection queue clock)
   "Pre: full frame and admitted request ID in actor slot order. Post: queued write or immediate checked command.
-Only independent ordinary/versioned GETs may precede queued writes; other reads/PING/rejections/explicit groups drain them.
+Independent ordinary/versioned/grouped GETs may precede queued writes; PING and explicit mutations drain them.
 Same-key reads and conditional dependencies remain barriers. No response is sent inside dispatch."
   (let ((envelope (local-connection-pending connection)))
     (unless envelope (error 'arcdocdb.conditions:invariant-violation :reason :local-pending-envelope))
     (when (= 6 (envelope-code envelope))
       (dispatch-local-version-pending engine connection queue clock)
       (return-from dispatch-local-pending nil))
-    (when (and (member (envelope-code envelope) '(4 5 7))
+    (when (= +local-read-group-opcode+ (envelope-code envelope))
+      (if (>= (local-now clock) (local-connection-deadline connection))
+          (close-local-connection connection)
+          (queue-local-response connection (local-dispatch-read-group engine connection envelope clock queue) clock))
+      (return-from dispatch-local-pending nil))
+    (when (and (member (envelope-code envelope) '(4 7))
                (< (local-now clock) (local-connection-deadline connection)))
       (flush-local-write-queue engine queue clock)
       (if (>= (local-now clock) (local-connection-deadline connection))
           (close-local-connection connection)
           (queue-local-response connection (local-dispatch engine connection envelope clock) clock))
       (return-from dispatch-local-pending nil))
-    (if (>= (local-now clock) (local-connection-deadline connection))
-        (close-local-connection connection)
-        (multiple-value-bind (status key document)
-            (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
-          (if (and (zerop status) (member (envelope-code envelope) '(1 3)) (eq :ready (e:stato-motore engine)))
-              (enqueue-local-write engine connection queue clock (if (= 1 (envelope-code envelope)) :put :delete) key document nil 0)
-              (progn
-                (unless (independent-local-get-p engine connection queue status key)
-                  (flush-local-write-queue engine queue clock))
-                (if (>= (local-now clock) (local-connection-deadline connection))
-                    (close-local-connection connection)
-                    (queue-local-response connection
-                      (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)
-                      clock)))))))
+    (dispatch-local-command-pending engine connection envelope queue clock))
   nil)
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-AFF-004

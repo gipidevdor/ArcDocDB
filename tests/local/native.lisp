@@ -222,7 +222,7 @@
   (let* ((fixture (make-scripted-fixture)) (backend (fixture-backend fixture))
          (anchor (n::open-local-namespace "/svc/run.sock" :backend backend))
          (listener (n::open-local-listener "/svc/run.sock" :namespace anchor)))
-    (is (= 2 (n::handle-socket listener)))
+    (is (= 2 (n::native-listener-fd listener)))
     (let ((operations (mapcar #'car (reverse (fixture-calls fixture)))))
       (is (< (position :bind operations) (position :chmod operations) (position :listen operations))))
     (is (null (n::close-local-listener listener)))
@@ -283,11 +283,8 @@
     (is (zerop (fixture-call-count fixture :unlink)))
     (is (equal '(0 1 2) (fixture-closed fixture)))))
 
-(deftest test-REQ-IPC-001-native-gate-and-namespace-mismatch-before-effects
+(deftest test-REQ-IPC-001-native-namespace-mismatch-before-effects
   (let ((fixture (make-scripted-fixture)))
-    (rejects n::native-error
-      (n::native-open-listener "/svc/run.sock" (constantly nil) :backend (fixture-backend fixture)))
-    (is (null (fixture-calls fixture)))
     (let ((anchor (n::open-local-namespace "/svc/run.sock" :backend (fixture-backend fixture))))
       (rejects arcdocdb.conditions:invalid-argument
         (n::open-local-listener "/svc/other.sock" :namespace anchor))
@@ -354,7 +351,6 @@
     (rejects arcdocdb.conditions:invalid-argument (n::native-accept "0" :backend backend))
     (rejects arcdocdb.conditions:invalid-argument (n::native-socket-error -1 :backend backend))
     (rejects arcdocdb.conditions:invalid-argument (n::open-local-namespace "/svc/run.sock" :backend :bad))
-    (rejects arcdocdb.conditions:invalid-argument (n::handle-socket nil))
     (rejects arcdocdb.conditions:invalid-argument (n::accept-local-socket nil))
     (rejects arcdocdb.conditions:invalid-argument (n::close-local-listener nil))
     (rejects arcdocdb.conditions:invalid-argument (n::close-local-namespace nil))
@@ -434,14 +430,7 @@
   (let ((fixture (make-scripted-fixture)))
     (setf (fixture-runtime fixture) nil)
     (rejects n::native-error (n::open-local-namespace "/svc/run.sock" :backend (fixture-backend fixture)))
-    (is (equal '(0 1) (fixture-closed fixture))))
-  (let* ((primary (make-condition 'simple-error :format-control "FI READY"))
-         (fixture (make-scripted-fixture)))
-    (let ((condition (rejects n::native-error
-                       (n::native-open-listener "/svc/run.sock" (lambda () (error primary))
-                                               :backend (fixture-backend fixture)))))
-      (is (eq primary (n::native-error-primary condition))))
-    (is (null (fixture-calls fixture)))))
+    (is (equal '(0 1) (fixture-closed fixture)))))
 
 (defun run ()
   "Esegue solo su invocazione esplicita del runner dopo freeze/review; nessuna esecuzione al load."

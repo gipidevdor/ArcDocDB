@@ -2,6 +2,9 @@
 
 # Current results
 
+The [2026-11-07 source cleanup](2026-11-07-lean-code/report.md) retains two
+rejected read-key sharing prototypes and their measured regressions.
+
 The [main integration campaign](2026-11-01-metrics-main-merge/report.md) verifies
 the combined observability, offline backup and Unix-group catalog, including
 preservation of pre-existing work in the primary checkout.

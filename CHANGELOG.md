@@ -7,6 +7,18 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Remove unused record/delta/socket wrappers and the obsolete callback-gated
+  listener entry; share client ID preflight and immediate/queued read-group
+  dispatch. Retain independent private read-key copies after rejecting two
+  sharing prototypes whose measured comparison/allocation costs regressed.
+  [Method and limits](docs/implementazione/letture-gruppo-indipendenti.md#decoder-and-cleanup).
+
+- Preserve same-turn strong write groups across independent negotiated read
+  groups. Validate every key once, retain exact-key and reduced-credit barriers,
+  and copy the complete serial view before later write admission.
+  [Contract](docs/adr/0090-independent-read-groups-write-cohorts.md) and
+  [verification method](docs/implementazione/letture-gruppo-indipendenti.md).
+
 - Reserve and verify full-frame Unix socket kernel buffers before FD handoff,
   preserving larger grants and existing short-I/O, fairness and cleanup rules.
   Integrate owner-local histograms into the C4 service profiler to measure

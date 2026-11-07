@@ -471,7 +471,7 @@ Ownership: transferred to the caller only after complete configuration."
                       :cleanup (if cleanup (list cleanup) nil))))))
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
-(declaim (ftype (function (&key (:backend t)) native-fd) native-socket-new new-local-socket))
+(declaim (ftype (function (&key (:backend t)) native-fd) native-socket-new))
 (defun native-socket-new (&key backend)
   "Pre: valid backend. Post: NONBLOCK/CLOEXEC Unix stream FD; no bind or listener.
 Ownership: the caller assumes the FD, including zero; typed acquisition/configuration failure."
@@ -479,11 +479,6 @@ Ownership: the caller assumes the FD, including zero; typed acquisition/configur
   (let ((fd (%native-required backend :socket)))
     (unless (typep fd 'native-fd) (%native-fail :local-native-result :socket))
     (%native-configured-fd fd backend)))
-;;; REQ: REQ-IPC-001 REQ-AFF-004
-(defun new-local-socket (&key backend)
-  "Pre: valid backend. Post: configured private FD; ownership passes to the caller."
-  (native-socket-new :backend backend))
-
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t) (values string native-octets list string &optional))
                 native-path-preflight))
@@ -723,19 +718,13 @@ Ownership: anchor remains with the parent; no identity inferred from the textual
   (closed-p nil :type boolean))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
-(declaim (ftype (function (t) native-listener) %native-check-listener)
-         (ftype (function (t) native-fd) handle-socket))
+(declaim (ftype (function (t) native-listener) %native-check-listener))
 (defun %native-check-listener (listener)
   "Pre: external handle. Post: open listener and owned FD; no effects."
   (unless (and (typep listener 'native-listener) (not (native-listener-closed-p listener))
                (typep (native-listener-fd listener) 'native-fd))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-listener-state))
   listener)
-;;; REQ: REQ-IPC-001 REQ-AFF-004
-(defun handle-socket (listener)
-  "Pre: open listener. Post: FD borrowed for one step; do not close it separately."
-  (native-listener-fd (%native-check-listener listener)))
-
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-listener) null) %native-verify-socket))
 (defun %native-verify-socket (listener)
@@ -855,19 +844,6 @@ Ownership: :NAMESPACE borrowed; internal anchor closed with listener, engine rem
         (error (primary)
           (%native-fail :local-listener-open :open-listener :primary primary
                         :cleanup (native-close-listener listener)))))))
-
-;;; REQ: REQ-IPC-001 REQ-REC-001 REQ-AFF-004
-(declaim (ftype (function (t t &key (:backend t)) native-listener) native-open-listener))
-(defun native-open-listener (path ready-p &key backend)
-  "Pre: trusted gate callback. Post: listener only after a result of exactly T; no prior effects.
-Ownership: listener owns its internal anchor; INVALID-ARGUMENT or typed failure."
-  (unless (functionp ready-p)
-    (error 'arcdocdb.conditions:invalid-argument :reason :local-ready-function))
-  (handler-case
-      (unless (eq t (funcall ready-p)) (%native-fail :local-engine-not-ready :open-listener))
-    (arcdocdb.conditions:arcdocdb-error (condition) (error condition))
-    (error (condition) (%native-fail :local-ready-callback :open-listener :primary condition)))
-  (open-local-listener path :backend backend))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t) (values (or null native-fd) fixnum &optional)) accept-local-socket))

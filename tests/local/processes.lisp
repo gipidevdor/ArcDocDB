@@ -18,6 +18,9 @@
 (defparameter *process-timeout* 60)
 (defparameter *stop-timeout* 5)
 (defparameter *log-byte-limit* 1048576)
+;; Preserve the existing 256-process allowance plus this increment's 24 servers:
+;; two formats * two primary modes * three failure stages * two starts.
+(defconstant +fixture-process-limit+ 280)
 (defparameter *fixture-parent* (merge-pathnames ".arcdocdb-p3-tests/" (user-homedir-pathname)))
 (defparameter *archive-hex* "49494949494949494949494949494949")
 (defparameter *series-hex* "29292929292929292929292929292929")
@@ -115,7 +118,7 @@
              "Log oltre il limite, processo ~A: ~A" (child-name child) path))))
 
 (defun launch (name role script arguments &key expected-failure)
-  (check (< (length *children*) 256) "Limite processi della fixture superato.")
+  (check (< (length *children*) +fixture-process-limit+) "Limite processi della fixture superato (~D)." +fixture-process-limit+)
   (let* ((id (1+ (length *children*)))
          (prefix (format nil "~3,'0D-~A" id name))
          (stdout (merge-pathnames (format nil "~A.stdout" prefix) *root*))
@@ -632,6 +635,17 @@
        (funcall test)
        (format t "~&ok    ~A~%" test))))
   t)
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-VAL-001
+(deftest test-REQ-LIM-003-local-fixture-process-budget-refuses-before-spawn
+  (let ((*children* (make-list +fixture-process-limit+)) (refused nil))
+    ;; No root or script is needed: the cumulative bound must precede all spawn work.
+    (handler-case (launch "over-budget" :server "not-a-script" nil)
+      (simple-error (condition)
+        (check (search "Limite processi della fixture superato" (princ-to-string condition)) "Wrong fixture budget error")
+        (setf refused t)))
+    (check refused "Fixture process budget was not enforced")
+    (check (= +fixture-process-limit+ (length *children*)) "Rejected spawn changed child registry")))
 
 (defun prepare-discovery-image (data version)
   (let* ((engine (arcdocdb.engine:apri-motore data (decode-hex *archive-hex*) (decode-hex *series-hex*)

@@ -22,7 +22,7 @@
                                 (is (eq op :poll)) (incf polls)
                                 (arcdocdb.binary:scrivi-u16 (first args) 6
                                   (arcdocdb.binary:leggi-u16 (first args) 4)) (values 1 0))))
-           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :write-groups t :read-groups read-groups
+           (client (l::make-local-client :socket (l::native-socket-new) :state :ready :write-groups t :read-groups read-groups
                      :versions versions :conditional-groups conditional-groups
                      :clock (lambda ()
                               (when (and (eq expire :decode) (= cursor (length reply)))

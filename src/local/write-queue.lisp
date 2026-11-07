@@ -37,6 +37,19 @@ No wait, renewed deadline or data CSN; output scratch is cleared, references bey
       (return t))))
 
 ;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-WAL-002 REQ-LIM-003
+(declaim (ftype (function (e:motore local-connection local-write-queue (integer 0 5) (integer 0 8)) boolean)
+                independent-local-read-group-p))
+(defun independent-local-read-group-p (engine connection queue status count)
+  "Pre: serial actor; zero STATUS requires fully decoded negotiated read keys in the connection workspace.
+Post: only a valid READY group with full frame credit and no key in the nonempty write prefix qualifies (ADR-0090).
+At most 8*8 exact comparisons; duplicates retain their order. No allocation, admission or I/O."
+  (and (zerop status) (plusp count) (= +server-max-frame+ (local-connection-limit connection))
+       (eq :ready (e:stato-motore engine)) (plusp (local-write-queue-count queue))
+       (let ((keys (local-group-workspace-operations (local-connection-group-workspace connection))))
+         (dotimes (i count t)
+           (when (queued-local-key-p queue (svref keys i)) (return nil))))))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-WAL-002 REQ-LIM-003
 (declaim (inline independent-local-read-key-p))
 (declaim (ftype (function (e:motore local-connection local-write-queue (integer 0 5) (or null b:octets)
                                   (member 60032 60040)) boolean) independent-local-read-key-p))

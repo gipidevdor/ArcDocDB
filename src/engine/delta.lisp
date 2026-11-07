@@ -53,20 +53,6 @@ Ordinary exhaustion preserves READY in preflight; incomplete commit imposes FAUL
                 (incf (delta-indice-motore-count delta)))))))))
   nil)
 
-;;; REQ: REQ-IDX-010 REQ-IDX-001
-(declaim (ftype (function (motore octets index index) boolean) chiave-nel-delta-motore-p))
-(defun chiave-nel-delta-motore-p (engine key start end)
-  "Pre: serial BUSY GET, valid range. Post: T only for the identity of a touched key.
-NIL without delta; equal digests do not replace byte comparison, no allocation."
-  (esigi-owner-motore engine)
-  (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-read-admission))
-  (let ((delta (motore-delta engine)))
-    (if delta
-        (multiple-value-bind (high low)
-            (arcdocdb.hash64:xxh64 key start end (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
-          (nth-value 1 (sonda-delta-indice delta key start end high low)))
-        nil)))
-
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-001
 (declaim (ftype (function (motore octets) null) verifica-capienza-delta-motore))
 (defun verifica-capienza-delta-motore (engine key)

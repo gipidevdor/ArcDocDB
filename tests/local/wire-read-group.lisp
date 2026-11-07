@@ -12,6 +12,52 @@
     (l::decode-local-read-group-response wire (envelope wire) (cbor:crea-spazio-cbor)
       (make-array 8 :element-type '(unsigned-byte 64)) count)))
 
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(deftest test-REQ-IPC-002-read-key-copies-remain-private-through-workspace-reuse
+  (dolist (keys (list (make-list 8 :initial-element (bytes 0 #xff))
+                     (loop for i below 8 collect (bytes 0 i))
+                     (list (bytes 0) (bytes 0 0) (bytes 0 #xff) (bytes 0) (bytes 0 0) (bytes 0 #xff) (bytes 0) (bytes 0))))
+    (let* ((wire (apply #'read-request keys)) (work (l::make-local-group-workspace))
+           (copy (symbol-function 'l::%wire-copy)) (copies 0))
+      (unwind-protect
+           (progn
+             (setf (symbol-function 'l::%wire-copy)
+                   (lambda (&rest args) (incf copies) (apply copy args)))
+             (multiple-value-bind (status count) (l::decode-local-read-group wire (envelope wire) work)
+               (is (zerop status)) (is (= count (length keys))))
+             (is (= copies (length keys)))
+             (fill wire 0)
+             (let ((owned (l::local-group-workspace-operations work)))
+               (dotimes (i (length keys))
+                 (is (equalp (nth i keys) (svref owned i)))
+                 (dotimes (j i) (is (not (eq (svref owned i) (svref owned j)))))))
+             (l::clear-local-group-workspace work)
+             (is (every #'null (l::local-group-workspace-operations work)))
+             (let* ((next (read-request (bytes 9))) (env (envelope next)))
+               (is (zerop (l::decode-local-read-group next env work)))
+               (is (= (1+ (length keys)) copies))
+               (is (equalp (bytes 9) (svref (l::local-group-workspace-operations work) 0)))))
+        (setf (symbol-function 'l::%wire-copy) copy) (l::clear-local-group-workspace work)))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-LIM-003
+(deftest test-REQ-IPC-002-read-key-copy-error-and-throw-release-prefix
+  (dolist (exit '(:error :throw))
+    (let* ((wire (read-request (bytes 1) (bytes 1) (bytes 2))) (env (envelope wire))
+           (work (l::make-local-group-workspace)) (copy (symbol-function 'l::%wire-copy)) (calls 0))
+      (unwind-protect
+           (progn
+             (setf (symbol-function 'l::%wire-copy)
+                   (lambda (&rest args) (incf calls)
+                     (when (= calls 2)
+                       (if (eq exit :error) (error 'arcdocdb.conditions:resource-exhausted :reason :key-copy-fi)
+                           (throw 'key-copy-stop :stopped))) (apply copy args)))
+             (if (eq exit :error)
+                 (signals arcdocdb.conditions:resource-exhausted (l::decode-local-read-group wire env work))
+                 (is (eq :stopped (catch 'key-copy-stop (l::decode-local-read-group wire env work)))))
+             (is (= 2 calls)) (is (every #'null (l::local-group-workspace-operations work)))
+             (is (every #'zerop (l::local-group-workspace-spans work))))
+        (setf (symbol-function 'l::%wire-copy) copy)))))
+
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (deftest test-REQ-IPC-002-read-group-all-capabilities-exact-bytes-and-two-values
   (dolist (writes '(nil t))
@@ -47,7 +93,8 @@
     (multiple-value-bind (status count work) (read-group-status wire)
       (is (zerop status)) (is (= count 2)) (fill wire 0)
       (is (every (lambda (value) (equalp value key)) (subseq (l::local-group-workspace-operations work) 0 2)))
-      (is (not (eq (svref (l::local-group-workspace-operations work) 0) (svref (l::local-group-workspace-operations work) 1))))))
+      (is (not (eq (svref (l::local-group-workspace-operations work) 0) (svref (l::local-group-workspace-operations work) 1))))
+      (l::clear-local-group-workspace work)))
   (is (= 1 (read-group-status (read-request))))
   (is (= 5 (read-group-status (apply #'read-request (make-list 9 :initial-element (bytes 1))))))
   (let ((original (symbol-function 'l::%wire-copy)) (copies 0))

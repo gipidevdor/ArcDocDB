@@ -11,6 +11,15 @@
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-state))
   nil)
 
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (local-client) b:u64) next-local-client-id))
+(defun next-local-client-id (client)
+  "Pre: READY owner before encoding. Post: available u64 ID, without consumption, output mutation or I/O.
+Exhaustion signals RESOURCE-EXHAUSTED before the exchange; the final u64 ID remains usable exactly once."
+  (let ((id (local-client-next-id client)))
+    (unless (<= id #xffffffffffffffff)
+      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted)) id))
+
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun close-local (client)
   "Pre: handle of the owner thread. Post: ownership consumed once, even if close fails."
@@ -241,9 +250,7 @@ Secondary cleanup errors are retained, never replace an existing nonlocal transf
   "Pre: READY owner and stable arguments. Post: one correlated legacy result; no retry after mutation uncertainty.
 Encoding/ID/frame refusals precede send and ID consumption; shared exchange owns every incomplete I/O exit."
   (esigi-local-client client :ready)
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (let ((size (encode-local-request (local-client-output client) id opcode key document)))
       (run-local-client-exchange client id size opcode))))
 

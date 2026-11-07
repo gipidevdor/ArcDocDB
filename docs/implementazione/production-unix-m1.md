@@ -113,7 +113,7 @@ result; otherwise status 5 before reading. The value is
 copied and GET is finished before waiting for the peer: no EBR pin or writer
 lease is retained during send. This is a conservative, declared limit.
 
-Read groups validate every key before copies/GET, drain earlier writes and
+Read groups validate every key before copies/GET, drain dependent earlier writes and
 complete serially without interleaved data operations or peer waits. Results
 preserve order, duplicates and absence. Each GET uses the existing full value
 scratch and releases its pin before response send. Cache and automatic RAM/paged
@@ -330,11 +330,15 @@ No timer waits to fill a group, and an isolated write follows the existing path.
 Logical slot order is preserved. An ordinary valid GET (credit 60032) or negotiated versioned GET (credit
 60040) may copy its canonical value and, for the latter, verified record CSN before preceding queued writes when its exact key
 differs from every queued mutation. A later write to its key remains after that
-read. Same-key GET, PING, explicit operations and rejections drain the
+read. Negotiated read groups with full 65,536-byte credit may likewise copy
+their whole current view when every member key is disjoint from queued writes.
+Same-key GET, dependent/reduced-credit read groups, PING, explicit mutations and invalid requests drain the
 queue. Conditional mutations retain exact dependency barriers. [ADR-0088](../adr/0088-independent-get-write-groups.md) records the changed
 physical read/fault order and unchanged unknown-outcome rules;
 [ADR-0089](../adr/0089-independent-versioned-get-write-groups.md) extends the rule
-to versioned GET without changing its value/token checks. No response is
+to versioned GET without changing its value/token checks.
+[ADR-0090](../adr/0090-independent-read-groups-write-cohorts.md) extends it to
+read groups, including whole-group aggregate overflow rejection. No response is
 sent until dispatch completes the final strong group; failure closes all peers.
 Fresh absolute-deadline checks remove expired commands before admission. Only
 an unadmitted capacity refusal may split into individually admitted requests;

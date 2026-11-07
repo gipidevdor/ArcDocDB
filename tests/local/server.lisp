@@ -130,8 +130,8 @@
                                           :deadline (l::local-until 0 30) :size 10 :io-backend backend)))
     (unwind-protect
          (progn
-           (setf (l::local-connection-socket input) (l::new-local-socket)
-                 (l::local-connection-socket output) (l::new-local-socket))
+           (setf (l::local-connection-socket input) (l::native-socket-new)
+                 (l::local-connection-socket output) (l::native-socket-new))
            (is (l::step-local-connection nil input 10 (lambda () 10)))
            (let ((deadline (l::local-connection-deadline input)))
              (is (= deadline (l::local-until 10 30)))

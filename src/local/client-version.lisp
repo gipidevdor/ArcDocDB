@@ -10,9 +10,7 @@ Capability/input/frame/ID refusal precedes send. Conditional send failures are O
   (esigi-local-client client :ready)
   (unless (local-client-versions client)
     (error 'arcdocdb.conditions:unsupported-format :reason :local-versions-not-negotiated))
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (let ((size (encode-local-version (local-client-output client) id operation key document expected (local-client-limit client))))
       (run-local-client-exchange client id size +local-version-opcode+ 0 nil operation))))
 
@@ -36,9 +34,7 @@ No target retention, document vector, historical snapshot or retry. Failed reads
   (unless (local-client-versions client)
     (error 'arcdocdb.conditions:unsupported-format :reason :local-versions-not-negotiated))
   (esigi-local-get-output client key target start)
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (let ((size (encode-local-version (local-client-output client) id 0 key nil 0 (local-client-limit client))))
       (run-local-client-exchange client id size +local-version-opcode+ 0 nil 0 nil target start))))
 

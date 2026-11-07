@@ -22,7 +22,7 @@
                                 (is (eq op :poll)) (incf polls)
                                 (arcdocdb.binary:scrivi-u16 (first args) 6
                                   (arcdocdb.binary:leggi-u16 (first args) 4)) (values 1 0))))
-           (client (l::make-local-client :socket (l::new-local-socket) :state :ready :limit limit :clock clock :input input :read-groups read-groups :versions versions
+           (client (l::make-local-client :socket (l::native-socket-new) :state :ready :limit limit :clock clock :input input :read-groups read-groups :versions versions
                      :io-backend backend :waiter (l::make-local-waiter 1 backend))))
       (values client (lambda () (list :calls calls :sends sends :polls polls :cursor cursor :requests (reverse requests)))))))
 (defun receive-stream (&rest frames) (apply #'concatenate '(vector (unsigned-byte 8)) frames))

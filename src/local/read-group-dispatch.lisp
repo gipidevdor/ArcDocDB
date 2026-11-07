@@ -23,7 +23,7 @@ No copy or success may be constructed from an inconsistent GET result."
 ;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-CCH-002 REQ-CCH-004 REQ-LIM-003 REQ-AFF-004
 (declaim (ftype (function (e:motore local-connection envelope (integer 1 8) (or null function)) b:index) collect-local-read-group))
 (defun collect-local-read-group (engine connection envelope count clock)
-  "Pre: complete validated key copies, drained writes, reserved full value/output scratch. Post: whole success or error/null 5.
+  "Pre: complete validated key copies, preceding writes drained or proven disjoint, reserved full scratch. Post: whole success or error/null 5.
 Canonical GETs finish serially on one current view, releasing every pin before response send. No interleaved writer/peer wait.
 Actual aggregate overflow never reaches engine as a short target and never exposes a partial vector; other faults propagate."
   (let* ((out (local-connection-output connection)) (value (local-connection-value connection))
@@ -48,16 +48,24 @@ Actual aggregate overflow never reaches engine as a short target and never expos
       (%wire-frame-end out cursor))))
 
 ;;; REQ: REQ-IPC-002 REQ-IDX-001 REQ-LIM-003 REQ-AFF-004
-(declaim (ftype (function (e:motore local-connection envelope &optional (or null function)) b:index) local-dispatch-read-group))
-(defun local-dispatch-read-group (engine connection envelope &optional clock)
+(declaim (ftype (function (e:motore local-connection envelope &optional (or null function) (or null local-write-queue)) b:index)
+                local-dispatch-read-group))
+(defun local-dispatch-read-group (engine connection envelope &optional clock queue)
   "Pre: complete REQUEST and reserved actor scratch. Post: whole current read vector or authoritative rejection.
-No data CSN/flush, split or retry; validation precedes all GETs, scratch cleared on every exit."
-  (let ((out (local-connection-output connection)) (work (local-connection-group-workspace connection)) (id (envelope-id envelope)))
+Optional QUEUE is the actor's preceding write prefix: only full-credit disjoint groups may precede its strong completion.
+One decoder and cleanup path serve immediate and queued calls. Fresh deadlines follow decode/drain in the queued path.
+No read CSN/flush, split or retry; validation precedes all GETs, scratch cleared on every exit."
+  (let ((out (local-connection-output connection)) (work (local-connection-group-workspace connection)) (id (envelope-id envelope))
+        (gate (cond ((not (local-connection-read-groups connection)) 4)
+                    ((not (eq :ready (e:stato-motore engine))) 3) (t 0))))
     (unwind-protect
-         (cond
-           ((not (local-connection-read-groups connection)) (encode-local-response out id 4))
-           ((not (eq :ready (e:stato-motore engine))) (encode-local-response out id 3))
-           (t (multiple-value-bind (status count) (decode-local-read-group (local-connection-input connection) envelope work)
-                (if (plusp status) (encode-local-response out id status)
-                    (collect-local-read-group engine connection envelope count clock)))))
+         (multiple-value-bind (status count)
+             (if (zerop gate) (decode-local-read-group (local-connection-input connection) envelope work) (values gate 0))
+           (when queue
+             (when (zerop gate) (check-local-read-group-deadline connection clock))
+             (unless (independent-local-read-group-p engine connection queue status count)
+               (flush-local-write-queue engine queue clock))
+             (check-local-read-group-deadline connection clock))
+           (if (plusp status) (encode-local-response out id status)
+               (collect-local-read-group engine connection envelope count clock)))
       (clear-local-group-workspace work))))

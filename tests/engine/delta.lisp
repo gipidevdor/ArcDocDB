@@ -181,7 +181,8 @@
       (let ((option (build-option 1)))
         (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
         (signals arcdocdb.conditions:invariant-violation
-                 (e::chiave-nel-delta-motore-p engine (key 1) 0 16))
+                 (e::leggi-delta-motore engine (key 1) 0 16
+                                       (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)))
         (signals arcdocdb.conditions:invariant-violation
                  (e::registra-chiave-delta-motore engine (key 1) t))
         (is (zerop (e::delta-indice-motore-count (e::motore-delta engine))))))))

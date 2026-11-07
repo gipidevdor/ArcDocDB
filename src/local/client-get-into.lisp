@@ -26,8 +26,6 @@ Uses ordinary GET and the existing rejection/deadline/close rules; no capability
 the copied prefix: deadline/failure/nonlocal exit after copying may leave unconfirmed bytes. No new document vector is allocated."
   (esigi-local-client client :ready)
   (esigi-local-get-output client key target start)
-  (let ((id (local-client-next-id client)))
-    (unless (<= id #xffffffffffffffff)
-      (error 'arcdocdb.conditions:resource-exhausted :reason :local-client-id-exhausted))
+  (let ((id (next-local-client-id client)))
     (let ((size (encode-local-request (local-client-output client) id 2 key nil)))
       (run-local-client-exchange client id size 2 0 nil nil nil target start))))

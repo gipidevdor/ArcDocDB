@@ -125,7 +125,7 @@
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
 (deftest test-REQ-IPC-002-real-socket-full-frame-grants-flags-and-larger-grant-preserved
-  (let ((fd (n::new-local-socket)))
+  (let ((fd (n::native-socket-new)))
     (unwind-protect
       (progn
         (is (not (zerop (logand n::+native-fd-cloexec+ (sb-posix:fcntl fd sb-posix:f-getfd)))))
